@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#191919">
+<title>System Over Self — Exam OS</title>
+<style>
+:root{
+  --bg:#191919;--surface:#202020;--surface2:#252523;--surface3:#2c2c2a;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
+  --text:#f4f4f3;--text2:rgba(255,255,255,.66);--text3:rgba(255,255,255,.42);
+  --blue:#5E9FE8;--green:#72BC8F;--orange:#DE9255;--red:#E97366;
+  --purple:#BF8EDA;--yellow:#EAC26B;--pink:#DF84A8;--teal:#4FB9C9;
+  --r-lg:14px;--r-md:10px;--r-sm:8px;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.28);
+  --sidebar-w:238px;--ease:cubic-bezier(.2,.7,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  background:radial-gradient(1200px 700px at 80% -10%,#20211f 0%,var(--bg) 55%) fixed,var(--bg);
+  color:var(--text);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;min-height:100vh;-webkit-tap-highlight-color:transparent;
+}
+::selection{background:rgba(94,159,232,.32)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;touch-action:manipulation}
+input,select,textarea{font:inherit;color:var(--text)}
+a{color:var(--blue);text-decoration:none}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+#errbar{display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#3a1f1d;color:#ffb3aa;border-bottom:1px solid rgba(233,115,102,.5);padding:9px 14px;font-size:12.5px;font-weight:600;white-space:pre-wrap}
+#app{display:flex;min-height:100vh}
+#sidebar{width:var(--sidebar-w);flex:0 0 auto;position:fixed;inset:0 auto 0 0;height:100vh;display:flex;flex-direction:column;gap:2px;padding:20px 12px 14px;background:rgba(25,25,25,.72);backdrop-filter:blur(14px);border-right:1px solid var(--border);z-index:40}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 10px 18px}
+.brand .mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;background:linear-gradient(135deg,#2b3a4d,#233044);border:1px solid var(--border2);box-shadow:var(--shadow)}
+.brand b{font-size:14.5px;letter-spacing:-.01em;display:block;line-height:1.2}
+.brand span{font-size:11px;color:var(--text3);letter-spacing:.02em}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:var(--r-md);color:var(--text2);font-size:14px;font-weight:500;position:relative;transition:background .16s var(--ease),color .16s var(--ease),transform .1s var(--ease);width:100%;text-align:left}
+.nav-item svg{width:18px;height:18px;flex:0 0 auto;opacity:.85}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item:active{transform:scale(.97)}
+.nav-item.active{background:var(--surface3);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+.nav-item.active::before{content:"";position:absolute;left:-12px;top:20%;bottom:20%;width:3px;border-radius:3px;background:var(--blue)}
+.nav-badge{margin-left:auto;font-size:11px;font-weight:700;background:rgba(233,115,102,.16);color:var(--red);border:1px solid rgba(233,115,102,.3);min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
+.side-foot{margin-top:auto;padding:10px 10px 2px;border-top:1px solid var(--border);display:flex;gap:8px}
+#main{flex:1;margin-left:var(--sidebar-w);min-width:0}
+#topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;padding:14px 40px 12px;background:rgba(25,25,25,.78);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+#topbar h1{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.date-chip{font-size:13px;color:var(--text2);padding:6px 12px;border:1px solid var(--border);border-radius:99px;background:var(--surface)}
+.streak-chip{font-size:13px;font-weight:600;color:var(--orange);padding:6px 12px;border-radius:99px;background:rgba(222,146,85,.12);border:1px solid rgba(222,146,85,.28)}
+.icon-btn{width:36px;height:36px;border-radius:var(--r-md);display:grid;place-items:center;color:var(--text2);border:1px solid var(--border);background:var(--surface);transition:all .15s var(--ease)}
+.icon-btn:hover{background:var(--surface3);color:var(--text)}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:17px;height:17px}
+.sync-pill{font-size:12px;font-weight:600;padding:6px 11px;border-radius:99px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;color:var(--text2)}
+.sync-pill:hover{background:var(--surface3)}
+.sync-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--text3)}
+.sync-pill.synced .dot{background:var(--green)}
+.sync-pill.syncing .dot,.sync-pill.connecting .dot{background:var(--yellow);animation:pulse 1.2s infinite}
+.sync-pill.error .dot{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.timer-pill{font-size:12px;font-weight:600;padding:6px 11px;border-radius:99px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--text2);transition:all .15s;font-variant-numeric:tabular-nums}
+.timer-pill:hover{background:var(--surface3)}
+.timer-pill.running{background:rgba(233,115,102,.14);border-color:rgba(233,115,102,.4);color:var(--red)}
+#view{padding:28px 40px 90px;max-width:1180px}
+.view-anim{animation:viewIn .32s var(--ease)}
+@keyframes viewIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+#bottomnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(28,28,27,.94);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:6px 4px calc(8px + env(safe-area-inset-bottom));pointer-events:auto}
+#bottomnav .bn-wrap{display:flex;justify-content:space-around;align-items:stretch}
+.bn-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;min-width:48px;min-height:48px;flex:1 1 0;color:var(--text3);font-size:9.5px;font-weight:600;letter-spacing:.02em;border-radius:10px;position:relative;transition:color .15s var(--ease),transform .1s var(--ease)}
+.bn-item svg{width:21px;height:21px;pointer-events:none}
+.bn-item span{pointer-events:none}
+.bn-item:active{transform:scale(.9)}
+.bn-item.active{color:var(--blue);background:rgba(94,159,232,.1)}
+.bn-item .nav-badge{position:absolute;top:2px;right:14%;min-width:16px;height:16px;font-size:9.5px;padding:0 4px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;transition:transform .18s var(--ease),box-shadow .18s var(--ease),border-color .18s var(--ease)}
+.card.lift:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--border2)}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.card-h h2{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.card-h .sub{font-size:12.5px;color:var(--text3);margin-left:auto}
+.grid{display:grid;gap:16px}
+.muted{color:var(--text2)}.small{font-size:12.5px}.tiny{font-size:11.5px;color:var(--text3)}
+.section-gap{margin-top:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 16px;border-radius:var(--r-md);font-size:13.5px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text);transition:all .14s var(--ease);user-select:none;white-space:nowrap}
+.btn:hover{background:var(--surface3);border-color:var(--border2)}
+.btn:active{transform:scale(.95)}
+.btn.primary{background:var(--blue);border-color:transparent;color:#0d1b2c}
+.btn.primary:hover{background:#72adee;box-shadow:0 4px 16px rgba(94,159,232,.35)}
+.btn.green{background:var(--green);border-color:transparent;color:#0e2016}
+.btn.green:hover{background:#86cfa1;box-shadow:0 4px 16px rgba(114,188,143,.3)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--red)}.btn.danger:hover{background:rgba(233,115,102,.12);border-color:rgba(233,115,102,.35)}
+.btn.sm{padding:6px 11px;font-size:12.5px;border-radius:8px}
+.btn svg{width:14px;height:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);white-space:nowrap}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill b{margin-left:2px}
+.chip{padding:6px 13px;border-radius:99px;font-size:12.5px;font-weight:600;color:var(--text2);border:1px solid var(--border);background:var(--surface);transition:all .13s var(--ease)}
+.chip:hover{background:var(--surface3);color:var(--text)}
+.chip:active{transform:scale(.94)}
+.chip.on{background:rgba(94,159,232,.16);border-color:rgba(94,159,232,.45);color:var(--blue)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.inp,select.inp,textarea.inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;font-size:13.5px;color:var(--text);transition:border-color .14s var(--ease),box-shadow .14s var(--ease)}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(94,159,232,.18);outline:none}
+.inp::placeholder{color:var(--text3)}
+select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;cursor:pointer}
+select.inp option{background:#252523;color:var(--text)}
+input[type="date"].inp,input[type="time"].inp{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer}
+textarea.inp{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;resize:vertical}
+.pbar{height:6px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;min-width:54px}
+.pfill{height:100%;border-radius:99px;transition:width .5s var(--ease)}
+.stage-dots{display:inline-flex;gap:4px;align-items:center}
+.stage-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.12);transition:background .3s}
+.stage-dots i.on{background:var(--blue)}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;transition:transform .18s var(--ease),border-color .18s var(--ease),box-shadow .18s var(--ease)}
+.stat:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--shadow)}
+.stat .k{font-size:11.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.stat .v{font-size:24px;font-weight:750;letter-spacing:-.02em;margin-top:4px}
+.stat .f{font-size:11.5px;color:var(--text3);margin-top:2px}
+.row-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r-md);border:1px solid transparent;transition:background .15s var(--ease),border-color .15s var(--ease)}
+.row-item:hover{background:var(--surface2);border-color:var(--border)}
+.row-item .grow{flex:1;min-width:0}
+.row-item .t{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-item .m{font-size:12px;color:var(--text3);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tag-overdue{color:var(--red);background:rgba(233,115,102,.13);border:1px solid rgba(233,115,102,.3);font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.tag-today{color:var(--blue);background:rgba(94,159,232,.13);border:1px solid rgba(94,159,232,.32);font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.tag-new{color:var(--purple);background:rgba(191,142,218,.13);border:1px solid rgba(191,142,218,.32);font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.tag-future{color:var(--text3);background:var(--surface2);border:1px solid var(--border);font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.toolbar{position:sticky;top:60px;z-index:20;background:rgba(25,25,25,.9);backdrop-filter:blur(12px);padding:12px 0;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.toolbar .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toolbar .search{flex:1;min-width:180px;position:relative}
+.toolbar .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text3)}
+.toolbar .search .inp{padding-left:34px}
+.subj-group{margin-top:14px}
+.subj-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-md);cursor:pointer;transition:background .15s var(--ease);user-select:none}
+.subj-head:hover{background:var(--surface2)}
+.subj-head .sdot{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+.subj-head b{font-size:13.5px;letter-spacing:.01em;text-transform:capitalize}
+.subj-head .cnt{font-size:11.5px;color:var(--text3);font-weight:600}
+.subj-head .pbar{flex:1;max-width:150px;margin-left:auto}
+.subj-head .chev{transition:transform .2s var(--ease);color:var(--text3);width:16px;height:16px}
+.subj-group.closed .chev{transform:rotate(-90deg)}
+.subj-body{padding:2px 0 8px}
+.topic-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:10px 12px;border-radius:var(--r-md);border:1px solid transparent;transition:background .14s var(--ease),border-color .14s var(--ease)}
+.topic-row:hover{background:var(--surface2);border-color:var(--border)}
+.topic-row .name{font-size:13.5px;font-weight:550;line-height:1.4}
+.topic-row .tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.exam-tag{font-size:10px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:5px}
+.exam-CGL{color:#ff9d92;background:rgba(233,115,102,.13)}
+.exam-CHSL{color:#eec27f;background:rgba(222,146,85,.14)}
+.exam-RBI{color:#8fd9a8;background:rgba(114,188,143,.13)}
+.topic-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.mini-sel{font-size:12px;font-weight:600;padding:5px 24px 5px 9px;border-radius:7px;border:1px solid var(--border);background-color:var(--surface);color:var(--text2);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .13s}
+.mini-sel:hover{border-color:var(--border2)}
+.mini-sel.st-Not-started{color:#ff9d92}.mini-sel.st-Learning{color:var(--yellow)}
+.mini-sel.st-Practicing{color:var(--blue)}.mini-sel.st-Reviewing{color:var(--purple)}
+.mini-sel.st-Mastered{color:var(--green)}
+.mini-sel.pr-Critical{color:#ff9d92}.mini-sel.pr-High{color:var(--pink)}
+.mini-sel.pr-Medium{color:var(--yellow)}.mini-sel.pr-Low{color:var(--green)}
+.row-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.topic-row:hover .row-actions,.row-item:hover .row-actions{opacity:1}
+.mini-icon{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:var(--text3);transition:all .13s}
+.mini-icon:hover{background:var(--surface3);color:var(--text)}
+.mini-icon:active{transform:scale(.9)}
+.mini-icon svg{width:14px;height:14px}
+.mini-icon.danger:hover{color:var(--red);background:rgba(233,115,102,.12)}
+.page-tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--border)}
+.page-tab{padding:10px 16px;font-size:13.5px;font-weight:600;color:var(--text2);border-bottom:2px solid transparent;transition:all .14s;cursor:pointer;margin-bottom:-1px}
+.page-tab:hover{color:var(--text)}
+.page-tab.on{color:var(--text);border-bottom-color:var(--blue)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:8px 15px;border-radius:99px;font-size:13px;font-weight:600;color:var(--text2);border:1px solid var(--border);background:var(--surface);transition:all .14s var(--ease)}
+.tab:hover{color:var(--text);background:var(--surface3)}
+.tab.on{background:var(--text);color:#191919;border-color:transparent}
+.tab .n{opacity:.6;font-size:11px;margin-left:4px}
+.sess-card{display:flex;flex-direction:column;gap:10px}
+.sess-top{display:flex;align-items:flex-start;gap:10px}
+.sess-name{font-size:14.5px;font-weight:650;letter-spacing:-.01em;flex:1;min-width:0}
+.sess-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text2)}
+.sess-meta b{color:var(--text);font-weight:600}
+.sess-meta .fld{display:flex;flex-direction:column;gap:3px}
+.sess-meta .fld label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);font-weight:600}
+.sess-meta input[type="date"]{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:4px 8px;font-size:12.5px;color:var(--text);color-scheme:dark}
+.date-grp{margin-top:20px}
+.date-grp-h{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.bcol{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;min-height:120px}
+.bcol-h{display:flex;align-items:center;gap:8px;padding:2px 6px 12px;font-size:12.5px;font-weight:700;letter-spacing:.02em}
+.bcol-h .cnt{margin-left:auto;font-size:11px;color:var(--text3);background:var(--surface2);border-radius:99px;padding:2px 8px}
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 13px;margin-bottom:9px;transition:transform .16s var(--ease),border-color .16s var(--ease),box-shadow .16s var(--ease)}
+.task-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--shadow)}
+.task-card .tt{font-size:13.5px;font-weight:600;line-height:1.35}
+.task-card .tm{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.task-card .prog{font-size:12px;color:var(--text2);margin-top:8px;background:var(--surface2);border-radius:7px;padding:6px 9px;border:1px solid var(--border)}
+.task-card .acts{display:flex;gap:6px;margin-top:10px;align-items:center;flex-wrap:wrap}
+.tb-chip{font-size:11px;color:var(--teal);background:rgba(79,185,201,.1);border:1px solid rgba(79,185,201,.25);padding:2px 8px;border-radius:99px;font-weight:600}
+.habit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.hday{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px}
+.hday.today{border-color:rgba(94,159,232,.5);box-shadow:0 0 0 3px rgba(94,159,232,.1)}
+.hday .dh{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.hday .dh b{font-size:13.5px}
+.hday .dh .pct{margin-left:auto;font-size:12px;font-weight:700;color:var(--text2)}
+.hgroup{font-size:10.5px;font-weight:700;letter-spacing:.07em;color:var(--text3);text-transform:uppercase;margin:10px 0 6px}
+.hcheck{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer;user-select:none;transition:background .13s;font-size:13px;color:var(--text2)}
+.hcheck:hover{background:var(--surface2)}
+.hcheck .box{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border2);display:grid;place-items:center;transition:all .15s var(--ease);flex:0 0 auto}
+.hcheck .box svg{width:12px;height:12px;opacity:0;transform:scale(.5);transition:all .15s var(--ease);color:#0e2016}
+.hcheck.on{color:var(--text)}
+.hcheck.on .box{background:var(--green);border-color:var(--green)}
+.hcheck.on .box svg{opacity:1;transform:scale(1)}
+.hcheck:active .box{transform:scale(.85)}
+.goal-bar{position:relative;height:10px;border-radius:99px;background:rgba(255,255,255,.07);overflow:visible;margin:18px 0 6px}
+.goal-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .5s var(--ease)}
+.goal-marker{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--orange);left:50%}
+.goal-marker span{position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;color:var(--orange);white-space:nowrap}
+.chart-wrap{width:100%;overflow-x:auto}
+.chart-wrap svg{min-width:520px;width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--text2)}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px}
+#modal-root:empty{display:none}
+.overlay{position:fixed;inset:0;background:rgba(10,10,10,.62);backdrop-filter:blur(5px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .18s var(--ease)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:#232322;border:1px solid var(--border2);border-radius:18px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:22px;animation:popIn .22s var(--ease);box-shadow:0 24px 64px rgba(0,0,0,.5)}
+@keyframes popIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+.modal h3{font-size:16.5px;font-weight:700;letter-spacing:-.01em;margin-bottom:16px}
+.sett-section{border-top:1px solid var(--border);padding-top:14px;margin-top:14px}
+.sett-section:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.sett-section h4{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.frow{margin-bottom:13px}
+.frow label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.frow .hint{font-size:11px;color:var(--text3);margin-top:4px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-acts{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;position:sticky;bottom:-22px;background:#232322;padding:14px 0 0;border-top:1px solid var(--border)}
+.picker-list{max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r-sm);margin-top:8px}
+.pick-opt{display:flex;align-items:center;gap:9px;padding:9px 11px;font-size:13px;cursor:pointer;transition:background .12s}
+.pick-opt:hover{background:var(--surface2)}
+.pick-opt.sel{background:rgba(94,159,232,.12);color:var(--blue)}
+.pick-opt .sdot{width:8px;height:8px;border-radius:3px;flex:0 0 auto}
+.pick-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pick-chips .pill .x{cursor:pointer;margin-left:2px;opacity:.7;font-weight:700}
+.pick-chips .pill .x:hover{opacity:1}
+#toast-root{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:#2b2b2a;border:1px solid var(--border2);border-radius:12px;padding:11px 18px;font-size:13.5px;font-weight:600;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:toastIn .25s var(--ease);display:flex;align-items:center;gap:9px;max-width:90vw}
+.toast .sub{font-weight:500;color:var(--text2);font-size:12.5px}
+.toast.out{animation:toastOut .3s var(--ease) forwards}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(8px) scale(.97)}}
+.empty{text-align:center;padding:36px 20px;color:var(--text3)}
+.empty .ic{font-size:30px;margin-bottom:10px}
+.empty b{color:var(--text2);display:block;font-size:14px;margin-bottom:4px}
+.empty p{font-size:12.5px}
+.hero-head{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.hero-head h2{font-size:23px;font-weight:750;letter-spacing:-.02em}
+.hero-head .sub{color:var(--text2);font-size:13.5px;margin-top:3px}
+.dash-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+.dash-col{display:grid;gap:16px;align-content:start}
+.next-action{background:linear-gradient(135deg,rgba(94,159,232,.14),rgba(94,159,232,.05));border:1px solid rgba(94,159,232,.3);border-radius:var(--r-lg);padding:18px 20px;transition:transform .18s var(--ease),box-shadow .18s var(--ease)}
+.next-action:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(94,159,232,.14)}
+.next-action .k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
+.next-action .t{font-size:16px;font-weight:700;letter-spacing:-.01em;margin-top:6px;line-height:1.35}
+.next-action .m{font-size:12.5px;color:var(--text2);margin-top:5px}
+.urgent-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;transition:background .13s}
+.urgent-item:hover{background:var(--surface2)}
+.urgent-item .t{flex:1;font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.weak-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;transition:background .13s}
+.weak-item:hover{background:var(--surface2)}
+.weak-score{font-size:11px;font-weight:800;color:var(--red);background:rgba(233,115,102,.14);border:1px solid rgba(233,115,102,.3);padding:2px 7px;border-radius:99px;min-width:34px;text-align:center;font-variant-numeric:tabular-nums}
+.weak-t{flex:1;font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rel-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .13s;max-width:220px}
+.rel-pill:hover{border-color:var(--border2);color:var(--text)}
+.rel-pill .sdot{width:7px;height:7px;border-radius:3px;flex:0 0 auto}
+.rel-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);transition:all .13s;text-decoration:none;color:var(--text)}
+.link-row:hover{border-color:var(--border2);transform:translateY(-1px)}
+.link-row .lf{flex:1;font-size:13px;font-weight:600}
+.link-row .lu{font-size:11px;color:var(--text3)}
+.res-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;transition:all .16s var(--ease)}
+.res-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.res-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+footer.app-foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text3);flex-wrap:wrap;gap:10px}
+@media (max-width:960px){.dash-grid{grid-template-columns:1fr}.board{grid-template-columns:1fr}}
+@media (max-width:860px),(pointer:coarse){
+  #sidebar{display:none}#main{margin-left:0}#bottomnav{display:block}
+  #view{padding:18px 16px 110px}#topbar{padding:11px 16px 10px;gap:8px}#topbar h1{font-size:16px}
+  .date-chip{display:none}.streak-chip{display:none}
+  .toolbar{top:52px}
+  .topic-row{grid-template-columns:1fr}.topic-controls{justify-content:flex-start}.row-actions{opacity:1}
+  .overlay{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;max-width:none;max-height:92vh;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+  .hero-head h2{font-size:20px}.stat .v{font-size:21px}
+  .sync-pill span:not(.dot){display:none}.sync-pill{padding:8px 10px}
+}
+@media (max-width:480px){.bn-item{font-size:8.5px}.bn-item svg{width:19px;height:19px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div id="errbar"></div>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="mark">⚡</div>
+      <div><b>SYSTEM OVER SELF</b><span id="brand-sub">Exam OS · CGL · CHSL · RBI</span></div>
+    </div>
+    <div id="side-nav"></div>
+    <div class="side-foot">
+      <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </aside>
+  <main id="main">
+    <header id="topbar">
+      <h1 id="page-title">Dashboard</h1>
+      <div class="top-right">
+        <button class="sync-pill" id="sync-pill" title="Sync status"><span class="dot"></span><span>Local</span></button>
+        <button class="timer-pill" id="timer-pill" title="Focus timer">⏱ Focus</button>
+        <span class="streak-chip" id="streak-chip">🔥 0</span>
+        <span class="date-chip" id="date-chip"></span>
+      </div>
+    </header>
+    <div id="view"></div>
+  </main>
+  <nav id="bottomnav"><div class="bn-wrap" id="bn-wrap"></div></nav>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+/* ==================== SEED DATA ==================== */
+const SYL_RAW=[
+["Descriptive Writing – Finance (Part 1)","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Water Resources (10)","geography","CHSL|CGL","Critical","Not started",""],
+["Post-Gupta Dynasties","history","CHSL|CGL","Critical","Not started",""],
+["EDUTAP CA","CA","CHSL|CGL","Critical","Not started",""],
+["Synonyms and Antonyms","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Marginal Opportunity Cost & Marginal Rate of Transformation","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Tripartite Struggle and Cholas","history","CHSL|CGL","Critical","Not started",""],
+["20. Financial Risk Management (Part 1)","finance","RBI GRADE B","Medium","Not started",""],
+["13. Organisational Change","management","RBI GRADE B","Medium","Not started",""],
+["Nutrients","general science","CHSL|CGL","Critical","Not started",""],
+["Equivalent Ranks in Armed Forces","defence","CHSL|CGL","Critical","Not started",""],
+["Sustainable Development and Environmental Issues","economical issues","RBI GRADE B","Medium","Not started",""],
+["Glossary","environment","CHSL|CGL","Critical","Not started",""],
+["2. Motivation (Part 2)","management","RBI GRADE B","Medium","Not started",""],
+["Forest & Wildlife Resources (10)","geography","CHSL|CGL","Critical","Not started",""],
+["Major policies (especially Alauddin Khilji & Muhammad bin Tughlaq)","history","CHSL|CGL","Critical","Not started",""],
+["Buddhist Councils + Jain Councils","history","CHSL|CGL","Critical","Not started",""],
+["Gupta Dynasty","history","CHSL|CGL","Critical","Not started",""],
+["Tax Structure in India (Direct & Indirect Taxes)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Mansabdari & Jagirdari system","history","CHSL|CGL","Critical","Not started",""],
+["Interior of Earth","geography","CHSL|CGL","Critical","Not started",""],
+["Verb","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Emotional Intelligence","reasoning","CGL|CHSL","Critical","Not started",""],
+["Microeconomics and Macroeconomics","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Live Precis Writing","descriptive english","RBI GRADE B","Medium","Not started",""],
+["8. EXTERNAL SECTOR & INVESTMENT","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Books & Authors (freedom struggle related)","history","CHSL|CGL","Critical","Not started",""],
+["Natural Veg & Wildlife (9)","geography","CHSL|CGL","Critical","Not started",""],
+["Law of Demand","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Imp Date and Dates / Important Days","misc GK","CHSL|CGL","Critical","Not started",""],
+["International Economic Issues (Part 1)","economical issues","RBI GRADE B","Medium","Not started",""],
+["4. Leadership (Part 1)","management","RBI GRADE B","Medium","Not started",""],
+["Transformation","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["2. Bonds (Part 2)","finance","RBI GRADE B","Medium","Not started",""],
+["Seismic waves, earthquake and Tsunami","geography","CHSL|CGL","Critical","Not started",""],
+["Algebra","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["Solids and Fluids","general science","CHSL|CGL","Critical","Not started",""],
+["N America","geography","CHSL|CGL","Critical","Not started",""],
+["Independence of India","history","CHSL|CGL","Critical","Not started",""],
+["Calculation, Digital Sum","maths","CGL|RBI GRADE B|CHSL","Critical","Learning","High"],
+["Himalayas","geography","CHSL|CGL","Critical","Not started",""],
+["Corals in India","environment","CHSL|CGL","Critical","Not started",""],
+["Boat and Stream","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["Data Sufficiency","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Important Organisations / Departments of Finance","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Blood Relations - Jumbled Descriptions, Relation Puzzle, Coded Relations","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Non-Finite Verbs","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Parliament","polity","CHSL|CGL","Critical","Not started",""],
+["2. MEDIEVAL HISTORY","history","CHSL|CGL|RBI GRADE B","Critical","Not started",""],
+["Mar 26","CA","CHSL|CGL","Critical","Not started",""],
+["Hormones","general science","CHSL|CGL","Critical","Not started",""],
+["2. CHEMISTRY","general science","CHSL|CGL|RBI GRADE B","Critical","Not started",""],
+["Revolt of 1857","history","CHSL|CGL","Critical","Not started",""],
+["Coding–Decoding - Letter Coding, Direct Letter Coding, Number/Symbol Coding, Matrix Coding, Substitution, Jumbled Coding","reasoning","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Governor-Generals / Viceroys with key reforms & events","history","CHSL|CGL","Critical","Not started",""],
+["State Legislature","polity","CHSL|CGL","Critical","Not started",""],
+["Mauryan administration (important officials)","history","CHSL|CGL","Critical","Not started",""],
+["International Organisations","misc GK","CHSL|CGL","Critical","Not started",""],
+["Banking: Part 1 & Part 2","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Early Modern / Company Rule","history","CHSL|CGL","Critical","Not started",""],
+["8 Core Industries in India","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["9. INDICES, REPORTS, INSTITUTIONS & KEY CONCEPTS","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["INA Trials","history","CHSL|CGL","Critical","Not started",""],
+["3. BIOLOGY","general science","CHSL|CGL|RBI GRADE B","Critical","Not started",""],
+["Early Associations","history","CHSL|CGL","Critical","Not started",""],
+["Food Chain And Food Web","environment","CHSL|CGL","Critical","Not started",""],
+["relief of the ocean floor","geography","CHSL|CGL","Critical","Not started",""],
+["24. Financial Statement – Balance Sheet (Part 1)","finance","RBI GRADE B","Medium","Not started",""],
+["Desert","geography","CHSL|CGL","Critical","Not started",""],
+["National Parks","environment","CHSL|CGL","Critical","Not started",""],
+["Indus Valley Civilization","history","CHSL|CGL","Critical","Not started",""],
+["Hindustani Music","history","CHSL|CGL","Critical","Not started",""],
+["Jan 26","CA","CHSL|CGL","Critical","Learning",""],
+["Time Speed and Distance","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["Live Essay Writing","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Direction Sense Test","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Inequalities ( also in mathematical operations )","reasoning","RBI GRADE B|CGL","Critical","Not started",""],
+["7. General Management (Part 2)","management","RBI GRADE B","Medium","Not started",""],
+["Spotting Errors (Miscellaneous)","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["GST (Goods and Services Tax) – structure, slabs, features","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Feb 26","CA","CHSL|CGL","Critical","Not started",""],
+["Imp Places and Tourist Sites","misc GK","CHSL|CGL","Critical","Not started",""],
+["Census","misc GK","CHSL|CGL","Critical","Not started",""],
+["Mensuration 2D 3D","maths","CHSL|CGL","Critical","Not started","High"],
+["PART D – PRACTICAL GRAMMAR","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Concepts: GDP, GNP, NNP, NNI, GNI, Per Capita Income","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Completion of Incomplete Pattern","reasoning","CGL|CHSL","Critical","Not started",""],
+["Important painting schools","history","CHSL|CGL","Critical","Not started",""],
+["17. NBFCs","finance","RBI GRADE B","Medium","Not started",""],
+["Phrasal Verbs","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Address Matching","reasoning","CGL|CHSL","Critical","Not started",""],
+["Plant Tissue and Animal Tissue","general science","CHSL|CGL","Critical","Not started",""],
+["Key International Institutions related to Economy","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Population (9)","geography","CHSL|CGL","Critical","Not started",""],
+["Question Tags","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Unit II – Sentences, Clauses & Verbs","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Foreign Trade related concepts","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["4. Derivatives (Part 2)","finance","RBI GRADE B","Medium","Not started",""],
+["salinity and the temperature of ocean","geography","CHSL|CGL","Critical","Not started",""],
+["Important Tables and Facts","general science","CHSL|CGL","Critical","Not started",""],
+["List of Scientific Instruments","general science","CHSL|CGL","Critical","Not started",""],
+["LCM HCF","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["Voice","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["All Important Curves in Economics","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["17. Ethics (Part 2)","management","RBI GRADE B","Medium","Not started",""],
+["CPO (Central Police Organisations) – Various CAPF and Other Organisations","defence","CHSL|CGL","Critical","Not started",""],
+["Situation Reaction Test","reasoning","CGL|CHSL","Critical","Not started",""],
+["Major Agricultural Revolutions","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["4. MONEY, BANKING & MONETARY POLICY","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Industrial and Labour Policy + Industrial Development","economical issues","RBI GRADE B","Medium","Not started",""],
+["solar radiation, heat balance, temperature","geography","CHSL|CGL","Critical","Not started",""],
+["straits of the world","geography","CHSL|CGL","Critical","Not started",""],
+["Crematorium of Famous Persons","misc GK","CHSL|CGL","Critical","Not started",""],
+["ECONOMIC ISSUES","economical issues","RBI GRADE B","Medium","Not started",""],
+["Rule Detection","reasoning","CGL|CHSL","Critical","Not started",""],
+["Independent States","history","CHSL|CGL","Critical","Not started",""],
+["air masses and cyclones","geography","CHSL|CGL","Critical","Not started",""],
+["Advent of Europeans","history","CHSL|CGL","Critical","Not started",""],
+["8. Forex Market (Part 2)","finance","RBI GRADE B","Medium","Not started",""],
+["Gandhi-Irwin Pact","history","CHSL|CGL","Critical","Not started",""],
+["Coastal Plain","geography","CHSL|CGL","Critical","Not started",""],
+["Nervous System","general science","CHSL|CGL","Critical","Not started",""],
+["Sentence Improvement","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Clause Analysis","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["9. General Management (Part 4)","management","RBI GRADE B","Medium","Not started",""],
+["Plant and Animal Kingdom / Five Kingdom Classification","general science","CHSL|CGL","Critical","Not started",""],
+["6. Debt Market","finance","RBI GRADE B","Medium","Not started",""],
+["14. Emotional Intelligence & Interpersonal Behaviour","management","RBI GRADE B","Medium","Not started",""],
+["Light / Reflection and Refraction","general science","CHSL|CGL","Critical","Not started",""],
+["Ecological Pyramid and Ecological Succession","environment","CHSL|CGL","Critical","Not started",""],
+["Important sites & findings (Harappa, Mohenjo-daro, Lothal, Dholavira, Kalibangan, etc.)","history","CHSL|CGL","Critical","Not started",""],
+["Revolt & Early Nationalism","history","CHSL|CGL","Critical","Not started",""],
+["Oct 25","CA","CHSL|CGL","Critical","Not started",""],
+["Important saints with their sects/teachings","history","CHSL|CGL","Critical","Not started",""],
+["Poverty Alleviation and Employment Generation in India","economical issues","RBI GRADE B","Medium","Not started",""],
+["Rowlatt Act & Jallianwala Bagh","history","CHSL|CGL","Critical","Not started",""],
+["Vedic Age","history","CHSL|CGL","Critical","Not started",""],
+["One Word Substitutions","english grammar","RBI GRADE B|CHSL|CGL","Critical","Reviewing","High"],
+["Coordinate Geometry","maths","CHSL|CGL","Critical","Not started","High"],
+["Events / Acts / Reforms","history","CHSL|CGL","Critical","Not started",""],
+["Important Acts (Regulating Act to Government of India Act 1935)","history","CHSL|CGL","Critical","Not started",""],
+["Later Mughals","history","CHSL|CGL","Critical","Not started",""],
+["1. ANCIENT HISTORY","history","CHSL|CGL|RBI GRADE B","Critical","Not started",""],
+["Date & City Matching","reasoning","CGL|CHSL","Critical","Not started",""],
+["Indian Agriculture & Services Sector in India","economical issues","RBI GRADE B","Medium","Not started",""],
+["Synthesis","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["8. General Management (Part 3)","management","RBI GRADE B","Medium","Not started",""],
+["Australia and Oceania","geography","CHSL|CGL","Critical","Not started",""],
+["Awards and Honours","misc GK","CHSL|CGL","Critical","Not started",""],
+["Statement–Assumptions","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Percentage","maths","CGL|RBI GRADE B|CHSL","Critical","Practicing","High"],
+["Selecting the Correct Sentences","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["1. PHYSICS","general science","CHSL|CGL|RBI GRADE B","Critical","Not started",""],
+["13. Financial Institutions + Financial Inclusion","finance","RBI GRADE B","Medium","Not started",""],
+["7. PLANNING, INDUSTRY & AGRICULTURE","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Logic - Two-Premise & Three-Premise Arguments","reasoning","CGL|CHSL","Critical","Not started",""],
+["UNESCO Sites in India","history","CHSL|CGL","Critical","Not started",""],
+["Asia","geography","CHSL|CGL","Critical","Not started",""],
+["Climate of india","geography","CHSL|CGL","Critical","Not started",""],
+["Source of Energy","general science","CHSL|CGL","Critical","Not started",""],
+["Apr 26","CA","CHSL|CGL","Critical","Not started",""],
+["3. Communication","management","RBI GRADE B","Medium","Not started",""],
+["Demographic Trends","social issues","RBI GRADE B","Medium","Not started",""],
+["Price Elasticity of Demand & its degrees","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["5. PUBLIC FINANCE – BUDGET & TAXATION","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Logical Venn Diagrams - Type 1, Type 2","reasoning","CHSL|CGL","Critical","Not started",""],
+["Profit and loss, Discount","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["Rocks and minerals","geography","CHSL|CGL","Critical","Not started",""],
+["Physiography of India","geography","CHSL|CGL","Critical","Not started",""],
+["FDI (Foreign Direct Investment)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["5. Equity Market","finance","RBI GRADE B","Medium","Not started",""],
+["Reproduction","general science","CHSL|CGL","Critical","Not started",""],
+["Ecosystem Productivity","environment","CHSL|CGL","Critical","Not started",""],
+["Ecosystem","environment","CHSL|CGL","Critical","Not started",""],
+["Mahajanapadas","history","CHSL|CGL","Critical","Not started",""],
+["Reformers + their organisations (full list)","history","CHSL|CGL","Critical","Not started",""],
+["Water Images - Capital Letters, Small Letters, Numbers","reasoning","CGL|CHSL","Critical","Not started",""],
+["Biosphere Reserves","environment","CHSL|CGL","Critical","Not started",""],
+["INTERNAL SECURITY & POLICE ORGANISATIONS","defence","CHSL|CGL","Critical","Not started",""],
+["Megadiverse Countries","environment","CHSL|CGL","Critical","Not started",""],
+["ART, CULTURE & HERITAGE (Static GK)","misc GK","CHSL|CGL","Critical","Not started",""],
+["Indexing","reasoning","CGL|CHSL","Critical","Not started",""],
+["United Nations (UN)","misc GK","CHSL|CGL","Critical","Not started",""],
+["Logarithm","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["Analogy - Completing the Analogous Pair, Direct Analogy, Choosing Analogous Pair, Double Analogy, Number Analogy, Alphabet Analogy","reasoning","CHSL|CGL","Critical","Not started",""],
+["14. Inflation","finance","RBI GRADE B","Medium","Not started",""],
+["Partition of Bengal","history","CHSL|CGL","Critical","Not started",""],
+["Terms Related to Agriculture","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Gallantry Award","misc GK","CHSL|CGL","Critical","Not started",""],
+["Sectors of Indian Economy (Primary, Secondary, Tertiary, Quaternary, Quinary)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Figure Matrix","reasoning","CGL|CHSL","Critical","Not started",""],
+["Sangam Age","history","CHSL|CGL","Critical","Not started",""],
+["Power indices and Surds","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["Agriculture in India (10)","geography","CHSL|CGL","Critical","Not started",""],
+["Verification of the Truth of the Statement","reasoning","CGL|CHSL","Critical","Not started",""],
+["National Organisations","misc GK","CHSL|CGL","Critical","Not started",""],
+["Himalayas River System","geography","CHSL|CGL","Critical","Not started",""],
+["Growth of Modern Education","history","CHSL|CGL","Critical","Not started",""],
+["Unit I – Tenses, Voice & Modals","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Extremist Leaders","history","CHSL|CGL","Critical","Not started",""],
+["26. Financial Statement – Cash Flow Statement and Ratio Analysis","finance","RBI GRADE B","Medium","Not started",""],
+["Foreign Words and Expressions","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Heredity and Evolution","general science","CHSL|CGL","Critical","Not started",""],
+["August Offer & World War","history","CHSL|CGL","Critical","Not started",""],
+["Noteworthy points","polity","CHSL|CGL","Critical","Not started",""],
+["Rock Edicts","history","CHSL|CGL","Critical","Not started",""],
+["Socio-Religious Reforms / Movements","history","CHSL|CGL","Critical","Not started",""],
+["weather instruments","geography","CHSL|CGL","Critical","Not started",""],
+["Wildlife Diversity In India","environment","CHSL|CGL","Critical","Not started",""],
+["Indian Army","defence","CHSL|CGL","Critical","Not started",""],
+["Kinds of Sentences and Clauses","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Sequence of Sentences","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["6. General Management (Part 1)","management","RBI GRADE B","Medium","Not started",""],
+["cloud and it's classification","geography","CHSL|CGL","Critical","Not started",""],
+["Unemployment and Its Types","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["AWARDS & HONOURS","misc GK","CHSL|CGL","Critical","Not started",""],
+["COMPUTER","misc GK","CHSL|CGL","Critical","Not started",""],
+["Books and Authors","misc GK","CHSL|CGL","Critical","Not started",""],
+["Soil (10&11- ind)","geography","CHSL|CGL","Critical","Not started",""],
+["Mineral & Industries (10) - mineral part","geography","CHSL|CGL","Critical","Not started",""],
+["Punctuation","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Environmental Geography/ Hazards","geography","CHSL|CGL","Critical","Not started",""],
+["Monetary Policy (instruments, RBI tools – Repo, Reverse Repo, CRR, SLR, etc.)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["3. Derivatives (Part 1)","finance","RBI GRADE B","Medium","Not started",""],
+["Important Type of Plants","environment","CHSL|CGL","Critical","Not started",""],
+["Surat Split & Council Act of 1909","history","CHSL|CGL","Critical","Not started",""],
+["Mission System In India","defence","CHSL|CGL","Critical","Not started",""],
+["Africa","geography","CHSL|CGL","Critical","Not started",""],
+["Home Rule League","history","CHSL|CGL","Critical","Not started",""],
+["Moderate Leaders & Theories","history","CHSL|CGL","Critical","Not started",""],
+["Indian Revolutionary Organisations + founders","history","CHSL|CGL","Critical","Not started",""],
+["Post-Maurya Dynasties","history","CHSL|CGL","Critical","Not started",""],
+["PLACES, DATES, CENSUS & SUPERLATIVES","misc GK","CHSL|CGL","Critical","Not started",""],
+["Work – Power – Energy / Gravitation and Work Done","general science","CHSL|CGL","Critical","Not started",""],
+["5. MISCELLANEOUS / QUICK REVISION LISTS","history","CHSL|CGL|RBI GRADE B","Critical","Not started",""],
+["Superlatives in India","misc GK","CHSL|CGL","Critical","Not started",""],
+["Indices, Reports, International Institutions & Key Economic Concepts","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Heat and Thermodynamics","general science","CHSL|CGL","Critical","Not started",""],
+["India's Civilian Awards","misc GK","CHSL|CGL","Critical","Not started",""],
+["Prominent Leaders of Freedom Struggle","history","CHSL|CGL","Critical","Not started",""],
+["Determinants / Factors affecting Demand","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["18. Corporate Governance in Banking Sector","finance","RBI GRADE B","Medium","Not started",""],
+["Constitutional and Non Constitutional Bodies","polity","CHSL|CGL","Critical","Not started",""],
+["Descriptive Writing – Management (Part 1)","descriptive english","RBI GRADE B","Medium","Not started",""],
+["7. Forex Market (Part 1)","finance","RBI GRADE B","Medium","Not started",""],
+["15. Corporate Governance","management","RBI GRADE B","Medium","Not started",""],
+["Types of Goods (Normal, Inferior, Substitute, Complementary, Giffen, Veblen)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Facts about India","geography","CHSL|CGL","Critical","Not started",""],
+["Dec 25","CA","CHSL|CGL","Critical","Not started",""],
+["11. Personality and Perception","management","RBI GRADE B","Medium","Not started",""],
+["Number, Ranking and Time Sequence Test - Number Test, Ranking Test, Time Sequence Test","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Magnetic Effects of Electric Current","general science","CHSL|CGL","Critical","Not started",""],
+["NITI Aayog","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Important Acts","polity","CHSL|CGL","Critical","Not started",""],
+["Basics of Environmental Sciences","environment","CHSL|CGL","Critical","Not started",""],
+["Geomorphic Process","geography","CHSL|CGL","Critical","Not started",""],
+["Vijayanagara and Bahmani Kingdom","history","CHSL|CGL","Critical","Not started",""],
+["climate of india (9,11-ind)","geography","CHSL|CGL","Critical","Not started",""],
+["Jul 26","CA","CHSL|CGL","Critical","Not started",""],
+["National Insignia","misc GK","CHSL|CGL","Critical","Not started",""],
+["Bhakti and Sufi Movements","history","CHSL|CGL","Critical","Not started",""],
+["Factors of Production (Land, Labour, Capital, Entrepreneur)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Alpha-Numeric Sequence Puzzle","reasoning","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Economic History of India (Part 1)","economical issues","RBI GRADE B","Medium","Not started",""],
+["Probability","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["Adjective","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Construction of Squares and Triangles","reasoning","CGL|CHSL","Critical","Not started",""],
+["Unit III – Articles, Noun & Pronoun","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Assertion and Reason","reasoning","CGL|CHSL","Critical","Not started",""],
+["Mixture and Allegation","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["2. MICROECONOMICS","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Monetary Policy Since Reforms of 1991 (Part 2)","economical issues","RBI GRADE B","Medium","Not started",""],
+["6. INFLATION, UNEMPLOYMENT & POVERTY","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["world climate and climate change","geography","CHSL|CGL","Critical","Not started",""],
+["Trigonometry","maths","CGL|CHSL","Critical","Not started","High"],
+["Local Government","polity","CHSL|CGL","Critical","Not started",""],
+["World Heritage Sites","environment","CHSL|CGL","Critical","Not started",""],
+["Diseases","general science","CHSL|CGL","Critical","Not started",""],
+["Descriptive Writing – ESI (Part 2)","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Biodiversity","environment","CHSL|CGL","Critical","Not started",""],
+["May 26","CA","CHSL|CGL","Critical","Not started",""],
+["Current Status of Indian Economy (GDP ranking, PPP)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Part 1 and Part 2","polity","CHSL|CGL","Critical","Not started",""],
+["Series (Non-Verbal) - Five Figure Series, Three/Four Figure Series, Missing Figure, Detecting Wrong Figure","reasoning","CGL|CHSL","Critical","Not started",""],
+["Important Terms Related to Banking","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Average","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["Descriptive Writing – Finance (Part 2)","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Paronyms and Homonyms","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["DPSP and Fundamental Duties","polity","CHSL|CGL","Critical","Not started",""],
+["Periodic Classification of Elements / Periodic Table","general science","CHSL|CGL","Critical","Not started",""],
+["Budget and Taxation (overall)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Indian Philosophy","history","CHSL|CGL","Critical","Not started",""],
+["Urbanisation and Migration","social issues","RBI GRADE B","Medium","Not started",""],
+["President and Vice President","polity","CHSL|CGL","Critical","Not started",""],
+["Mineral & Industries (10) - Industries part","geography","CHSL|CGL","Critical","Not started",""],
+["Motion","general science","CHSL|CGL","Critical","Not started",""],
+["Forms of Market (Perfect Competition, Monopoly, Oligopoly, Monopolistic Competition)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Orientation to Social Issues + Multiculturalism","social issues","RBI GRADE B","Medium","Not started",""],
+["BOOKS, SPORTS & ORGANISATIONS","misc GK","CHSL|CGL","Critical","Not started",""],
+["Music and Paintings","misc GK","CHSL|CGL","Critical","Not started",""],
+["Centre State Relation","polity","CHSL|CGL","Critical","Not started",""],
+["International Economic Issues (Part 2) + Political Economy","economical issues","RBI GRADE B","Medium","Not started",""],
+["Regional Economic Cooperation","economical issues","RBI GRADE B","Medium","Not started",""],
+["Atoms and Molecule / Atom and Its Structure","general science","CHSL|CGL","Critical","Not started",""],
+["corals","geography","CHSL|CGL","Critical","Not started",""],
+["Mughal architecture (who built what)","history","CHSL|CGL","Critical","Not started",""],
+["tides","geography","CHSL|CGL","Critical","Not started",""],
+["International Economic Institutions","economical issues","RBI GRADE B","Medium","Not started",""],
+["Mathematical Operations - Substitution, Interchange of Signs/Numbers, Deriving Conclusions","reasoning","CHSL|CGL","Critical","Not started",""],
+["18. Ethics (Part 3)","management","RBI GRADE B","Medium","Not started",""],
+["Paintings","history","CHSL|CGL","Critical","Not started",""],
+["Inflation and Its Types and Other Details","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Money and Banking (functions, types of money)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["ocean currents","geography","CHSL|CGL","Critical","Not started",""],
+["19. Role of IT in Banking and Financial System + Digital Payment System","finance","RBI GRADE B","Medium","Not started",""],
+["Demand","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Words with Meanings","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Pipe and cisten","maths","CGL|CHSL|RBI GRADE B","Critical","Not started","High"],
+["Change in Quantity Demanded vs Change in Demand","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Balance of Payment","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["25. Financial Statement – Balance Sheet (Part 2)","finance","RBI GRADE B","Medium","Not started",""],
+["Trophic Dynamics and Energy Transfer","environment","CHSL|CGL","Critical","Not started",""],
+["4. ART & CULTURE","history","CHSL|CGL|RBI GRADE B","Critical","Not started",""],
+["The Mughal Empire","history","CHSL|CGL","Critical","Not started",""],
+["Spotting Out the Embedded Figure Type 1, Type 2","reasoning","CGL|CHSL","Critical","Not started",""],
+["Earth and the universe","geography","CHSL|CGL","Critical","Not started",""],
+["Temple Architecture","history","CHSL|CGL","Critical","Not started",""],
+["Other Modern Topics","history","CHSL|CGL","Critical","Not started",""],
+["Oceanography","geography","CHSL|CGL","Critical","Not started",""],
+["Paper Folding","reasoning","CGL|CHSL","Critical","Not started",""],
+["Gravitation","general science","CHSL|CGL","Critical","Not started",""],
+["Styles (Nagara, Dravida, Vesara) with examples","history","CHSL|CGL","Critical","Not started",""],
+["Metal and Non Metal / Metals and Non-Metals","general science","CHSL|CGL","Critical","Not started",""],
+["Demand, Demand Schedule, Demand Curve","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Social Intelligence","reasoning","CGL|CHSL","Critical","Not started",""],
+["Gandhian Era & Mass Movements","history","CHSL|CGL","Critical","Not started",""],
+["Carbon and Its Compounds","general science","CHSL|CGL","Critical","Not started",""],
+["Revolutionary Cases and Events","history","CHSL|CGL","Critical","Not started",""],
+["Sports","misc GK","CHSL|CGL","Critical","Not started",""],
+["1. Orientation + Motivation (Part 1)","management","RBI GRADE B","Medium","Not started",""],
+["types of rainfall","geography","CHSL|CGL","Critical","Not started",""],
+["Unit IV – Adjective, Adverb & Prepositions","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Economic History of India (Part 2)","economical issues","RBI GRADE B","Medium","Not started",""],
+["Opening Up of the Indian Economy + Balance of Payments","economical issues","RBI GRADE B","Medium","Not started",""],
+["Early Vedic vs Later Vedic differences","history","CHSL|CGL","Critical","Not started",""],
+["Unit and Measurement","general science","CHSL|CGL","Critical","Not started",""],
+["Emergency & Constitutional Amendments","polity","CHSL|CGL","Critical","Not started",""],
+["Sculptures","history","CHSL|CGL","Critical","Not started",""],
+["Simplification","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["12. RBI and its Functions","finance","RBI GRADE B","Medium","Not started",""],
+["Spelling Rules","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Land Revenue System","history","CHSL|CGL","Critical","Not started",""],
+["Pronoun","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Lower Caste Movements","history","CHSL|CGL","Critical","Not started",""],
+["The Peninsula Plateau","geography","CHSL|CGL","Critical","Not started",""],
+["Human Eye and Colourful World / Human Eye and Vision","general science","CHSL|CGL","Critical","Not started",""],
+["Time and Work","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["15. Global Financial Markets and International Banking","finance","RBI GRADE B","Medium","Not started",""],
+["1. Orientation + Time Value of Money + Bonds","finance","RBI GRADE B","Medium","Not started",""],
+["Art of Essay Writing","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Partnership & Ages","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["Descriptive Writing – ESI (Part 1)","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Mirror Images - Capital Letters, Small Letters, Numbers, Clocks","reasoning","CGL|CHSL","Critical","Not started",""],
+["Laws of Motion / Force and Laws of Motion","general science","CHSL|CGL","Critical","Not started",""],
+["Human/Economic geography","geography","CHSL|CGL","Critical","Not started",""],
+["Fundamental Rights","polity","CHSL|CGL","Critical","Not started",""],
+["16. Public Private Partnership","finance","RBI GRADE B","Medium","Not started",""],
+["Elements, Mixture and Compound","general science","CHSL|CGL","Critical","Not started",""],
+["Art of Precis Writing","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Important rulers, literature, science & technology","history","CHSL|CGL","Critical","Not started",""],
+["Haze, mist and fog","geography","CHSL|CGL","Critical","Not started",""],
+["Articles","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Ashoka's Major Rock Edicts & Pillar Edicts","history","CHSL|CGL","Critical","Not started",""],
+["OPERATIONS & EQUIPMENT","defence","CHSL|CGL","Critical","Not started",""],
+["MHA and Its Counterparts","defence","CHSL|CGL","Critical","Not started",""],
+["PART C – COMPREHENSION & ARRANGEMENT","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Classical Dance","misc GK","CHSL|CGL","Critical","Not started",""],
+["Supreme Court and HIgh Court","polity","CHSL|CGL","Critical","Not started",""],
+["DESCRIPTIVE ENGLISH/WRITING","descriptive english","RBI GRADE B","Medium","Not started",""],
+["21. Financial Risk Management (Part 2)","finance","RBI GRADE B","Medium","Not started",""],
+["Important Congress Sessions (year + President + major decision)","history","CHSL|CGL","Critical","Not started",""],
+["3. MODERN HISTORY","history","CHSL|CGL|RBI GRADE B","Critical","Not started",""],
+["Important Economic Indices (HDI, CPI, WPI, IIP, etc.)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["SOCIAL ISSUES","social issues","RBI GRADE B","Medium","Not started",""],
+["Biogeography (Vegetation, Wildlife & Biodiversity)","geography","CHSL|CGL","Critical","Not started",""],
+["Deriving Conclusions from Passages","reasoning","CGL|CHSL","Critical","Not started",""],
+["Delhi Sultanate","history","CHSL|CGL","Critical","Not started",""],
+["Art and Culture (general)","history","CHSL|CGL","Critical","Not started",""],
+["Idioms and Phrases","english grammar","RBI GRADE B|CHSL|CGL","Critical","Learning","High"],
+["Circulatory System and Excretory System","general science","CHSL|CGL","Critical","Not started",""],
+["premble","polity","CHSL|CGL","Critical","Not started",""],
+["Important Conventions and Protocols","environment","CHSL|CGL","Critical","Not started",""],
+["10. Fundamentals of Organisational Behaviour","management","RBI GRADE B","Medium","Not started",""],
+["Folk Dances of India","misc GK","CHSL|CGL","Critical","Not started",""],
+["Poverty and Balance of Payment","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Union Budget and Its Facts","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Puzzle Test - Seating Arrangement, Family Puzzle, Sequential Order, Selection Based","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["5. Leadership (Part 2)","management","RBI GRADE B","Medium","Not started",""],
+["Prepositions","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Classification - Odd Word, Odd Pair of Words, Odd Numeral, Odd Numeral Pair, Odd Letter Group","reasoning","CHSL|CGL","Critical","Not started",""],
+["Analogy (Non-Verbal) - Choosing Related Pair, Set of Similarly Related Figures, Odd Relationship","reasoning","CGL|CHSL","Critical","Not started",""],
+["Environmental Chemistry","general science","CHSL|CGL","Critical","Not started",""],
+["Paper Cutting","reasoning","CGL|CHSL","Critical","Not started",""],
+["Volcanoes and It's landform","geography","CHSL|CGL","Critical","Not started",""],
+["Train","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["Orientation","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Height and Distance","maths","CHSL|CGL","Critical","Not started","High"],
+["PART B – VERBAL ABILITY (Vocabulary)","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Electricity","general science","CHSL|CGL","Critical","Not started",""],
+["Stone Age","history","CHSL|CGL","Critical","Not started",""],
+["India's Defence Setup – Ministry of Defence","defence","CHSL|CGL","Critical","Not started",""],
+["All Important Battles in History","history","CHSL|CGL","Critical","Not started",""],
+["Dot Situation","reasoning","CGL|CHSL","Critical","Not started",""],
+["Classical Dances + state of origin","history","CHSL|CGL","Critical","Not started",""],
+["Imp Data of Ministry","misc GK","CHSL|CGL","Critical","Not started",""],
+["Art of Reading Comprehension","descriptive english","RBI GRADE B","Medium","Not started",""],
+["12. Organisational Conflict","management","RBI GRADE B","Medium","Not started",""],
+["Peasant Movements + leaders","history","CHSL|CGL","Critical","Not started",""],
+["Acid Base and Salt / Acids, Base and Salt","general science","CHSL|CGL","Critical","Not started",""],
+["Indian National Congress","history","CHSL|CGL","Critical","Not started",""],
+["Various Landforms","geography","CHSL|CGL","Critical","Not started",""],
+["Contractions","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Cross Elasticity of Demand","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Measures of Poverty & Unemployment","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Methods of measuring National Income","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Statement–Arguments","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Ramsar Sites","environment","CHSL|CGL","Critical","Not started",""],
+["SI CI","maths","CGL|RBI GRADE B|CHSL","Critical","Learning","High"],
+["Biogeochemical Cycles","environment","CHSL|CGL","Critical","Not started",""],
+["Noun","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["World Geography","geography","CHSL|CGL","Critical","Not started",""],
+["Fiscal Policy Since Reforms of 1991","economical issues","RBI GRADE B","Medium","Not started",""],
+["Making of the Constitution","polity","CHSL|CGL","Critical","Not started",""],
+["Wildlife Protection Act 1972","environment","CHSL|CGL","Critical","Not started",""],
+["Geometry","maths","CGL|CHSL","Critical","Not started","High"],
+["CDS J","CA","CHSL|CGL","Critical","Not started",""],
+["New Criminal Laws 2023","polity","CHSL|CGL","Critical","Not started",""],
+["INTERNATIONAL & HERITAGE","environment","CHSL|CGL","Critical","Not started",""],
+["3. NATIONAL INCOME","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Adverb","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Production Possibility Curve (PPC)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["GDP Deflator","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Live Reading Comprehension","descriptive english","RBI GRADE B","Medium","Not started",""],
+["Measurement of Growth (Part 2)","economical issues","RBI GRADE B","Medium","Not started",""],
+["Data Interpretation and Statistics - Caselet DI, Data Sufficiency, Quantity Comparison/ Quadratic Comparison, Missing DI/New Pattern","maths","RBI GRADE B","Medium","Not started","High"],
+["BASIC CONCEPTS & ECOLOGY","environment","CHSL|CGL","Critical","Not started",""],
+["Statement–Courses of Action","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Types of Demand (Cross, Income, Direct, Derived, Joint, Composite)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["PM and COM","polity","CHSL|CGL","Critical","Not started",""],
+["Liner and Circular Race","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["Matter in Our Surrounding / Matter and Its Structure","general science","CHSL|CGL","Critical","Not started",""],
+["Social Justice","social issues","RBI GRADE B","Medium","Not started",""],
+["Arithmetical Reasoning - Calculation-Based Problems, Data-Based Questions, Problems on Ages, Venn-Based Questions","reasoning","CHSL|CGL","Critical","Not started",""],
+["evaporation, condensation, precipitation","geography","CHSL|CGL","Critical","Not started",""],
+["Maurya Dynasty","history","CHSL|CGL","Critical","Not started",""],
+["Major Tribal Movements + leaders","history","CHSL|CGL","Critical","Not started",""],
+["humidity","geography","CHSL|CGL","Critical","Not started",""],
+["Wind (Primary, Secondary and tertiary)","geography","CHSL|CGL","Critical","Not started",""],
+["Maharatna and Navratna Companies","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Grouping of Identical Figures","reasoning","CGL|CHSL","Critical","Not started",""],
+["WILDLIFE & CONSERVATION IN INDIA","environment","CHSL|CGL","Critical","Not started",""],
+["Distribution of ocean and continent","geography","CHSL|CGL","Critical","Not started",""],
+["Means of Transport (10)","geography","CHSL|CGL","Critical","Not started",""],
+["22. Introduction to Basics of Accounting","finance","RBI GRADE B","Medium","Not started",""],
+["Modals","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["11. Banking System (Part 2)","finance","RBI GRADE B","Medium","Not started",""],
+["Real vs Nominal GDP","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Statement–Conclusions","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Committees on Various Sectors of Indian Economy","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["19. Ethics (Part 4)","management","RBI GRADE B","Medium","Not started",""],
+["Statistics - table DI, Bar/line/pie graph","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["PART A – FOUNDATION MODULE (Grammar)","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["9. Alternative Sources of Finance","finance","RBI GRADE B","Medium","Not started",""],
+["Jun 26","CA","CHSL|CGL","Critical","Not started",""],
+["Nov 25","CA","CHSL|CGL","Critical","Not started",""],
+["Major Animal Conservation Projects","environment","CHSL|CGL","Critical","Not started",""],
+["AGRICULTURE RELATED","environment","CHSL|CGL","Critical","Not started",""],
+["National Income = C + I + G + (X – M)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Literature / Books / Authors","history","CHSL|CGL","Critical","Not started",""],
+["DEFENCE SETUP & ORGANISATION","defence","CHSL|CGL","Critical","Not started",""],
+["Cubes and Dice - Counting Cubes, Painting/Colouring, Dice Problems","reasoning","CGL|CHSL","Critical","Not started",""],
+["Resources","geography","CHSL|CGL","Critical","Not started",""],
+["Ratio and Proportion","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["Non-Cooperation / CDM & Simon Commission","history","CHSL|CGL","Critical","Not started",""],
+["Alphabet Test - Alphabetical Order of Words, Letter-Word Problems, Rule Detection, Word Formation","reasoning","CHSL|CGL","Critical","Not started",""],
+["Terms Related to Agriculture","environment","CHSL|CGL","Critical","Not started",""],
+["Orientation + Measurement of Growth (Part 1)","economical issues","RBI GRADE B","Medium","Not started",""],
+["Classification of Centre Codes / Roll Numbers","reasoning","CGL|CHSL","Critical","Not started",""],
+["Permutation and Combination","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["Salient fetures","polity","CHSL|CGL","Critical","Not started",""],
+["International Conventions / Environmental Conventions","environment","CHSL|CGL","Critical","Not started",""],
+["Quit India Movement","history","CHSL|CGL","Critical","Not started",""],
+["Number System + Sequence and Series","maths","CGL|RBI GRADE B|CHSL","Critical","Not started","High"],
+["Europe","geography","CHSL|CGL","Critical","Not started",""],
+["Marathas","history","CHSL|CGL","Critical","Not started",""],
+["Jainism and Buddhism","history","CHSL|CGL","Critical","Not started",""],
+["Atmosphere and it's composition","geography","CHSL|CGL","Critical","Not started",""],
+["Festivals of India","misc GK","CHSL|CGL","Critical","Not started",""],
+["Figure Formation and Analysis","reasoning","CGL|CHSL","Critical","Not started",""],
+["16. Ethics (Part 1)","management","RBI GRADE B","Medium","Not started",""],
+["10. Banking System (Part 1)","finance","RBI GRADE B","Medium","Not started",""],
+["Analytical Reasoning (Non-Verbal)","reasoning","RBI GRADE B|CGL","Critical","Not started",""],
+["Objective Comprehension","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Northern Plains","geography","CHSL|CGL","Critical","Not started",""],
+["Rulers in chronological order","history","CHSL|CGL","Critical","Not started",""],
+["Monetary Policy Since Reforms of 1991 (Part 1)","economical issues","RBI GRADE B","Medium","Not started",""],
+["Andaman and Lakshadweep","geography","CHSL|CGL","Critical","Not started",""],
+["Chemical Reaction and Equation / Chemical Reactions","general science","CHSL|CGL","Critical","Not started",""],
+["Sources of the Indian Constitution","polity","CHSL|CGL","Critical","Not started",""],
+["Digestion and Respiration","general science","CHSL|CGL","Critical","Not started",""],
+["Types of Economy (Open, Closed, Mixed, Capitalist, Socialist)","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Classification (Non-Verbal) - Odd Figure, Similar Figure, Same Characteristics","reasoning","CGL|CHSL","Critical","Not started",""],
+["machine input output","reasoning","RBI GRADE B|CGL","Critical","Not started",""],
+["Climatology","geography","CHSL|CGL","Critical","Not started",""],
+["Indian Air Force","defence","CHSL|CGL","Critical","Not started",""],
+["The Function of Tenses","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Indian Navy","defence","CHSL|CGL","Critical","Not started",""],
+["The Sentence Completion","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Other Micro Topics","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Descriptive Writing – Management (Part 2)","descriptive english","RBI GRADE B","Medium","Not started",""],
+["South America","geography","CHSL|CGL","Critical","Not started",""],
+["Series Completion - Number Series, Alphabet Series, Alpha-Numeric Series, Continuous Pattern Series","reasoning","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Unit VI – Error Detection & Improvement","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Cause and Effect Reasoning","reasoning","RBI GRADE B|CGL|CHSL","Critical","Not started",""],
+["Newspapers & founders","history","CHSL|CGL","Critical","Not started",""],
+["5 Year Plans / Five Year Plan and Industrial Policy","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Military Equipments","defence","CHSL|CGL","Critical","Not started",""],
+["Cell","general science","CHSL|CGL","Critical","Not started",""],
+["Export-Import Policy","economical issues","RBI GRADE B","Medium","Not started",""],
+["Unit V – Phrasal Verbs & Idioms","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Logical Sequence of Words","reasoning","CHSL|CGL","Critical","Not started",""],
+["Theme Detection","reasoning","CGL|CHSL","Critical","Not started",""],
+["Computer (Generations, Characteristics, Applications, Basics)","misc GK","CHSL|CGL","Critical","Not started",""],
+["Peninsular river system","geography","CHSL|CGL","Critical","Not started",""],
+["23. Financial Statement – Income Statement","finance","RBI GRADE B","Medium","Not started",""],
+["Gender Issues","social issues","RBI GRADE B","Medium","Not started",""],
+["Natural hazards and disaster (11)","geography","CHSL|CGL","Critical","Not started",""],
+["1. BASICS OF ECONOMY","economics","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Cloze Test","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Important Military Operations","defence","CHSL|CGL","Critical","Not started",""],
+["Mangroves in India","environment","CHSL|CGL","Critical","Not started",""],
+["Narration (Direct-Indirect Speech)","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["Geomorphology","geography","CHSL|CGL","Critical","Not started",""],
+["Oscillation, Sound and Waves / Sound","general science","CHSL|CGL","Critical","Not started",""],
+["REASONING","reasoning","","","Not started",""],
+["ENGLISH","english grammar","RBI GRADE B|CHSL|CGL","Critical","Not started",""],
+["MANAGEMENT","management","","","Not started",""],
+["FINANCE","finance","RBI GRADE B","Medium","Not started",""],
+["POLITY","polity","RBI GRADE B|CHSL|CGL","","Not started",""],
+["Maths","maths","RBI GRADE B|CHSL|CGL","Critical","Not started","High"],
+["GEOGRAPHY","geography","RBI GRADE B|CHSL|CGL","","Not started",""]
+];
+
+const SEED_SESSIONS=[
+{id:"s1",name:"Bhutesh sir - FRB Percentage",topicId:"t150",stage:"Revise: Day 1",logDate:"2026-09-04",lastReviewed:"2026-09-13"},
+{id:"s2",name:"digital sum yt video",topicId:"t39",stage:"1st Time Study",logDate:"2026-08-30",lastReviewed:"2026-08-30"},
+{id:"s3",name:"edutap - english lecture",topicId:null,stage:"1st Time Study",logDate:null,lastReviewed:null},
+{id:"s4",name:"Bhutesh Sir - SI",topicId:"t427",stage:"1st Time Study",logDate:null,lastReviewed:null}
+];
+const SEED_ERRORS=[
+{id:"e1",title:"percentage doubt one",source:"Mock Test",type:"time trap",topicId:"t150",link:"",date:"2026-09-10"},
+{id:"e2",title:"percentage doubt two",source:"Sectional Mock",type:"concept missed",topicId:"t150",link:"",date:"2026-09-11"}
+];
+const SEED_MOCKS=[
+{id:"m1",title:"cgl pyq 2024",date:"2026-08-29",type:"SBI SEC",raw:160,percentile:70,accuracy:80,weak:["t492"]},
+{id:"m2",title:"cgl pyq 2023",date:"2026-08-28",type:"SSC",raw:140,percentile:70,accuracy:75,weak:["t150"]}
+];
+const SEED_TASKS=[
+{id:"k1",title:"PLAN TB FOR YOUR DAY",status:"Next Up",priority:"High 🔥",due:"",tbS:"05:30",tbE:"06:00",progress:""},
+{id:"k2",title:"MORNING JOURNAL",status:"Next Up",priority:"Medium",due:"",tbS:"06:00",tbE:"06:30",progress:""},
+{id:"k3",title:"NEWSPAPER ONE HOUR",status:"Next Up",priority:"High 🔥",due:"",tbS:"07:45",tbE:"08:15",progress:""},
+{id:"k4",title:"CURRENT AFFAIRS ONE HOUR",status:"Next Up",priority:"High 🔥",due:"",tbS:"16:30",tbE:"17:30",progress:""},
+{id:"k5",title:"REVISION",status:"Next Up",priority:"High 🔥",due:"",tbS:"13:15",tbE:"14:15",progress:""},
+{id:"k6",title:"COACHING",status:"Next Up",priority:"High 🔥",due:"",tbS:"08:00",tbE:"13:00",progress:""},
+{id:"k7",title:"CHDMNDR INT / PRACTICE MOCK Qs",status:"Next Up",priority:"Medium",due:"",tbS:"",tbE:"",progress:""},
+{id:"k8",title:"p2 prac (5am–8am)",status:"Next Up",priority:"High 🔥",due:"",tbS:"05:00",tbE:"08:00",progress:""},
+{id:"k9",title:"GEO+POL (3–6pm)",status:"Next Up",priority:"High 🔥",due:"",tbS:"15:00",tbE:"18:00",progress:""},
+{id:"k10",title:"ECO+SCI (6–9pm)",status:"Next Up",priority:"High 🔥",due:"",tbS:"18:00",tbE:"21:00",progress:""},
+{id:"k11",title:"CA+ENG (9–midnight)",status:"Next Up",priority:"High 🔥",due:"",tbS:"21:00",tbE:"23:59",progress:""},
+{id:"k12",title:"STRETCHING",status:"Next Up",priority:"High 🔥",due:"",tbS:"06:30",tbE:"06:45",progress:""},
+{id:"k13",title:"Revise Bhutesh sir questions + PYQs + other notes",status:"Next Up",priority:"High 🔥",due:"",tbS:"",tbE:"",progress:""},
+{id:"k14",title:"%age PYQ practice from Kiran",status:"Next Up",priority:"High 🔥",due:"",tbS:"",tbE:"",progress:""},
+{id:"k15",title:"Finance lectures",status:"Next Up",priority:"Medium",due:"",tbS:"",tbE:"",progress:""},
+{id:"k16",title:"Direction sense — EduTap",status:"Next Up",priority:"Medium",due:"",tbS:"",tbE:"",progress:""},
+{id:"k17",title:"January CA",status:"Next Up",priority:"Medium",due:"",tbS:"",tbE:"",progress:""}
+];
+const SEED_LINKS=[
+{id:"l1",label:"RBI P1 — Live Classes",url:"https://www.edutap.co.in/"},
+{id:"l2",label:"RBI P2 — Live Classes",url:"https://www.edutap.co.in/"},
+{id:"l3",label:"EduTap Telegram",url:"https://t.me/edutap"},
+{id:"l4",label:"SSC CGL Discord",url:"https://discord.com/"}
+];
+</script>
+
+<script>
+/* ==================== ERRORS ==================== */
+function fatal(msg){var b=document.getElementById("errbar");if(!b)return;b.style.display="block";b.textContent="⚠️ "+(b.textContent?b.textContent+"\n":"")+msg;}
+window.addEventListener("error",e=>fatal((e.message||"Script error")+(e.lineno?"  (line "+e.lineno+")":"")));
+window.addEventListener("unhandledrejection",e=>fatal("Promise: "+((e.reason&&e.reason.message)||e.reason)));
+
+/* ==================== CORE ==================== */
+const KEY="sos-exam-os-v3";
+const FBCFG_KEY="exam-os-fbcfg-v1";
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+let _uid=0; const uid=p=>p+Date.now().toString(36)+(_uid++).toString(36);
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayISO=()=>iso(new Date());
+const parseD=s=>{if(!s)return null;const p=s.split("-").map(Number);return new Date(p[0],p[1]-1,p[2]);};
+const addDays=(s,n)=>{const d=parseD(s)||new Date();d.setDate(d.getDate()+n);return iso(d);};
+const diffD=(a,b)=>Math.round((parseD(a)-parseD(b))/86400000);
+const fmtD=s=>s?parseD(s).toLocaleDateString("en-IN",{day:"numeric",month:"short"}):"—";
+const fmtDY=s=>s?parseD(s).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"—";
+const relD=s=>{const d=diffD(s,todayISO());if(d===0)return"Today";if(d===1)return"Tomorrow";if(d===-1)return"Yesterday";return d<0?Math.abs(d)+"d overdue":"in "+d+"d";};
+const STAGES=["1st Time Study","Revise: Day 1","Revise: Day 3","Revise: Day 7","Revise: Day 14","Revise: Day 30","Mastered"];
+const INTERVALS=[1,3,7,14,30,60];
+const STAGE_COLOR={"1st Time Study":"var(--purple)","Revise: Day 1":"var(--pink)","Revise: Day 3":"var(--orange)","Revise: Day 7":"var(--yellow)","Revise: Day 14":"#9a9a97","Revise: Day 30":"var(--blue)","Mastered":"var(--green)"};
+const STATUSES=["Not started","Learning","Practicing","Reviewing","Mastered"];
+const STATUS_PCT={"Not started":0,"Learning":25,"Practicing":50,"Reviewing":75,"Mastered":100};
+const STATUS_COLOR={"Not started":"var(--red)","Learning":"var(--yellow)","Practicing":"var(--blue)","Reviewing":"var(--purple)","Mastered":"var(--green)"};
+const SYL_PRI=["Critical","High","Medium","Low"];
+const WEIGHTS=["High","Medium","Low"];
+const EXAMS=["CGL","CHSL","RBI GRADE B"];
+const SUBJ_ORDER=["maths","reasoning","english grammar","descriptive english","general science","geography","history","polity","economics","economical issues","finance","management","social issues","environment","CA","misc GK","defence"];
+const SUBJ_COLOR={maths:"#72BC8F",reasoning:"#EAC26B","english grammar":"#5E9FE8","descriptive english":"#DF84A8",geography:"#DE9255",history:"#D4A574",polity:"#E97366",economics:"#BF8EDA","economical issues":"#A876D8",finance:"#4FB9C9",management:"#8FA8E8","general science":"#6BB5D8",environment:"#3FA7A3",CA:"#E891B0","misc GK":"#9a9a97",defence:"#8A9A5B","social issues":"#C77FA1"};
+const ERR_TYPES=["concept missed","forgot formula","calculation slip","time trap"];
+const ERR_COLOR={"concept missed":"var(--purple)","forgot formula":"var(--blue)","calculation slip":"var(--yellow)","time trap":"var(--pink)"};
+const ERR_SOURCES=["Mock Test","Sectional Mock","PYQ","Discord doubt"];
+const MOCK_TYPES=["CGL FULL","CGL SEC","CHSL FULL","CHSL SEC","RBI FULL","RBI SEC","SBI FULL","SBI SEC","SSC","Banking","IB ACIO"];
+const TASK_PRI=["High 🔥","Medium","Low"];
+const TASK_STATUS=["Next Up","In Progress","Completed"];
+const RES_SOURCES=["Takshila","Unacademy","IBT","Study Funda","Soldier Unplugged","EduTap","Other"];
+const RES_TYPES=["Notes","PDF","Video","Test Series","Book","Article"];
+const HABITS=[{g:"CRACK THE EXAM",items:["4 hrs done","8 hrs done","12 hrs done"]},{g:"WORKOUT",items:["Run","Stretching"]},{g:"INTROSPECTION",items:["Journal introspect read"]}];
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const priRank=t=>{const i=SYL_PRI.indexOf(t.priority);return i<0?9:i;};
+
+function seedState(){
+  return {
+    syllabus:SYL_RAW.map((r,i)=>({id:"t"+i,topic:r[0],subject:r[1],exams:r[2]?r[2].split("|"):[],priority:r[3]||"",status:r[4]||"Not started",weightage:r[5]||"",remarks:""})),
+    sessions:JSON.parse(JSON.stringify(SEED_SESSIONS)),
+    errors:JSON.parse(JSON.stringify(SEED_ERRORS)),
+    mocks:JSON.parse(JSON.stringify(SEED_MOCKS)),
+    tasks:JSON.parse(JSON.stringify(SEED_TASKS)),
+    links:JSON.parse(JSON.stringify(SEED_LINKS)),
+    resources:[],
+    focusLog:[],
+    habits:{},
+    settings:{userName:"",notifEnabled:false,notifTime:"08:00",lastNotif:""},
+    sync:{enabled:false,room:""}
+  };
+}
+const store={
+  get(k){try{return localStorage.getItem(k);}catch(e){return null;}},
+  set(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}
+};
+let FBCFG;
+try{FBCFG=JSON.parse(store.get(FBCFG_KEY)||"{}")||{};}catch(e){FBCFG={};}
+function saveFBCFG(){store.set(FBCFG_KEY,JSON.stringify(FBCFG));}
+
+let S;
+try{
+  const raw=store.get(KEY);
+  S=raw?JSON.parse(raw):seedState();
+  if(!S||!S.syllabus) S=seedState();
+  /* migrate / fill missing arrays so old saves don't crash */
+  if(!S.links) S.links=JSON.parse(JSON.stringify(SEED_LINKS));
+  if(!S.resources) S.resources=[];
+  if(!S.focusLog) S.focusLog=[];
+  if(!S.habits) S.habits={};
+  if(!S.settings) S.settings={userName:"",notifEnabled:false,notifTime:"08:00",lastNotif:""};
+  if(!S.sync) S.sync={enabled:false,room:""};
+}catch(e){ S=seedState(); }
+function save(){ store.set(KEY,JSON.stringify(S)); updateBadges(); queueSync(); }
+
+const topicById=id=>S.syllabus.find(t=>t.id===id)||null;
+const subjColor=s=>SUBJ_COLOR[s]||"#9a9a97";
+
+function nextReview(s){
+  if(s.stage==="Mastered") return null;
+  if(!s.lastReviewed) return todayISO();
+  const i=STAGES.indexOf(s.stage);
+  return addDays(s.lastReviewed,INTERVALS[i<0?0:i]);
+}
+function reviewState(s){
+  if(s.stage==="Mastered") return {st:"mastered",nr:null};
+  const nr=nextReview(s), d=diffD(nr,todayISO());
+  if(!s.lastReviewed) return {st:"new",nr};
+  if(d<0) return {st:"overdue",nr,days:-d};
+  if(d===0) return {st:"today",nr};
+  return {st:"future",nr,days:d};
+}
+const isDue=s=>["overdue","today","new"].indexOf(reviewState(s).st)>-1;
+function dueSessions(){ return S.sessions.filter(isDue).sort((a,b)=>{
+  const ra=reviewState(a), rb=reviewState(b);
+  const da=ra.st==="overdue"?-ra.days-1000:(ra.st==="new"?-500:0), db=rb.st==="overdue"?-rb.days-1000:(rb.st==="new"?-500:0);
+  return da-db || a.name.localeCompare(b.name);
+});}
+function completeReview(id){
+  const s=S.sessions.find(x=>x.id===id); if(!s) return;
+  const i=STAGES.indexOf(s.stage);
+  if(i>=STAGES.length-1){ toast("Already mastered 🏆"); return; }
+  s.lastReviewed=todayISO(); s.stage=STAGES[i+1]; save();
+  const nr=nextReview(s);
+  toast(s.stage==="Mastered"?"🏆 Mastered!":"✓ Review logged — "+s.stage, s.stage==="Mastered"?esc(s.name):"Next review "+fmtD(nr)+" ("+relD(nr)+")");
+  rerender();
+}
+function studyStreak(){
+  const set=new Set();
+  S.sessions.forEach(s=>{if(s.lastReviewed)set.add(s.lastReviewed);if(s.logDate)set.add(s.logDate);});
+  S.mocks.forEach(m=>{if(m.date)set.add(m.date);});
+  (S.focusLog||[]).forEach(f=>{if(f.startedAt)set.add(f.startedAt.slice(0,10));});
+  let streak=0, cur=todayISO();
+  if(!set.has(cur)) cur=addDays(cur,-1);
+  while(set.has(cur)){ streak++; cur=addDays(cur,-1); }
+  return streak;
+}
+
+/* ==================== WEAK RADAR ==================== */
+function weaknessScore(t){
+  const errs=S.errors.filter(e=>e.topicId===t.id).length;
+  const mockWeak=S.mocks.filter(m=>(m.weak||[]).indexOf(t.id)>-1).length;
+  let s=0;
+  s+=errs*10;
+  s+=mockWeak*15;
+  if(t.priority==="Critical") s+=20; else if(t.priority==="High") s+=10;
+  if(t.weightage==="High") s+=15;
+  const st={"Not started":5,"Learning":15,"Practicing":10,"Reviewing":5,"Mastered":-50};
+  s+=st[t.status]||0;
+  if(t.exams.indexOf("CGL")>-1) s+=10;
+  return s;
+}
+function weakTopics(limit){
+  return S.syllabus
+    .filter(t=>t.status!=="Mastered")
+    .map(t=>({t:t,score:weaknessScore(t)}))
+    .filter(x=>x.score>0)
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,limit||10);
+}
+
+/* ==================== FOCUS TIMER ==================== */
+let TMR={running:false,startedAt:null,label:"",taskId:null,topicId:null,tick:null};
+function timerStart(opts){
+  if(TMR.running){
+    if(!confirm("A timer is already running. Stop and start a new one?")) return;
+    timerStop(true);
+  }
+  TMR={running:true,startedAt:Date.now(),label:opts.label||"Focus",taskId:opts.taskId||null,topicId:opts.topicId||null,
+    tick:setInterval(updateTimerUI,1000)};
+  updateTimerUI(); renderTimerWidget();
+}
+function timerStop(keepSilent){
+  if(!TMR.running) return;
+  clearInterval(TMR.tick);
+  const mins=Math.round((Date.now()-TMR.startedAt)/60000);
+  if(mins>=1){
+    S.focusLog=S.focusLog||[];
+    S.focusLog.push({id:uid("f"),label:TMR.label,taskId:TMR.taskId,topicId:TMR.topicId,
+      startedAt:new Date(TMR.startedAt).toISOString(),endedAt:new Date().toISOString(),minutes:mins});
+    save();
+    if(!keepSilent) toast("⏱ Logged "+mins+" min","Focus session saved");
+    if(route()==="dashboard"||route()==="radar") rerender();
+  } else if(!keepSilent){ toast("Too short — nothing logged"); }
+  TMR={running:false,startedAt:null,label:"",taskId:null,topicId:null,tick:null};
+  updateTimerUI(); renderTimerWidget();
+}
+function updateTimerUI(){
+  const el=$("#timer-pill"); if(!el) return;
+  if(TMR.running){
+    const sec=Math.floor((Date.now()-TMR.startedAt)/1000);
+    const mm=String(Math.floor(sec/60)).padStart(2,"0");
+    const ss=String(sec%60).padStart(2,"0");
+    el.className="timer-pill running";
+    el.innerHTML="⏹ "+mm+":"+ss+" · "+esc(TMR.label).slice(0,20);
+  } else {
+    el.className="timer-pill";
+    el.innerHTML="⏱ Focus";
+  }
+}
+function renderTimerWidget(){
+  const w=$("#timer-widget"); if(!w) return;
+  if(!TMR.running){ w.innerHTML=""; return; }
+  w.innerHTML='<div class="card" style="border-color:rgba(233,115,102,.4)"><div class="card-h"><h2>⏱ Focus running</h2></div>'
+    +'<div class="muted small">'+esc(TMR.label)+'</div>'
+    +'<div class="chips" style="margin-top:10px"><button class="btn green sm" data-action="timer-stop">Stop &amp; save</button>'
+    +'<button class="btn ghost sm" data-action="timer-cancel">Discard</button></div></div>';
+}
+function focusStats(){
+  const weekStart=iso(mondayOf(0));
+  const logs=(S.focusLog||[]).filter(f=>f.startedAt&&f.startedAt.slice(0,10)>=weekStart);
+  const totalMin=logs.reduce((a,f)=>a+(f.minutes||0),0);
+  const bySub={};
+  logs.forEach(f=>{
+    const t=f.topicId?topicById(f.topicId):null;
+    const k=t?t.subject:"Unlinked";
+    bySub[k]=(bySub[k]||0)+(f.minutes||0);
+  });
+  return {totalMin:totalMin,bySub:bySub,count:logs.length};
+}
+function fmtMin(m){ if(m<60) return m+"m"; const h=Math.floor(m/60), r=m%60; return h+"h"+(r?" "+r+"m":""); }
+
+/* ==================== COMPONENTS ==================== */
+function toast(main,sub){
+  const root=$("#toast-root"); if(!root) return;
+  const t=document.createElement("div"); t.className="toast";
+  t.innerHTML="<span>"+main+"</span>"+(sub?'<span class="sub">'+sub+"</span>":"");
+  root.appendChild(t);
+  setTimeout(()=>{ t.classList.add("out"); setTimeout(()=>t.remove(),300); },2800);
+}
+let _modalSave=null;
+function openModal(title,body,onSave,saveLabel){
+  const r=$("#modal-root"); if(!r) return;
+  r.innerHTML='<div class="overlay"><div class="modal" role="dialog" aria-modal="true">'
+    +'<h3>'+esc(title)+'</h3><div class="mbody">'+body+'</div>'
+    +'<div class="modal-acts"><button class="btn ghost" data-mclose>Cancel</button>'
+    +'<button class="btn primary" data-msave>'+esc(saveLabel||"Save")+'</button></div></div></div>';
+  $$(".tpick",r).forEach(wirePicker);
+  _modalSave=onSave;
+  const cl=$("[data-mclose]",r); if(cl) cl.onclick=closeModal;
+  const sv=$("[data-msave]",r);
+  if(sv) sv.onclick=()=>{ const vals=collectVals(r); if(_modalSave&&_modalSave(vals)===false) return; closeModal(); };
+  r.firstElementChild.addEventListener("mousedown",e=>{ if(e.target.classList.contains("overlay")) closeModal(); });
+  document.addEventListener("keydown",escClose);
+  const f=$(".modal .inp",r); if(f) setTimeout(()=>f.focus(),60);
+}
+function escClose(e){ if(e.key==="Escape") closeModal(); }
+function closeModal(){ const r=$("#modal-root"); if(r) r.innerHTML=""; _modalSave=null; document.removeEventListener("keydown",escClose); }
+function collectVals(root){
+  const v={};
+  $$(".modal [name]",root).forEach(el=>{
+    if(el.type==="checkbox"){ if(!v[el.name]) v[el.name]=[]; if(el.checked) v[el.name].push(el.value); }
+    else v[el.name]=el.value;
+  });
+  return v;
+}
+function openConfirm(msg,onYes){
+  openModal("Are you sure?",'<p class="muted small">'+esc(msg)+'</p>',()=>onYes(),"Confirm");
+  const b=$("[data-msave]"); if(b){ b.classList.remove("primary"); b.classList.add("danger"); }
+}
+function pickerHTML(name,selIds,multi){
+  selIds=selIds||[];
+  return '<div class="tpick" data-name="'+name+'" data-multi="'+(multi?1:0)+'">'
+    +'<input type="hidden" name="'+name+'" value=\''+esc(JSON.stringify(selIds))+'\'>'
+    +(multi?'<div class="pick-chips"></div>':'')
+    +'<input class="inp pick-search" placeholder="Search syllabus topic…" autocomplete="off">'
+    +'<div class="picker-list"></div></div>';
+}
+function wirePicker(el){
+  const multi=el.dataset.multi==="1", hidden=$("input[type=hidden]",el), search=$(".pick-search",el), list=$(".picker-list",el);
+  const getSel=()=>{try{return JSON.parse(hidden.value);}catch(e){return[];}};
+  const setSel=a=>{ hidden.value=JSON.stringify(a); renderChips(); renderList(); };
+  const renderChips=()=>{ if(!multi) return; const c=$(".pick-chips",el); if(!c) return;
+    c.innerHTML=getSel().map(id=>{const t=topicById(id);if(!t)return"";
+      return'<span class="pill"><i class="dot" style="background:'+subjColor(t.subject)+'"></i><span>'+esc(t.topic)+'</span><span class="x" data-unpick="'+id+'">×</span></span>';}).join(""); };
+  const renderList=()=>{ const q=search.value.toLowerCase(), sel=getSel();
+    const m=S.syllabus.filter(t=>!q||t.topic.toLowerCase().indexOf(q)>-1).slice(0,30);
+    list.innerHTML=m.length? m.map(t=>'<div class="pick-opt'+(sel.indexOf(t.id)>-1?" sel":"")+'" data-pick="'+t.id+'">'
+      +'<i class="sdot" style="background:'+subjColor(t.subject)+'"></i><span>'+esc(t.topic)+'</span>'
+      +'<span class="tiny" style="margin-left:auto">'+esc(t.subject)+'</span></div>').join("")
+      :'<div class="empty" style="padding:14px"><p>No topic found</p></div>'; };
+  search.addEventListener("input",renderList);
+  list.addEventListener("click",e=>{ const o=e.target.closest("[data-pick]"); if(!o) return;
+    const id=o.dataset.pick, sel=getSel();
+    if(multi){ setSel(sel.indexOf(id)>-1?sel.filter(x=>x!==id):sel.concat([id])); }
+    else{ setSel([id]); const t=topicById(id); search.value=t?t.topic:""; renderList(); } });
+  if(multi) el.addEventListener("click",e=>{ const x=e.target.closest("[data-unpick]"); if(x) setSel(getSel().filter(i=>i!==x.dataset.unpick)); });
+  renderChips(); renderList();
+}
+const pickVals=v=>{try{return JSON.parse(v);}catch(e){return[];}};
+
+const stagePill=s=>'<span class="pill"><i class="dot" style="background:'+(STAGE_COLOR[s]||"var(--text3)")+'"></i>'+esc(s)+'</span>';
+const stageDots=s=>{ const i=STAGES.indexOf(s); return '<span class="stage-dots">'+STAGES.map((_,j)=>'<i class="'+(j<=i?"on":"")+'"></i>').join("")+'</span>'; };
+const relPill=id=>{ const t=topicById(id); if(!t) return "";
+  return '<button class="rel-pill" data-action="goto-topic" data-id="'+id+'"><i class="sdot" style="background:'+subjColor(t.subject)+'"></i><span>'+esc(t.topic)+'</span></button>'; };
+const examTags=t=>t.exams.map(e=>'<span class="exam-tag exam-'+(e==="RBI GRADE B"?"RBI":e)+'">'+(e==="RBI GRADE B"?"RBI":e)+'</span>').join("");
+const pbar=(pct,color)=>'<div class="pbar"><div class="pfill" style="width:'+pct+'%;background:'+color+'"></div></div>';
+const dueTag=s=>{ const r=reviewState(s);
+  if(r.st==="overdue") return '<span class="tag-overdue">'+r.days+'d overdue</span>';
+  if(r.st==="today") return '<span class="tag-today">Due today</span>';
+  if(r.st==="new") return '<span class="tag-new">New — due today</span>';
+  if(r.st==="mastered") return '<span class="pill"><i class="dot" style="background:var(--green)"></i>Mastered</span>';
+  return '<span class="tag-future">'+relD(r.nr)+'</span>'; };
+const selOpts=(arr,cur)=>arr.map(o=>'<option value="'+esc(o)+'"'+(o===cur?" selected":"")+'>'+esc(o)+'</option>').join("");
+
+const ICONS={
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  repeat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+  target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>',
+  habits:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+  pencil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  radar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M12 12 20 6"/></svg>'
+};
+const NAV=[
+  {id:"dashboard",label:"Home",icon:"home",title:"Dashboard"},
+  {id:"syllabus",label:"Syllabus",icon:"book",title:"Syllabus & Resources"},
+  {id:"radar",label:"Radar",icon:"radar",title:"Weak Topic Radar"},
+  {id:"reviews",label:"Reviews",icon:"repeat",title:"Spaced Repetition"},
+  {id:"tasks",label:"Tasks",icon:"target",title:"One Step Closer"},
+  {id:"errors",label:"Errors",icon:"alert",title:"Error Log Book"},
+  {id:"mocks",label:"Mocks",icon:"chart",title:"Mock Test Tracker"},
+  {id:"system",label:"Habits",icon:"habits",title:"System Over Self"}
+];
+
+function buildNav(){
+  const side=$("#side-nav"), bottom=$("#bn-wrap");
+  const mk=cls=>NAV.map(n=>'<button class="'+cls+'" data-nav="'+n.id+'">'+ICONS[n.icon]+'<span>'+n.label+'</span><span class="nav-badge" data-badge="'+n.id+'" hidden></span></button>').join("");
+  if(side) side.innerHTML=mk("nav-item");
+  if(bottom) bottom.innerHTML=mk("bn-item");
+}
+function updateBadges(){
+  try{
+    const due=dueSessions().length;
+    $$('[data-badge="reviews"]').forEach(el=>{el.hidden=!due;el.textContent=due;});
+    const open=S.tasks.filter(t=>t.status!=="Completed").length;
+    $$('[data-badge="tasks"]').forEach(el=>{el.hidden=!open;el.textContent=open;});
+  }catch(e){}
+}
+const route=()=>{ const h=(location.hash||"").replace(/^#\/?/,""); return NAV.some(n=>n.id===h)?h:"dashboard"; };
+function rerender(){ const y=window.scrollY; renderRoute(); window.scrollTo(0,y); }
+function renderRoute(){
+  try{
+    const r=route(), n=NAV.find(x=>x.id===r)||NAV[0];
+    const t=$("#page-title"); if(t) t.textContent=n.title;
+    $$("[data-nav]").forEach(b=>b.classList.toggle("active",b.dataset.nav===r));
+    const sc=$("#streak-chip"); if(sc) sc.textContent="🔥 "+studyStreak();
+    const dc=$("#date-chip"); if(dc) dc.textContent=new Date().toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"});
+    const V=$("#view"); if(!V) return;
+    V.innerHTML='<div class="view-anim">'+VIEWS[r]()+'</div>';
+    if(POST[r]) POST[r]();
+    updateBadges();
+    renderTimerWidget();
+  }catch(e){ fatal("Render error: "+e.message); }
+}
+function go(id){
+  const h="#/"+id;
+  if(location.hash===h){ renderRoute(); return; }
+  try{ location.hash=h; renderRoute(); }
+  catch(e){ renderRoute(); }
+}
+
+/* ==================== FIREBASE SYNC ==================== */
+let fbReady=false, syncUnsub=null, syncTimer=null, syncStatus="off", _applyingRemote=false;
+function setSyncStatus(st){ syncStatus=st; updateSyncPill(); }
+function updateSyncPill(){
+  const el=$("#sync-pill"); if(!el) return;
+  const map={off:"Local",connecting:"Connecting…",syncing:"Syncing…",synced:"Synced",error:"Sync error"};
+  el.className="sync-pill "+syncStatus;
+  el.innerHTML='<span class="dot"></span><span>'+(map[syncStatus]||syncStatus)+'</span>';
+  el.title = syncStatus==="error" ? "Sync error — open Settings" : "Sync status: "+(map[syncStatus]||syncStatus);
+}
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src=src; s.onload=res; s.onerror=()=>rej(new Error("Failed to load "+src));
+    document.head.appendChild(s);
+  });
+}
+async function initFirebase(){
+  if(fbReady) return true;
+  if(!FBCFG.apiKey||!FBCFG.projectId) return false;
+  await loadScript("https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js");
+  await loadScript("https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js");
+  if(!window.firebase) return false;
+  if(!firebase.apps||!firebase.apps.length) firebase.initializeApp(FBCFG);
+  fbReady=true;
+  return true;
+}
+async function pushNow(silent){
+  if(!S.sync.enabled||!S.sync.room) return;
+  try{
+    setSyncStatus("syncing");
+    if(!await initFirebase()){ setSyncStatus("error"); if(!silent) toast("⚠️ Firebase not configured"); return; }
+    const db=firebase.firestore();
+    const payload=JSON.parse(JSON.stringify(S));
+    delete payload.sync; delete payload._lastSync;
+    const now=new Date().toISOString();
+    await db.collection("exam_os_rooms").doc(S.sync.room).set({data:payload,updatedAt:now});
+    S._lastSync=now;
+    store.set(KEY,JSON.stringify(S));
+    setSyncStatus("synced");
+    if(!silent) toast("☁️ Pushed to cloud");
+  }catch(e){ setSyncStatus("error"); if(!silent) toast("⚠️ Sync failed",e.message); }
+}
+function queueSync(){
+  if(!S.sync.enabled||!_applyingRemote) { if(!S.sync.enabled) return; }
+  if(!S.sync.enabled) return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>pushNow(true),2500);
+}
+async function startSync(){
+  if(!S.sync.enabled||!S.sync.room){ setSyncStatus("off"); if(syncUnsub){syncUnsub();syncUnsub=null;} return; }
+  try{
+    setSyncStatus("connecting");
+    if(!await initFirebase()){ setSyncStatus("error"); toast("⚠️ Paste Firebase config in Settings"); return; }
+    const db=firebase.firestore();
+    const ref=db.collection("exam_os_rooms").doc(S.sync.room);
+    const snap=await ref.get();
+    if(snap.exists){
+      const remote=snap.data();
+      if(remote&&remote.data){
+        if(!S._lastSync){
+          /* first time on this device: cloud already has data */
+          openConfirm("Cloud already has data for this room. Replace THIS device's data with cloud? (Cancel = keep local, cloud gets overwritten)",()=>{
+            _applyingRemote=true;
+            const incoming=remote.data;
+            Object.keys(incoming).forEach(k=>{ S[k]=incoming[k]; });
+            S._lastSync=remote.updatedAt||new Date().toISOString();
+            S.sync={enabled:true,room:ref.id};
+            _applyingRemote=false;
+            save(); rerender(); toast("⬇ Pulled cloud data");
+          });
+        } else if(remote.updatedAt>S._lastSync){
+          _applyingRemote=true;
+          const incoming=remote.data;
+          Object.keys(incoming).forEach(k=>{ S[k]=incoming[k]; });
+          S._lastSync=remote.updatedAt;
+          S.sync={enabled:true,room:ref.id};
+          _applyingRemote=false;
+          save(); rerender(); toast("⬇ Updated from cloud");
+        }
+      }
+    } else {
+      await pushNow(true);
+    }
+    if(syncUnsub) syncUnsub();
+    syncUnsub=ref.onSnapshot(doc=>{
+      if(!doc.exists||_applyingRemote) return;
+      const d=doc.data(); if(!d||!d.data) return;
+      if(d.updatedAt&&(!S._lastSync||d.updatedAt>S._lastSync)){
+        _applyingRemote=true;
+        const incoming=d.data;
+        Object.keys(incoming).forEach(k=>{ S[k]=incoming[k]; });
+        S._lastSync=d.updatedAt;
+        S.sync={enabled:true,room:ref.id};
+        _applyingRemote=false;
+        store.set(KEY,JSON.stringify(S));
+        rerender();
+        setSyncStatus("synced");
+      }
+    });
+    setSyncStatus("synced");
+  }catch(e){ setSyncStatus("error"); console.error(e); toast("⚠️ Sync error",e.message); }
+}
+function stopSync(){ if(syncUnsub){syncUnsub();syncUnsub=null;} setSyncStatus("off"); }
+
+/* ==================== NOTIFICATIONS ==================== */
+async function requestNotifPerm(){
+  if(!("Notification" in window)){ toast("⚠️ Not supported on this browser"); return false; }
+  if(Notification.permission==="granted") return true;
+  const p=await Notification.requestPermission();
+  return p==="granted";
+}
+function checkAndNotify(){
+  try{
+    if(!S.settings||!S.settings.notifEnabled) return;
+    if(!("Notification" in window)||Notification.permission!=="granted") return;
+    const today=todayISO();
+    if(S.settings.lastNotif===today) return;
+    const due=dueSessions().length;
+    if(due===0) return;
+    const now=new Date();
+    const parts=(S.settings.notifTime||"08:00").split(":").map(Number);
+    if(now.getHours()<parts[0]||(now.getHours()===parts[0]&&now.getMinutes()<parts[1])) return;
+    new Notification("Exam OS — "+due+" review"+(due>1?"s":"")+" due",{body:"Clear today's agenda to keep the streak alive.",tag:"exam-os-daily"});
+    S.settings.lastNotif=today; save();
+  }catch(e){}
+}
+setInterval(checkAndNotify,60000);
+setTimeout(checkAndNotify,4000);
+
+/* ==================== SETTINGS MODAL ==================== */
+function openSettings(){
+  const cfg=FBCFG.apiKey?JSON.stringify(FBCFG,null,2):"";
+  const body='<div class="sett-section"><h4>You</h4>'
+    +'<div class="frow"><label>Your name</label><input class="inp" name="userName" value="'+esc(S.settings.userName||"")+'" placeholder="e.g. Ayush"></div>'
+    +'</div>'
+    +'<div class="sett-section"><h4>Cloud Sync <span class="tiny" style="text-transform:none;letter-spacing:0">('+syncStatus+')</span></h4>'
+    +'<div class="frow"><label>Firebase config (paste the object from Firebase console)</label>'
+      +'<textarea class="inp" name="fbcfg" rows="6" placeholder=\'{"apiKey":"...","projectId":"..."}\'>'+esc(cfg)+'</textarea>'
+      +'<div class="hint">See setup instructions from the assistant message.</div></div>'
+    +'<div class="frow"><label>Room code (share across your devices)</label>'
+      +'<div style="display:flex;gap:8px"><input class="inp" name="roomCode" value="'+esc(S.sync.room||"")+'" placeholder="auto-generated">'
+      +'<button class="btn" data-action="gen-room">New</button></div>'
+      +'<div class="hint">Anyone with this code + your Firebase config can read/write your data.</div></div>'
+    +'<div class="chips"><button class="btn" data-action="sync-push">⬆ Push now</button>'
+      +'<button class="btn" data-action="sync-pull">⬇ Pull now</button>'
+      +'<button class="btn danger" data-action="sync-disable">Disconnect</button></div>'
+    +'</div>'
+    +'<div class="sett-section"><h4>Notifications</h4>'
+    +'<div class="frow"><label>Reminder time</label><input class="inp" type="time" name="notifTime" value="'+esc(S.settings.notifTime||"08:00")+'"></div>'
+    +'<div class="chips"><button class="btn" data-action="notif-enable">'+(S.settings.notifEnabled?"✓ Enabled":"Enable browser notifications")+'</button>'
+      +'<button class="btn ghost" data-action="notif-test">Test</button></div>'
+    +'<div class="hint" style="margin-top:8px">Notifications fire when the app is open at/after this time and reviews are due.</div>'
+    +'</div>'
+    +'<div class="sett-section"><h4>Data</h4>'
+    +'<div class="chips"><button class="btn" data-action="export-data">⬇ Export JSON</button>'
+      +'<button class="btn" data-action="import-data">⬆ Import JSON</button>'
+      +'<button class="btn danger" data-action="reset-data">Reset everything</button></div>'
+    +'</div>';
+  openModal("Settings", body, v=>{
+    S.settings.userName=v.userName||"";
+    S.settings.notifTime=v.notifTime||"08:00";
+    const raw=(v.fbcfg||"").trim();
+    if(raw){
+      try{
+        let clean=raw.replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");
+        FBCFG=JSON.parse(clean); saveFBCFG();
+      }catch(e){ toast("⚠️ Firebase config invalid JSON"); return false; }
+    } else { FBCFG={}; saveFBCFG(); }
+    S.sync.room=(v.roomCode||"").trim();
+    S.sync.enabled=!!(FBCFG.apiKey&&S.sync.room);
+    save();
+    if(S.sync.enabled) startSync(); else stopSync();
+    toast("✓ Settings saved");
+  },"Save");
+}
+
+/* ==================== VIEW: DASHBOARD ==================== */
+function recommend(){
+  const due=dueSessions();
+  if(due.length){ const s=due[0], r=reviewState(s), t=topicById(s.topicId);
+    return {k:r.st==="overdue"?"OVERDUE REVIEW":"REVIEW DUE",t:s.name,m:(t?esc(t.topic)+" · ":"")+s.stage+" · clear this first",act:{a:"complete-review",id:s.id,label:"Complete Review"}}; }
+  const weak=weakTopics(1);
+  if(weak.length&&weak[0].score>=25) return {k:"WEAK SPOT",t:weak[0].t.topic,m:"Score "+weak[0].score+" · attack this next",act:{a:"goto-topic",id:weak[0].t.id,label:"Open Topic"}};
+  const ip=S.syllabus.filter(t=>["Learning","Practicing","Reviewing"].indexOf(t.status)>-1).sort((a,b)=>priRank(a)-priRank(b));
+  if(ip.length) return {k:"KEEP THE STREAK",t:"Continue "+ip[0].topic,m:ip[0].status+" · "+ip[0].subject+" · push it forward",act:{a:"goto-syllabus",id:ip[0].id,label:"Open Syllabus"}};
+  const fresh=S.syllabus.filter(t=>t.status==="Not started"&&t.priority==="Critical"&&t.weightage==="High");
+  if(fresh.length) return {k:"START FRESH",t:fresh[0].topic,m:"Critical · High weightage · "+fresh[0].subject,act:{a:"goto-syllabus",id:fresh[0].id,label:"Open Syllabus"}};
+  return {k:"ALL CLEAR",t:"Take a full-length mock",m:"No pending work — test yourself",act:{a:"goto-mocks",id:"",label:"Log a Mock"}};
+}
+function agendaRow(s){
+  const rel=s.topicId?relPill(s.topicId):"";
+  return '<div class="row-item"><div class="grow"><div class="t">'+esc(s.name)+'</div>'
+    +'<div class="m">'+stagePill(s.stage)+' '+rel+' '+dueTag(s)+'</div></div>'
+    +'<button class="btn green sm" data-action="complete-review" data-id="'+s.id+'">✓ Complete</button></div>';
+}
+function urgentRow(x){
+  const btn=x.type==="sess"
+    ?'<button class="btn green sm" data-action="complete-review" data-id="'+x.id+'">✓</button>'
+    :'<button class="btn sm" data-action="start-topic" data-id="'+x.id+'">Start</button>';
+  return '<div class="urgent-item"><i class="sdot" style="width:8px;height:8px;border-radius:3px;background:var(--red);flex:0 0 auto"></i>'
+    +'<div class="t">'+esc(x.txt)+'</div><span class="tiny">'+esc(x.sub)+'</span>'+btn+'</div>';
+}
+function weakRow(x){
+  const t=x.t;
+  return '<div class="weak-item"><span class="weak-score">'+x.score+'</span>'
+    +'<div class="weak-t">'+esc(t.topic)+'<div class="tiny" style="font-weight:500">'+esc(t.subject)+(t.priority?" · "+t.priority:"")+'</div></div>'
+    +'<button class="mini-icon" data-action="goto-topic" data-id="'+t.id+'" title="Open">'+ICONS.pencil+'</button>'
+    +'<button class="mini-icon" data-action="timer-start-topic" data-id="'+t.id+'" title="Start focus">⏱</button></div>';
+}
+function viewDashboard(){
+  const h=new Date().getHours(), greet=h<12?"Good morning":h<17?"Good afternoon":"Good evening";
+  const name=S.settings.userName||"Aspirant";
+  const due=dueSessions();
+  const mastered=S.syllabus.filter(t=>t.status==="Mastered").length;
+  const mpct=S.syllabus.length?Math.round(mastered/S.syllabus.length*100):0;
+  const rec=recommend();
+  const cglDue=due.filter(s=>{const t=topicById(s.topicId);return t&&t.exams.indexOf("CGL")>-1;});
+  const cglTodo=S.syllabus.filter(t=>t.exams.indexOf("CGL")>-1&&t.priority==="Critical"&&t.status!=="Mastered"&&t.status!=="Not started").slice(0,3);
+  const cglFresh=S.syllabus.filter(t=>t.exams.indexOf("CGL")>-1&&t.priority==="Critical"&&t.status==="Not started"&&t.weightage==="High").slice(0,Math.max(0,4-cglDue.length-cglTodo.length));
+  const urgItems=cglDue.map(s=>({txt:s.name,sub:"Review "+reviewState(s).st,id:s.id,type:"sess"}))
+    .concat(cglTodo.map(t=>({txt:t.topic,sub:t.status+" · in motion",id:t.id,type:"topic"})))
+    .concat(cglFresh.map(t=>({txt:t.topic,sub:"Not started · High weightage",id:t.id,type:"topic"})))
+    .slice(0,5);
+  const weak=weakTopics(5);
+  const avgP=S.mocks.length?Math.round(S.mocks.reduce((a,m)=>a+(+m.percentile||0),0)/S.mocks.length):0;
+  const avgA=S.mocks.length?Math.round(S.mocks.reduce((a,m)=>a+(+m.accuracy||0),0)/S.mocks.length):0;
+  const wk=weekStats(0);
+  const fs=focusStats();
+  const dueClr=due.length?"var(--orange)":"var(--green)";
+  const wkClr=wk.pct>=50?"var(--green)":"var(--text)";
+  const todayStr=new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const agendaHTML=due.length? due.map(agendaRow).join("")
+    :'<div class="empty"><div class="ic">🎉</div><b>All clear for today</b><p>No reviews due. Log a new session to keep momentum.</p></div>';
+  const urgHTML=urgItems.length? urgItems.map(urgentRow).join(""):'<div class="empty"><b>No urgent CGL items</b></div>';
+  const weakHTML=weak.length? weak.map(weakRow).join(""):'<div class="empty"><b>Nothing flagged yet</b><p>Log errors and mock weak areas — they\'ll surface here.</p></div>';
+  const links=(S.links||[]).slice(0,6);
+  const linksHTML=links.length? links.map(l=>'<a class="link-row" href="'+esc(l.url)+'" target="_blank" rel="noopener">'
+    +'<span>↗</span><div class="lf">'+esc(l.label)+'</div><span class="lu">'+esc((l.url||"").replace(/^https?:\/\//,"").slice(0,24))+'</span></a>').join("")
+    :'<div class="tiny">No quick links yet — add some in Settings or from the dashboard.</div>';
+  const topSubs=Object.keys(fs.bySub).sort((a,b)=>fs.bySub[b]-fs.bySub[a]).slice(0,5);
+  const focusHTML=topSubs.length? '<div style="display:grid;gap:6px">'+topSubs.map(k=>{
+    const m=fs.bySub[k]; const pct=Math.round(m/Math.max(1,fs.totalMin)*100);
+    return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>'+esc(k)+'</span><b>'+fmtMin(m)+'</b></div>'
+      +'<div class="pbar"><div class="pfill" style="width:'+pct+'%;background:'+subjColor(k)+'"></div></div></div>';
+  }).join("")+'</div>':'<div class="tiny">Start the focus timer to see time per subject.</div>';
+  return '<div class="hero-head"><div><h2>'+greet+', '+esc(name)+' ⚡</h2><div class="sub">'+todayStr+' — one step closer today.</div></div>'
+  +'<button class="btn primary" style="margin-left:auto" data-action="open-add-session">'+ICONS.plus+' Log Session</button></div>'
+  +'<div id="timer-widget"></div>'
+  +'<div class="dash-grid">'
+    +'<div class="dash-col">'
+      +'<div class="card"><div class="card-h"><h2>🎯 Today\'s Agenda</h2><span class="sub">'+due.length+' due</span></div>'+agendaHTML+'</div>'
+      +'<div class="card lift"><div class="card-h"><h2>🎯 Weak Topic Radar</h2><span class="sub">top '+weak.length+'</span></div>'+weakHTML
+        +(weak.length?'<div style="margin-top:10px"><button class="btn ghost sm" data-action="goto-radar">See full radar →</button></div>':'')
+      +'</div>'
+    +'</div>'
+    +'<div class="dash-col">'
+      +'<div class="next-action"><div class="k">Recommended next action</div>'
+        +'<div class="t">'+rec.t+'</div><div class="m">'+rec.m+'</div>'
+        +'<button class="btn primary sm" style="margin-top:12px" data-action="'+rec.act.a+'" data-id="'+rec.act.id+'">'+rec.act.label+'</button></div>'
+      +'<div class="card lift"><div class="card-h"><h2>🔥 CGL Urgent</h2><span class="sub">Critical × CGL</span></div>'+urgHTML+'</div>'
+      +'<div class="card"><div class="card-h"><h2>🔗 Quick Links</h2></div>'+linksHTML+'</div>'
+      +'<div class="card"><div class="card-h"><h2>⏱ Focus This Week</h2><span class="sub">'+fmtMin(fs.totalMin)+'</span></div>'+focusHTML+'</div>'
+    +'</div>'
+  +'</div>'
+  +'<div class="stat-grid section-gap">'
+    +'<div class="stat"><div class="k">Due today</div><div class="v" style="color:'+dueClr+'">'+due.length+'</div><div class="f">reviews waiting</div></div>'
+    +'<div class="stat"><div class="k">Mastered</div><div class="v">'+mpct+'%</div><div class="f">'+mastered+' of '+S.syllabus.length+'</div></div>'
+    +'<div class="stat"><div class="k">Streak</div><div class="v" style="color:var(--orange)">'+studyStreak()+'d</div><div class="f">consecutive days</div></div>'
+    +'<div class="stat"><div class="k">Mocks</div><div class="v">'+S.mocks.length+'</div><div class="f">avg percentile '+(avgP||"—")+'</div></div>'
+    +'<div class="stat"><div class="k">Accuracy</div><div class="v">'+(avgA?avgA+"%":"—")+'</div><div class="f">across all mocks</div></div>'
+    +'<div class="stat"><div class="k">This week</div><div class="v" style="color:'+wkClr+'">'+wk.pct+'%</div><div class="f">habit goal: &gt;50%</div></div>'
+  +'</div>';
+}
+
+/* ==================== VIEW: SYLLABUS + RESOURCES ==================== */
+const sf={q:"",exam:"All",status:"All",priority:"All",closed:{}};
+const rf={q:"",source:"All",type:"All"};
+let sylTab="topics";
+function sylFiltered(){
+  return S.syllabus.filter(t=>
+    (sf.exam==="All"||t.exams.indexOf(sf.exam)>-1) &&
+    (sf.status==="All"||t.status===sf.status) &&
+    (sf.priority==="All"||t.priority===sf.priority) &&
+    (!sf.q||t.topic.toLowerCase().indexOf(sf.q)>-1||t.subject.toLowerCase().indexOf(sf.q)>-1));
+}
+function viewSyllabus(){
+  const tabs='<div class="page-tabs">'
+    +'<div class="page-tab'+(sylTab==="topics"?" on":"")+'" data-stab="topics">Topics ('+S.syllabus.length+')</div>'
+    +'<div class="page-tab'+(sylTab==="resources"?" on":"")+'" data-stab="resources">Resources ('+((S.resources||[]).length)+')</div>'
+  +'</div>';
+  if(sylTab==="resources") return tabs+viewResources();
+  return tabs
+  +'<div class="toolbar">'
+    +'<div class="row"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+      +'<input class="inp" id="syl-q" placeholder="Search '+S.syllabus.length+' topics or subjects…" value="'+esc(sf.q)+'" autocomplete="off"></div>'
+      +'<button class="btn primary" data-action="open-add-topic">'+ICONS.plus+' Topic</button></div>'
+    +'<div class="row">'
+      +'<div class="chips" id="syl-exam">'+["All"].concat(EXAMS).map(e=>'<button class="chip'+(sf.exam===e?" on":"")+'" data-exam="'+e+'">'+(e==="RBI GRADE B"?"RBI":e)+'</button>').join("")+'</div>'
+      +'<select class="inp" id="syl-status" style="width:auto"><option value="All">All statuses</option>'+selOpts(STATUSES,sf.status)+'</select>'
+      +'<select class="inp" id="syl-pri" style="width:auto"><option value="All">All priorities</option>'+selOpts(SYL_PRI,sf.priority)+'</select>'
+    +'</div></div>'
+    +'<div id="syl-list"></div>'
+    +'<footer class="app-foot"><span>Syllabus Master · grouped by subject</span><span id="syl-count"></span></footer>';
+}
+function viewResources(){
+  const list=(S.resources||[]).filter(r=>
+    (rf.source==="All"||r.source===rf.source)&&
+    (rf.type==="All"||r.type===rf.type)&&
+    (!rf.q||(r.title||"").toLowerCase().indexOf(rf.q)>-1||(r.notes||"").toLowerCase().indexOf(rf.q)>-1));
+  return '<div class="toolbar">'
+    +'<div class="row"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+      +'<input class="inp" id="res-q" placeholder="Search resources…" value="'+esc(rf.q)+'"></div>'
+      +'<button class="btn primary" data-action="open-add-resource">'+ICONS.plus+' Resource</button></div>'
+    +'<div class="row">'
+      +'<select class="inp" id="res-src" style="width:auto"><option value="All">All sources</option>'+selOpts(RES_SOURCES,rf.source)+'</select>'
+      +'<select class="inp" id="res-type" style="width:auto"><option value="All">All types</option>'+selOpts(RES_TYPES,rf.type)+'</select>'
+    +'</div></div>'
+    +'<div id="res-list" style="display:grid;gap:10px">'
+    +(list.length? list.map(r=>'<div class="res-card"><div style="display:flex;gap:10px;align-items:flex-start">'
+      +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:650">'+esc(r.title||"Untitled")+'</div>'
+      +'<div class="res-meta">'
+        +(r.source?'<span class="pill">'+esc(r.source)+'</span>':"")
+        +(r.type?'<span class="pill">'+esc(r.type)+'</span>':"")
+        +(r.topicId?relPill(r.topicId):"")
+        +(r.link?'<a class="pill" href="'+esc(r.link)+'" target="_blank" rel="noopener">↗ open</a>':"")
+      +'</div>'
+      +(r.notes?'<div class="tiny" style="margin-top:8px">'+esc(r.notes)+'</div>':"")
+      +'</div>'
+      +'<div class="row-actions" style="opacity:1">'
+        +'<button class="mini-icon" data-action="edit-resource" data-id="'+r.id+'">'+ICONS.pencil+'</button>'
+        +'<button class="mini-icon danger" data-action="del-resource" data-id="'+r.id+'">'+ICONS.trash+'</button>'
+      +'</div></div></div>').join("")
+      :'<div class="empty"><div class="ic">📚</div><b>No resources yet</b><p>Add links to your Takshila / Unacademy / IBT notes, PDFs, videos, and test series.</p></div>')
+    +'</div>';
+}
+function topicRow(t){
+  return '<div class="topic-row" data-id="'+t.id+'">'
+    +'<div><div class="name">'+esc(t.topic)+'</div>'
+      +'<div class="tags">'+examTags(t)+(t.remarks?'<span class="tiny" title="'+esc(t.remarks)+'">📝 has note</span>':"")+'</div>'
+      +'<div style="margin-top:7px;max-width:340px">'+pbar(STATUS_PCT[t.status],STATUS_COLOR[t.status])+'</div></div>'
+    +'<div class="topic-controls">'
+      +'<select class="mini-sel st-'+t.status.replace(/ /g,"-")+'" data-change="syl-status" data-id="'+t.id+'">'+selOpts(STATUSES,t.status)+'</select>'
+      +'<select class="mini-sel pr-'+(t.priority||"x")+'" data-change="syl-priority" data-id="'+t.id+'"><option value="">Priority</option>'+selOpts(SYL_PRI,t.priority)+'</select>'
+      +'<select class="mini-sel" data-change="syl-weight" data-id="'+t.id+'"><option value="">Weightage</option>'+selOpts(WEIGHTS,t.weightage)+'</select>'
+      +'<div class="row-actions">'
+        +'<button class="mini-icon" data-action="timer-start-topic" data-id="'+t.id+'" title="Focus timer">⏱</button>'
+        +'<button class="mini-icon" data-action="edit-topic" data-id="'+t.id+'" title="Edit & notes">'+ICONS.pencil+'</button>'
+        +'<button class="mini-icon danger" data-action="del-topic" data-id="'+t.id+'" title="Delete">'+ICONS.trash+'</button>'
+      +'</div></div></div>';
+}
+function renderSylList(){
+  const list=sylFiltered();
+  const groups={};
+  list.forEach(t=>{ (groups[t.subject]=groups[t.subject]||[]).push(t); });
+  const subs=Object.keys(groups).sort((a,b)=>{const ia=SUBJ_ORDER.indexOf(a),ib=SUBJ_ORDER.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);});
+  const el=$("#syl-list"); if(!el) return;
+  el.innerHTML=subs.length? subs.map(sub=>{
+    const items=groups[sub], done=items.filter(t=>t.status==="Mastered").length;
+    const avg=Math.round(items.reduce((a,t)=>a+STATUS_PCT[t.status],0)/items.length);
+    const closed=sf.closed[sub];
+    return '<div class="subj-group'+(closed?" closed":"")+'" data-subj="'+esc(sub)+'">'
+      +'<div class="subj-head" data-action="toggle-subj" data-id="'+esc(sub)+'">'
+        +'<i class="sdot" style="background:'+subjColor(sub)+'"></i><b>'+esc(sub)+'</b>'
+        +'<span class="cnt">'+done+'/'+items.length+' mastered</span>'
+        +'<div class="pbar"><div class="pfill" style="width:'+avg+'%;background:'+subjColor(sub)+'"></div></div>'
+        +'<span class="tiny">'+avg+'%</span>'
+        +'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>'
+      +'</div>'
+      +'<div class="subj-body"'+(closed?" hidden":"")+'>'+items.map(topicRow).join("")+'</div></div>';
+  }).join("") : '<div class="empty"><div class="ic">🔍</div><b>No topics match</b><p>Try clearing a filter or search term.</p></div>';
+  const c=$("#syl-count"); if(c) c.textContent=list.length+" of "+S.syllabus.length+" topics";
+}
+function postSyllabus(){
+  if(sylTab==="topics"){
+    renderSylList();
+    const q=$("#syl-q"); if(q) q.addEventListener("input",()=>{ sf.q=q.value.toLowerCase(); renderSylList(); });
+    const ex=$("#syl-exam"); if(ex) ex.addEventListener("click",e=>{ const b=e.target.closest("[data-exam]"); if(!b) return;
+      sf.exam=b.dataset.exam; $$("#syl-exam .chip").forEach(c=>c.classList.toggle("on",c===b)); renderSylList(); });
+    const st=$("#syl-status"); if(st) st.addEventListener("change",e=>{ sf.status=e.target.value; renderSylList(); });
+    const pr=$("#syl-pri"); if(pr) pr.addEventListener("change",e=>{ sf.priority=e.target.value; renderSylList(); });
+  } else {
+    const q=$("#res-q"); if(q) q.addEventListener("input",()=>{ rf.q=q.value.toLowerCase(); rerender(); });
+    const s=$("#res-src"); if(s) s.addEventListener("change",e=>{ rf.source=e.target.value; rerender(); });
+    const t=$("#res-type"); if(t) t.addEventListener("change",e=>{ rf.type=e.target.value; rerender(); });
+  }
+}
+function topicForm(t){
+  return '<div class="frow"><label>Topic</label><input class="inp" name="topic" value="'+esc(t?t.topic:"")+'" placeholder="e.g. Percentage"></div>'
+  +'<div class="f2"><div class="frow"><label>Subject</label><select class="inp" name="subject">'+selOpts(SUBJ_ORDER,t?t.subject:"maths")+'</select></div>'
+  +'<div class="frow"><label>Status</label><select class="inp" name="status">'+selOpts(STATUSES,t?t.status:"Not started")+'</select></div></div>'
+  +'<div class="f2"><div class="frow"><label>Priority</label><select class="inp" name="priority"><option value="">—</option>'+selOpts(SYL_PRI,t?t.priority:"")+'</select></div>'
+  +'<div class="frow"><label>Weightage</label><select class="inp" name="weightage"><option value="">—</option>'+selOpts(WEIGHTS,t?t.weightage:"")+'</select></div></div>'
+  +'<div class="frow"><label>Exams</label><div class="chips">'+EXAMS.map(e=>'<label class="chip" style="cursor:pointer"><input type="checkbox" name="exams" value="'+e+'" '+(t&&t.exams.indexOf(e)>-1?"checked":"")+' style="accent-color:var(--blue);margin-right:5px">'+(e==="RBI GRADE B"?"RBI":e)+'</label>').join("")+'</div></div>'
+  +'<div class="frow"><label>Remarks</label><textarea class="inp" name="remarks" rows="2" placeholder="Notes, book refs, page numbers…">'+esc(t?t.remarks:"")+'</textarea></div>';
+}
+function resourceModal(r){
+  openModal(r?"Edit Resource":"Add Resource",
+  '<div class="frow"><label>Title</label><input class="inp" name="title" value="'+esc(r?r.title:"")+'" placeholder="e.g. Percentage full lecture"></div>'
+  +'<div class="f2"><div class="frow"><label>Source</label><select class="inp" name="source">'+selOpts(RES_SOURCES,r?r.source:"Takshila")+'</select></div>'
+  +'<div class="frow"><label>Type</label><select class="inp" name="type">'+selOpts(RES_TYPES,r?r.type:"Notes")+'</select></div></div>'
+  +'<div class="frow"><label>Link / URL</label><input class="inp" name="link" value="'+esc(r?r.link:"")+'" placeholder="https://…"></div>'
+  +'<div class="frow"><label>Linked topic (optional)</label>'+pickerHTML("topicIds",r&&r.topicId?[r.topicId]:[],false)+'</div>'
+  +'<div class="frow"><label>Notes</label><textarea class="inp" name="notes" rows="2" placeholder="Page numbers, lecture ranges, etc.">'+esc(r?r.notes:"")+'</textarea></div>',
+  v=>{ if(!v.title){ toast("⚠️ Title is required"); return false; }
+    const ids=pickVals(v.topicIds);
+    const data={title:v.title,source:v.source,type:v.type,link:v.link||"",notes:v.notes||"",topicId:ids[0]||null};
+    if(r) Object.assign(r,data); else S.resources.push(Object.assign({id:uid("r")},data));
+    save(); rerender(); toast(r?"Resource updated":"Resource added 📚"); },
+  r?"Save changes":"Add resource");
+}
+
+/* ==================== VIEW: RADAR ==================== */
+function viewRadar(){
+  const list=weakTopics(30);
+  return '<div class="hero-head"><div><h2>Weak Topic Radar</h2>'
+  +'<div class="sub">Auto-ranked by errors, mock weak areas, priority and weightage. Attack from the top.</div></div></div>'
+  +'<div class="stat-grid">'
+    +'<div class="stat"><div class="k">Flagged topics</div><div class="v" style="color:var(--red)">'+list.length+'</div><div class="f">score &gt; 0</div></div>'
+    +'<div class="stat"><div class="k">Total errors</div><div class="v">'+S.errors.length+'</div><div class="f">logged in Error Book</div></div>'
+    +'<div class="stat"><div class="k">Mock weak tags</div><div class="v">'+S.mocks.reduce((a,m)=>a+((m.weak||[]).length),0)+'</div><div class="f">across all mocks</div></div>'
+    +'<div class="stat"><div class="k">Critical not mastered</div><div class="v">'+S.syllabus.filter(t=>t.priority==="Critical"&&t.status!=="Mastered").length+'</div><div class="f">remaining</div></div>'
+  +'</div>'
+  +'<div class="card section-gap">'
+  +'<div class="card-h"><h2>🎯 Ranked list</h2><span class="sub">click ⏱ to start a focus block</span></div>'
+  +(list.length? '<div style="display:grid;gap:6px">'+list.map((x,i)=>{
+    const t=x.t;
+    const errs=S.errors.filter(e=>e.topicId===t.id).length;
+    const mw=S.mocks.filter(m=>(m.weak||[]).indexOf(t.id)>-1).length;
+    return '<div class="weak-item"><span class="weak-score">'+x.score+'</span>'
+    +'<span style="font-size:11px;color:var(--text3);min-width:22px;text-align:right">#'+(i+1)+'</span>'
+    +'<div class="weak-t">'+esc(t.topic)+'<div class="tiny" style="font-weight:500">'
+      +esc(t.subject)+(t.priority?" · "+t.priority:"")+(t.weightage?" · "+t.weightage:"")
+      +' · '+t.status
+      +(errs?' · <span style="color:var(--red)">'+errs+' error'+(errs>1?'s':'')+'</span>':"")
+      +(mw?' · <span style="color:var(--orange)">'+mw+' mock tag'+(mw>1?'s':'')+'</span>':"")
+    +'</div></div>'
+    +'<button class="mini-icon" data-action="goto-topic" data-id="'+t.id+'" title="Open in Syllabus">'+ICONS.pencil+'</button>'
+    +'<button class="mini-icon" data-action="timer-start-topic" data-id="'+t.id+'" title="Focus timer">⏱</button></div>';
+  }).join("")+'</div>'
+    :'<div class="empty"><div class="ic">🎉</div><b>Nothing flagged</b><p>Log errors and mock weak areas — this list fills itself.</p></div>')
+  +'</div>';
+}
+
+/* ==================== VIEW: REVIEWS ==================== */
+let rtab="today";
+function viewReviews(){
+  return '<div class="hero-head"><div><h2>Spaced Repetition</h2>'
+  +'<div class="sub">1st Study → D1 → D3 → D7 → D14 → D30 → Mastered · intervals 1 → 3 → 7 → 14 → 30 → 60 days</div></div>'
+  +'<button class="btn primary" style="margin-left:auto" data-action="open-add-session">'+ICONS.plus+' Log Session</button></div>'
+  +'<div class="tabs" id="rtabs"></div>'
+  +'<div id="sess-list" style="margin-top:16px;display:grid;gap:12px"></div>';
+}
+function rtabCount(k){
+  if(k==="today") return dueSessions().length;
+  if(k==="upcoming") return S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;}).length;
+  if(k==="mastered") return S.sessions.filter(s=>s.stage==="Mastered").length;
+  return S.sessions.length;
+}
+function renderTabs(){
+  const el=$("#rtabs"); if(!el) return;
+  el.innerHTML=[["today","🎯 Today's Agenda"],["upcoming","Upcoming 7d"],["all","All Sessions"],["mastered","Mastered"]]
+    .map(p=>'<button class="tab'+(rtab===p[0]?" on":"")+'" data-rtab="'+p[0]+'">'+p[1]+'<span class="n">'+rtabCount(p[0])+'</span></button>').join("");
+}
+function sessCard(s){
+  const r=reviewState(s);
+  return '<div class="card lift sess-card" data-id="'+s.id+'">'
+    +'<div class="sess-top"><div class="sess-name">'+esc(s.name)+'</div>'
+      +'<div class="row-actions" style="opacity:1">'
+        +'<button class="mini-icon" data-action="timer-start-session" data-id="'+s.id+'" title="Focus timer">⏱</button>'
+        +'<button class="mini-icon" data-action="edit-session" data-id="'+s.id+'" title="Edit">'+ICONS.pencil+'</button>'
+        +'<button class="mini-icon danger" data-action="del-session" data-id="'+s.id+'" title="Delete">'+ICONS.trash+'</button>'
+      +'</div></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+stagePill(s.stage)+stageDots(s.stage)+(s.topicId?relPill(s.topicId):"")+dueTag(s)+'</div>'
+    +'<div class="sess-meta">'
+      +'<div class="fld"><label>Log date</label><input type="date" data-change="sess-logdate" data-id="'+s.id+'" value="'+(s.logDate||"")+'"></div>'
+      +'<div class="fld"><label>Last reviewed</label><input type="date" data-change="sess-reviewed" data-id="'+s.id+'" value="'+(s.lastReviewed||"")+'"></div>'
+      +'<div class="fld"><label>Next review</label><b style="font-size:13px;padding-top:5px;display:inline-block">'+(r.nr?fmtD(r.nr)+" · "+relD(r.nr):"—")+'</b></div>'
+    +'</div>'
+    +(s.stage==="Mastered"
+      ?'<div class="tiny">🏆 Fully mastered — no reviews scheduled</div>'
+      :'<div><button class="btn green sm" data-action="complete-review" data-id="'+s.id+'">✓ Complete Review</button></div>')
+  +'</div>';
+}
+function renderSessList(){
+  const el=$("#sess-list"); if(!el) return;
+  let html="";
+  if(rtab==="today"){
+    const due=dueSessions();
+    html=due.length? due.map(sessCard).join("") : '<div class="empty"><div class="ic">🎉</div><b>All clear for today</b><p>Nothing due. Log a new session above.</p></div>';
+  } else if(rtab==="upcoming"){
+    const up=S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;})
+      .sort((a,b)=>{const x=reviewState(a).nr,y=reviewState(b).nr;return x<y?-1:1;});
+    if(!up.length) html='<div class="empty"><div class="ic">📅</div><b>Nothing scheduled this week</b><p>Reviews you complete will appear here.</p></div>';
+    else { let cur="";
+      html=up.map(s=>{ const nr=reviewState(s).nr; let head="";
+        if(nr!==cur){ cur=nr; head='<div class="date-grp"><div class="date-grp-h">'+fmtD(nr)+' · '+relD(nr)+'</div></div>'; }
+        return head+sessCard(s); }).join(""); }
+  } else if(rtab==="mastered"){
+    const m=S.sessions.filter(s=>s.stage==="Mastered");
+    html=m.length? m.map(sessCard).join("") : '<div class="empty"><div class="ic">🏆</div><b>Nothing mastered yet</b><p>Finish all 7 stages of a session.</p></div>';
+  } else {
+    const all=S.sessions.slice().sort((a,b)=>{const ra=reviewState(a),rb=reviewState(b);if(!ra.nr)return 1;if(!rb.nr)return -1;return ra.nr<rb.nr?-1:1;});
+    html=all.length? all.map(sessCard).join("") : '<div class="empty"><div class="ic">📚</div><b>No sessions yet</b><p>Log your first study session.</p></div>';
+  }
+  el.innerHTML=html;
+}
+function postReviews(){
+  renderTabs(); renderSessList();
+  const el=$("#rtabs"); if(el) el.addEventListener("click",e=>{ const b=e.target.closest("[data-rtab]"); if(!b) return;
+    rtab=b.dataset.rtab; renderTabs(); renderSessList(); });
+}
+function sessionModal(s){
+  openModal(s?"Edit Session":"Log Study Session",
+  '<div class="frow"><label>Session name</label><input class="inp" name="name" value="'+esc(s?s.name:"")+'" placeholder="e.g. Percentage PYQs — Kiran"></div>'
+  +'<div class="frow"><label>Linked syllabus topic</label>'+pickerHTML("topicIds",s&&s.topicId?[s.topicId]:[],false)+'</div>'
+  +'<div class="frow"><label>Stage</label><select class="inp" name="stage">'+selOpts(STAGES,s?s.stage:"1st Time Study")+'</select></div>'
+  +'<div class="f2">'
+    +'<div class="frow"><label>Log date</label><input class="inp" type="date" name="logDate" value="'+((s&&s.logDate)||todayISO())+'"></div>'
+    +'<div class="frow"><label>Last reviewed</label><input class="inp" type="date" name="lastReviewed" value="'+((s&&s.lastReviewed)||todayISO())+'">'
+    +'<div class="hint">Next review auto-calculates from this date + stage.</div></div>'
+  +'</div>',
+  v=>{ const name=v.name; if(!name){ toast("⚠️ Session name is required"); return false; }
+    const ids=pickVals(v.topicIds);
+    const data={name:name,topicId:ids[0]||null,stage:v.stage,logDate:v.logDate||null,lastReviewed:v.lastReviewed||null};
+    if(s) Object.assign(s,data); else S.sessions.push(Object.assign({id:uid("s")},data));
+    save(); rerender(); toast(s?"Session updated":"Session logged 📚"); },
+  s?"Save changes":"Log session");
+}
+
+/* ==================== VIEW: ERRORS ==================== */
+const ef={type:"All",source:"All",q:""};
+function viewErrors(){
+  const counts={}; ERR_TYPES.forEach(t=>counts[t]=S.errors.filter(e=>e.type===t).length);
+  return '<div class="hero-head"><div><h2>Error Log Book</h2>'
+  +'<div class="sub">Every mistake logged here is a mark saved in the exam.</div></div>'
+  +'<button class="btn primary" style="margin-left:auto" data-action="open-add-error">'+ICONS.plus+' Log Error</button></div>'
+  +'<div class="chips">'+ERR_TYPES.map(t=>'<span class="pill"><i class="dot" style="background:'+ERR_COLOR[t]+'"></i>'+t+'<b>'+counts[t]+'</b></span>').join("")+'</div>'
+  +'<div class="toolbar" style="position:static;background:none;border:none;padding:14px 0 10px;backdrop-filter:none">'
+    +'<div class="row">'
+      +'<div class="chips" id="err-type">'+["All"].concat(ERR_TYPES).map(t=>'<button class="chip'+(ef.type===t?" on":"")+'" data-etype="'+t+'">'+t+'</button>').join("")+'</div>'
+      +'<select class="inp" id="err-src" style="width:auto"><option value="All">All sources</option>'+selOpts(ERR_SOURCES,ef.source)+'</select>'
+      +'<div class="search" style="flex:1;min-width:150px;position:relative"><input class="inp" id="err-q" placeholder="Search errors…" value="'+esc(ef.q)+'"></div>'
+    +'</div>'
+  +'</div>'
+  +'<div id="err-list" style="display:grid;gap:10px"></div>';
+}
+function renderErrList(){
+  const el=$("#err-list"); if(!el) return;
+  const list=S.errors.filter(e=>
+    (ef.type==="All"||e.type===ef.type)&&
+    (ef.source==="All"||e.source===ef.source)&&
+    (!ef.q||e.title.toLowerCase().indexOf(ef.q)>-1));
+  el.innerHTML=list.length? list.map(e=>'<div class="card" style="padding:14px 16px"><div class="row-item" style="padding:0">'
+    +'<div class="grow"><div class="t">'+esc(e.title)+'</div>'
+      +'<div class="m" style="margin-top:7px">'
+        +'<span class="pill"><i class="dot" style="background:'+(ERR_COLOR[e.type]||"var(--text3)")+'"></i>'+esc(e.type||"—")+'</span>'
+        +'<span class="pill">'+esc(e.source||"—")+'</span>'
+        +(e.topicId?relPill(e.topicId):"")
+        +(e.link?'<a class="pill" href="'+esc(e.link)+'" target="_blank" rel="noopener">↗ link</a>':"")
+      +'</div></div>'
+    +'<input type="date" data-change="err-date" data-id="'+e.id+'" value="'+(e.date||"")+'" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12.5px;color:var(--text);color-scheme:dark">'
+    +'<div class="row-actions" style="opacity:1">'
+      +'<button class="mini-icon" data-action="edit-error" data-id="'+e.id+'">'+ICONS.pencil+'</button>'
+      +'<button class="mini-icon danger" data-action="del-error" data-id="'+e.id+'">'+ICONS.trash+'</button>'
+    +'</div></div></div>').join("")
+  :'<div class="empty"><div class="ic">🧹</div><b>No errors logged</b><p>'+(S.errors.length?"No matches for these filters.":"Log mistakes from mocks and PYQs to fix them forever.")+'</p></div>';
+}
+function postErrors(){
+  renderErrList();
+  const t=$("#err-type"); if(t) t.addEventListener("click",e=>{ const b=e.target.closest("[data-etype]"); if(!b) return;
+    ef.type=b.dataset.etype; $$("#err-type .chip").forEach(c=>c.classList.toggle("on",c===b)); renderErrList(); });
+  const s=$("#err-src"); if(s) s.addEventListener("change",e=>{ ef.source=e.target.value; renderErrList(); });
+  const q=$("#err-q"); if(q) q.addEventListener("input",e=>{ ef.q=e.target.value.toLowerCase(); renderErrList(); });
+}
+function errorModal(er){
+  openModal(er?"Edit Error":"Log an Error",
+  '<div class="frow"><label>What went wrong?</label><input class="inp" name="title" value="'+esc(er?er.title:"")+'" placeholder="e.g. Mixed up CI vs SI formula"></div>'
+  +'<div class="f2">'
+    +'<div class="frow"><label>Error type</label><select class="inp" name="type">'+selOpts(ERR_TYPES,er?er.type:"concept missed")+'</select></div>'
+    +'<div class="frow"><label>Source</label><select class="inp" name="source">'+selOpts(ERR_SOURCES,er?er.source:"Mock Test")+'</select></div>'
+  +'</div>'
+  +'<div class="f2">'
+    +'<div class="frow"><label>Date</label><input class="inp" type="date" name="date" value="'+((er&&er.date)||todayISO())+'"></div>'
+    +'<div class="frow"><label>Link (optional)</label><input class="inp" name="link" value="'+esc(er?er.link:"")+'" placeholder="Discord / video URL"></div>'
+  +'</div>'
+  +'<div class="frow"><label>Linked syllabus topic</label>'+pickerHTML("topicIds",er&&er.topicId?[er.topicId]:[],false)+'</div>',
+  v=>{ if(!v.title){ toast("⚠️ Description is required"); return false; }
+    const ids=pickVals(v.topicIds);
+    const data={title:v.title,type:v.type,source:v.source,date:v.date||"",link:v.link||"",topicId:ids[0]||null};
+    if(er) Object.assign(er,data); else S.errors.push(Object.assign({id:uid("e")},data));
+    save(); rerender(); toast(er?"Error updated":"Error logged — it won't beat you twice 💪"); },
+  er?"Save changes":"Log error");
+}
+
+/* ==================== VIEW: MOCKS ==================== */
+function mockChart(){
+  const ms=S.mocks.filter(m=>m.date).sort((a,b)=>a.date<b.date?-1:1);
+  if(!ms.length) return "";
+  const W=680,H=240,PL=38,PR=16,PT=16,PB=30;
+  const X=i=>ms.length===1?PL+(W-PL-PR)/2:PL+i*(W-PL-PR)/(ms.length-1);
+  const Y=v=>PT+(100-Math.max(0,Math.min(100,+v||0)))*(H-PT-PB)/100;
+  const grid=[0,25,50,75,100].map(v=>'<line x1="'+PL+'" y1="'+Y(v)+'" x2="'+(W-PR)+'" y2="'+Y(v)+'" stroke="rgba(255,255,255,.06)"/>'
+    +'<text x="'+(PL-8)+'" y="'+(Y(v)+4)+'" fill="rgba(255,255,255,.35)" font-size="10" text-anchor="end">'+v+'</text>').join("");
+  const xlab=ms.map((m,i)=>'<text x="'+X(i)+'" y="'+(H-8)+'" fill="rgba(255,255,255,.4)" font-size="10" text-anchor="middle">'+fmtD(m.date)+'</text>').join("");
+  const line=(key,color)=>{ const pts=ms.map((m,i)=>[X(i),Y(m[key])]);
+    return '<polyline points="'+pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    +pts.map((p,i)=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="4.5" fill="#202020" stroke="'+color+'" stroke-width="2.5"><title>'+esc(ms[i].title)+'</title></circle>').join(""); };
+  return '<svg viewBox="0 0 '+W+' '+H+'">'+grid+xlab+line("percentile","#5E9FE8")+line("accuracy","#72BC8F")+'</svg>';
+}
+function mockCard(m){
+  return '<div class="card lift" data-id="'+m.id+'">'
+    +'<div class="sess-top"><div class="sess-name">'+esc(m.title)+'</div>'
+      +'<div class="row-actions" style="opacity:1">'
+        +'<button class="mini-icon" data-action="edit-mock" data-id="'+m.id+'">'+ICONS.pencil+'</button>'
+        +'<button class="mini-icon danger" data-action="del-mock" data-id="'+m.id+'">'+ICONS.trash+'</button>'
+      +'</div></div>'
+    +'<div class="sess-meta">'
+      +'<div class="fld"><label>Date</label><b style="font-size:13px;padding-top:5px;display:inline-block">'+fmtDY(m.date)+'</b></div>'
+      +'<div class="fld"><label>Exam type</label><span class="pill" style="margin-top:4px">'+esc(m.type)+'</span></div>'
+      +'<div class="fld"><label>Raw</label><b style="font-size:13px;padding-top:5px;display:inline-block">'+m.raw+'</b></div>'
+      +'<div class="fld"><label>Percentile</label><b style="font-size:13px;padding-top:5px;display:inline-block;color:var(--blue)">'+m.percentile+'</b></div>'
+      +'<div class="fld"><label>Accuracy</label><b style="font-size:13px;padding-top:5px;display:inline-block;color:var(--green)">'+m.accuracy+'%</b></div>'
+    +'</div>'
+    +(m.weak&&m.weak.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="tiny">Weak areas →</span>'+m.weak.map(relPill).join("")+'</div>':"")
+  +'</div>';
+}
+function viewMocks(){
+  const n=S.mocks.length;
+  const avg=k=>n?Math.round(S.mocks.reduce((a,m)=>a+(+m[k]||0),0)/n):0;
+  const best=n?Math.max.apply(null,S.mocks.map(m=>+m.percentile||0)):0;
+  return '<div class="hero-head"><div><h2>Mock Test Tracker</h2>'
+  +'<div class="sub">Every mock is a mirror. Log it, find weak areas, fix them.</div></div>'
+  +'<button class="btn primary" style="margin-left:auto" data-action="open-add-mock">'+ICONS.plus+' Log Mock</button></div>'
+  +'<div class="stat-grid">'
+    +'<div class="stat"><div class="k">Mocks taken</div><div class="v">'+n+'</div><div class="f">total logged</div></div>'
+    +'<div class="stat"><div class="k">Avg percentile</div><div class="v" style="color:var(--blue)">'+(n?avg("percentile"):"—")+'</div><div class="f">across all mocks</div></div>'
+    +'<div class="stat"><div class="k">Avg accuracy</div><div class="v" style="color:var(--green)">'+(n?avg("accuracy")+"%":"—")+'</div><div class="f">attempt precision</div></div>'
+    +'<div class="stat"><div class="k">Best percentile</div><div class="v" style="color:var(--purple)">'+(n?best:"—")+'</div><div class="f">personal best</div></div>'
+  +'</div>'
+  +(n?'<div class="card section-gap"><div class="card-h"><h2>📈 Score Trend</h2>'
+    +'<div class="legend" style="margin-left:auto"><span><i style="background:var(--blue)"></i>Percentile</span><span><i style="background:var(--green)"></i>Accuracy</span></div></div>'
+    +'<div class="chart-wrap">'+mockChart()+'</div></div>':"")
+  +'<div class="section-gap" style="display:grid;gap:12px">'
+    +(n? S.mocks.slice().sort((a,b)=>(a.date||"")<(b.date||"")?1:-1).map(mockCard).join("")
+      :'<div class="empty"><div class="ic">📈</div><b>No mocks yet</b><p>Log your first mock test.</p></div>')
+  +'</div>';
+}
+function mockModal(m){
+  openModal(m?"Edit Mock":"Log Mock Test",
+  '<div class="frow"><label>Mock title</label><input class="inp" name="title" value="'+esc(m?m.title:"")+'" placeholder="e.g. CGL PYQ 2025"></div>'
+  +'<div class="f2">'
+    +'<div class="frow"><label>Test date</label><input class="inp" type="date" name="date" value="'+((m&&m.date)||todayISO())+'"></div>'
+    +'<div class="frow"><label>Exam type</label><select class="inp" name="type">'+selOpts(MOCK_TYPES,m?m.type:"CGL FULL")+'</select></div>'
+  +'</div>'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px" class="frow">'
+    +'<div><label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">Raw score</label><input class="inp" type="number" step="any" name="raw" value="'+(m?m.raw:"")+'"></div>'
+    +'<div><label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">Percentile</label><input class="inp" type="number" step="any" min="0" max="100" name="percentile" value="'+(m?m.percentile:"")+'"></div>'
+    +'<div><label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">Accuracy %</label><input class="inp" type="number" step="any" min="0" max="100" name="accuracy" value="'+(m?m.accuracy:"")+'"></div>'
+  +'</div>'
+  +'<div class="frow"><label>Weak areas (links to syllabus)</label>'+pickerHTML("weak",(m&&m.weak)||[],true)+'</div>',
+  v=>{ if(!v.title){ toast("⚠️ Mock title is required"); return false; }
+    const data={title:v.title,date:v.date||todayISO(),type:v.type,raw:parseFloat(v.raw)||0,percentile:parseFloat(v.percentile)||0,accuracy:parseFloat(v.accuracy)||0,weak:pickVals(v.weak)};
+    if(m) Object.assign(m,data); else S.mocks.push(Object.assign({id:uid("m")},data));
+    save(); rerender(); toast(m?"Mock updated":"Mock logged 🎯"); },
+  m?"Save changes":"Log mock");
+}
+
+/* ==================== VIEW: TASKS ==================== */
+const tf={f:"all"};
+function taskCard(t){
+  const od=t.due&&diffD(t.due,todayISO())<0&&t.status!=="Completed";
+  const pc=t.priority?(t.priority.indexOf("High")===0?"var(--pink)":t.priority==="Medium"?"var(--yellow)":"var(--green)"):"";
+  return '<div class="task-card" data-id="'+t.id+'">'
+    +'<div class="tt">'+esc(t.title)+'</div>'
+    +'<div class="tm">'
+      +(t.priority?'<span class="pill" style="color:'+pc+'"><i class="dot" style="background:'+pc+'"></i>'+esc(t.priority)+'</span>':"")
+      +(t.due?'<span class="'+(od?"tag-overdue":diffD(t.due,todayISO())===0?"tag-today":"tag-future")+'">'+fmtD(t.due)+(od?" · overdue":"")+'</span>':"")
+      +(t.tbS?'<span class="tb-chip">⏱ '+esc(t.tbS)+(t.tbE?"–"+esc(t.tbE):"")+'</span>':"")
+    +'</div>'
+    +(t.progress?'<div class="prog">📝 '+esc(t.progress)+'</div>':"")
+    +'<div class="acts">'
+      +(t.status!=="Completed"
+        ?'<button class="btn sm '+(t.status==="In Progress"?"green":"")+'" data-action="task-advance" data-id="'+t.id+'">'+(t.status==="In Progress"?"✓ Complete":"▸ Start")+'</button>'
+        :'<button class="btn sm ghost" data-action="task-reopen" data-id="'+t.id+'">↺ Reopen</button>')
+      +'<button class="mini-icon" data-action="timer-start-task" data-id="'+t.id+'" title="Focus">⏱</button>'
+      +'<button class="mini-icon" data-action="edit-task" data-id="'+t.id+'">'+ICONS.pencil+'</button>'
+      +'<button class="mini-icon danger" data-action="del-task" data-id="'+t.id+'">'+ICONS.trash+'</button>'
+    +'</div></div>';
+}
+function renderBoard(){
+  const el=$("#task-board"); if(!el) return;
+  let list=S.tasks;
+  if(tf.f==="today") list=list.filter(t=>t.due===todayISO()||t.tbS);
+  if(tf.f==="high") list=list.filter(t=>(t.priority||"").indexOf("High")===0);
+  el.innerHTML=TASK_STATUS.map(st=>{
+    const items=list.filter(t=>t.status===st);
+    const dot=st==="Next Up"?"var(--text3)":st==="In Progress"?"var(--yellow)":"var(--green)";
+    return '<div class="bcol"><div class="bcol-h"><i class="sdot" style="width:8px;height:8px;border-radius:3px;background:'+dot+'"></i>'+st+'<span class="cnt">'+items.length+'</span></div>'
+      +(items.map(taskCard).join("")||'<div class="tiny" style="padding:6px 8px">Nothing here</div>')+'</div>';
+  }).join("");
+}
+function viewTasks(){
+  return '<div class="hero-head"><div><h2>One Step Closer</h2>'
+  +'<div class="sub">Time-blocked execution board — Next Up → In Progress → Completed</div></div>'
+  +'<button class="btn primary" style="margin-left:auto" data-action="open-add-task">'+ICONS.plus+' Task</button></div>'
+  +'<div class="chips" id="task-chips">'+[["all","All tasks"],["today","Today's plan"],["high","High 🔥"]]
+    .map(p=>'<button class="chip'+(tf.f===p[0]?" on":"")+'" data-tf="'+p[0]+'">'+p[1]+'</button>').join("")+'</div>'
+  +'<div class="board section-gap" id="task-board"></div>';
+}
+function postTasks(){
+  renderBoard();
+  const el=$("#task-chips"); if(el) el.addEventListener("click",e=>{ const b=e.target.closest("[data-tf]"); if(!b) return;
+    tf.f=b.dataset.tf; $$("#task-chips .chip").forEach(c=>c.classList.toggle("on",c===b)); renderBoard(); });
+}
+function taskModal(t){
+  openModal(t?"Edit Task":"New Task",
+  '<div class="frow"><label>Task</label><input class="inp" name="title" value="'+esc(t?t.title:"")+'" placeholder="e.g. GEO+POL (3–6pm)"></div>'
+  +'<div class="f2">'
+    +'<div class="frow"><label>Status</label><select class="inp" name="status">'+selOpts(TASK_STATUS,t?t.status:"Next Up")+'</select></div>'
+    +'<div class="frow"><label>Priority</label><select class="inp" name="priority"><option value="">—</option>'+selOpts(TASK_PRI,t?t.priority:"")+'</select></div>'
+  +'</div>'
+  +'<div class="frow"><label>Due date</label><input class="inp" type="date" name="due" value="'+((t&&t.due)||"")+'"></div>'
+  +'<div class="f2">'
+    +'<div class="frow"><label>Time block start</label><input class="inp" type="time" name="tbS" value="'+((t&&t.tbS)||"")+'"></div>'
+    +'<div class="frow"><label>Time block end</label><input class="inp" type="time" name="tbE" value="'+((t&&t.tbE)||"")+'"></div>'
+  +'</div>'
+  +'<div class="frow"><label>Progress note</label><textarea class="inp" name="progress" rows="2" placeholder="Where did you stop?">'+esc(t?t.progress:"")+'</textarea></div>',
+  v=>{ if(!v.title){ toast("⚠️ Task name is required"); return false; }
+    const data={title:v.title,status:v.status,priority:v.priority,due:v.due||"",tbS:v.tbS||"",tbE:v.tbE||"",progress:v.progress||""};
+    if(t) Object.assign(t,data); else S.tasks.push(Object.assign({id:uid("k")},data));
+    save(); rerender(); toast(t?"Task updated":"Task added ✅"); },
+  t?"Save changes":"Add task");
+}
+
+/* ==================== VIEW: SYSTEM OVER SELF ==================== */
+let weekOff=0;
+function mondayOf(off){ const d=new Date(); d.setDate(d.getDate()-((d.getDay()+6)%7)+(off||0)*7); return d; }
+function weekKey(){ return iso(mondayOf(weekOff)); }
+function weekStats(off){ const m=S.habits[iso(mondayOf(off===undefined?weekOff:off))]||{}; let c=0;
+  Object.keys(m).forEach(k=>Object.keys(m[k]).forEach(h=>{if(m[k][h])c++;}));
+  return {c:c,pct:Math.round(c/42*100)}; }
+function viewSystem(){
+  const wk=weekKey(), m=S.habits[wk]||{}, st=weekStats(), start=mondayOf(weekOff);
+  const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+6);
+  return '<div class="hero-head"><div><h2>System Over Self</h2>'
+  +'<div class="sub">Weekly execution — motivation is unreliable, systems aren\'t. Goal: beat 50%.</div></div></div>'
+  +'<div class="card">'
+    +'<div class="card-h"><h2>Week of '+fmtD(iso(start))+' – '+fmtD(iso(end))+'</h2>'
+      +'<span class="sub" style="display:flex;gap:6px">'
+        +'<button class="btn sm ghost" data-action="week-prev">‹ Prev</button>'
+        +'<button class="btn sm ghost" data-action="week-today">This week</button>'
+        +'<button class="btn sm ghost" data-action="week-next">Next ›</button></span></div>'
+    +'<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:2px">'
+      +'<span id="wk-pct" style="font-size:30px;font-weight:750;letter-spacing:-.02em;color:'+(st.pct>=50?"var(--green)":"var(--text)")+'">'+st.pct+'%</span>'
+      +'<span class="muted small" id="wk-cnt">'+st.c+' of 42 actions · goal &gt;50%</span></div>'
+    +'<div class="goal-bar"><div class="goal-fill" style="width:'+Math.min(100,st.pct)+'%"></div><div class="goal-marker"><span>GOAL 50%</span></div></div>'
+  +'</div>'
+  +'<div class="habit-grid section-gap">'
+    +DAYS.map((d,i)=>{
+      const dd=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i), dISO=iso(dd);
+      const dm=m[i]||{}, done=Object.keys(dm).filter(k=>dm[k]).length, isT=dISO===todayISO();
+      return '<div class="hday'+(isT?" today":"")+'">'
+        +'<div class="dh"><b>'+d+'</b><span class="tiny">'+fmtD(dISO)+(isT?" · Today":"")+'</span><span class="pct" data-daypct="'+i+'">'+done+'/6</span></div>'
+        +HABITS.map(g=>'<div class="hgroup">'+g.g+'</div>'+g.items.map(it=>{
+          const hid=g.g+"|"+it, on=!!dm[hid];
+          return '<div class="hcheck'+(on?" on":"")+'" role="checkbox" aria-checked="'+on+'" tabindex="0" data-action="habit" data-day="'+i+'" data-hid="'+esc(hid)+'">'
+            +'<span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>'+it+'</div>';
+        }).join("")).join("")
+      +'</div>'; }).join("")
+  +'</div>'
+  +'<div class="card section-gap">'
+    +'<div class="card-h"><h2>⚙️ Data &amp; Sync</h2></div>'
+    +'<div class="chips">'
+      +'<button class="btn" data-action="open-settings">Settings</button>'
+      +'<button class="btn" data-action="export-data">⬇ Export JSON</button>'
+      +'<button class="btn" data-action="import-data">⬆ Import JSON</button>'
+      +'<button class="btn danger" data-action="reset-data">Reset to Notion import</button>'
+    +'</div>'
+    +'<p class="tiny" style="margin-top:10px">Sync status: <b>'+syncStatus+'</b>. Open Settings to connect Firebase for cross-device sync.</p>'
+  +'</div>';
+}
+
+/* ==================== TOPIC MODAL ==================== */
+function topicModal(t){
+  openModal(t?"Edit Topic":"Add Topic", topicForm(t),
+  v=>{ if(!v.topic){ toast("⚠️ Topic name is required"); return false; }
+    const data={topic:v.topic,subject:v.subject,status:v.status,priority:v.priority,weightage:v.weightage,remarks:v.remarks||"",
+      exams:Array.isArray(v.exams)?v.exams:(v.exams?[v.exams]:[])};
+    if(t) Object.assign(t,data); else S.syllabus.push(Object.assign({id:uid("t")},data));
+    save(); rerender(); toast(t?"Topic updated":"Topic added 📖"); },
+  t?"Save changes":"Add topic");
+}
+
+/* ==================== ACTIONS ==================== */
+const ACTIONS={
+  "complete-review":id=>completeReview(id),
+  "open-add-session":()=>sessionModal(),
+  "edit-session":id=>sessionModal(S.sessions.find(x=>x.id===id)),
+  "del-session":id=>openConfirm("Delete this study session?",()=>{S.sessions=S.sessions.filter(x=>x.id!==id);save();rerender();toast("Session deleted");}),
+  "open-add-topic":()=>topicModal(),
+  "edit-topic":id=>topicModal(topicById(id)),
+  "del-topic":id=>openConfirm("Delete this topic? Linked sessions, errors and mock weak-areas will be kept but unlinked.",()=>{
+    S.sessions.forEach(s=>{if(s.topicId===id)s.topicId=null;});
+    S.errors.forEach(e=>{if(e.topicId===id)e.topicId=null;});
+    S.mocks.forEach(m=>{m.weak=(m.weak||[]).filter(w=>w!==id);});
+    S.resources.forEach(r=>{if(r.topicId===id)r.topicId=null;});
+    S.syllabus=S.syllabus.filter(x=>x.id!==id);save();rerender();toast("Topic deleted");}),
+  "start-topic":id=>{ const t=topicById(id); if(t){ t.status="Learning"; save(); rerender(); toast("▸ Started: "+esc(t.topic)); } },
+  "goto-topic":id=>{ const t=topicById(id); sf.q=t?t.topic.toLowerCase():""; sf.exam="All"; sf.status="All"; sf.priority="All"; sylTab="topics"; go("syllabus"); },
+  "goto-syllabus":id=>{ if(id){ ACTIONS["goto-topic"](id); } else go("syllabus"); },
+  "goto-mocks":()=>go("mocks"),
+  "goto-radar":()=>go("radar"),
+  "toggle-subj":id=>{ sf.closed[id]=!sf.closed[id];
+    const g=$('.subj-group[data-subj="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]');
+    if(g){ g.classList.toggle("closed"); const b=$(".subj-body",g); if(b) b.hidden=g.classList.contains("closed"); } },
+  "open-add-error":()=>errorModal(),
+  "edit-error":id=>errorModal(S.errors.find(x=>x.id===id)),
+  "del-error":id=>openConfirm("Delete this error entry?",()=>{S.errors=S.errors.filter(x=>x.id!==id);save();rerender();toast("Error deleted");}),
+  "open-add-mock":()=>mockModal(),
+  "edit-mock":id=>mockModal(S.mocks.find(x=>x.id===id)),
+  "del-mock":id=>openConfirm("Delete this mock test?",()=>{S.mocks=S.mocks.filter(x=>x.id!==id);save();rerender();toast("Mock deleted");}),
+  "open-add-task":()=>taskModal(),
+  "edit-task":id=>taskModal(S.tasks.find(x=>x.id===id)),
+  "del-task":id=>openConfirm("Delete this task?",()=>{S.tasks=S.tasks.filter(x=>x.id!==id);save();rerender();toast("Task deleted");}),
+  "task-advance":id=>{ const t=S.tasks.find(x=>x.id===id); if(!t) return;
+    t.status=t.status==="Next Up"?"In Progress":"Completed"; save(); rerender();
+    toast(t.status==="Completed"?"✓ Done — one step closer!":"▸ Started"); },
+  "task-reopen":id=>{ const t=S.tasks.find(x=>x.id===id); if(!t) return; t.status="Next Up"; save(); rerender(); toast("Moved back to Next Up"); },
+  "open-add-resource":()=>resourceModal(),
+  "edit-resource":id=>resourceModal((S.resources||[]).find(x=>x.id===id)),
+  "del-resource":id=>openConfirm("Delete this resource?",()=>{S.resources=S.resources.filter(x=>x.id!==id);save();rerender();toast("Resource deleted");}),
+  "habit":(id,el)=>{ const wk=weekKey(), day=el.dataset.day, hid=el.dataset.hid;
+    if(!S.habits[wk]) S.habits[wk]={}; if(!S.habits[wk][day]) S.habits[wk][day]={};
+    S.habits[wk][day][hid]=!S.habits[wk][day][hid]; save();
+    el.classList.toggle("on"); el.setAttribute("aria-checked",el.classList.contains("on"));
+    const dm=S.habits[wk][day], done=Object.keys(dm).filter(k=>dm[k]).length;
+    const dp=$('[data-daypct="'+day+'"]'); if(dp) dp.textContent=done+"/6";
+    const st=weekStats();
+    const pv=$("#wk-pct"); if(pv){ pv.textContent=st.pct+"%"; pv.style.color=st.pct>=50?"var(--green)":"var(--text)"; }
+    const pc=$("#wk-cnt"); if(pc) pc.textContent=st.c+" of 42 actions · goal >50%";
+    const gf=$(".goal-fill"); if(gf) gf.style.width=Math.min(100,st.pct)+"%"; },
+  "week-prev":()=>{ weekOff--; rerender(); },
+  "week-next":()=>{ weekOff++; rerender(); },
+  "week-today":()=>{ weekOff=0; rerender(); },
+  "timer-start-task":id=>{ const t=S.tasks.find(x=>x.id===id); if(!t) return;
+    timerStart({label:t.title,taskId:id,topicId:null}); toast("⏱ Timer started","Click the top-bar pill to stop"); },
+  "timer-start-topic":id=>{ const t=topicById(id); if(!t) return;
+    timerStart({label:t.topic,topicId:id,taskId:null}); toast("⏱ Timer started","Click the top-bar pill to stop"); },
+  "timer-start-session":id=>{ const s=S.sessions.find(x=>x.id===id); if(!s) return;
+    timerStart({label:s.name,topicId:s.topicId||null,taskId:null}); toast("⏱ Timer started","Click the top-bar pill to stop"); },
+  "timer-stop":()=>timerStop(false),
+  "timer-cancel":()=>timerStop(true),
+  "open-settings":()=>openSettings(),
+  "gen-room":()=>{ const code=(Math.random().toString(36).slice(2,6)+"-"+Math.random().toString(36).slice(2,6)+"-"+Math.random().toString(36).slice(2,6)).toUpperCase();
+    const inp=$('.modal [name="roomCode"]'); if(inp){ inp.value=code; toast("Room code generated","Press Save to connect"); } },
+  "sync-push":()=>pushNow(false),
+  "sync-pull":()=>{ if(!S.sync.enabled||!S.sync.room){ toast("⚠️ Not connected"); return; } startSync(); toast("⬇ Checking cloud…"); },
+  "sync-disable":()=>{ S.sync.enabled=false; save(); stopSync(); toast("Disconnected","Local-only mode"); closeModal(); },
+  "notif-enable":async()=>{ const ok=await requestNotifPerm(); if(ok){ S.settings.notifEnabled=true; save(); toast("✓ Notifications on"); closeModal(); openSettings(); } },
+  "notif-test":async()=>{ const ok=await requestNotifPerm(); if(!ok) return;
+    try{ new Notification("Exam OS — test",{body:"Notifications are working. You'll get reminded at "+S.settings.notifTime+"."}); toast("✓ Test sent"); }catch(e){ toast("⚠️ Test failed"); } },
+  "export-data":()=>{ try{
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="exam-os-backup-"+todayISO()+".json"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000); toast("Backup exported ⬇");
+  }catch(e){ toast("⚠️ Export failed"); } },
+  "import-data":()=>{ const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json,.json";
+    inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const r=new FileReader();
+      r.onload=()=>{ try{ const d=JSON.parse(r.result);
+        if(!d||!Array.isArray(d.syllabus)||!Array.isArray(d.sessions)) throw new Error("bad");
+        S=d; save(); rerender(); toast("Backup restored ✓");
+      }catch(e){ toast("⚠️ Invalid backup file"); } };
+      r.readAsText(f); };
+    inp.click(); },
+  "reset-data":()=>{ openModal("Reset everything?",
+    '<p class="muted small">This wipes every edit and restores the original Notion import. Your Firebase config is kept.</p>',
+    ()=>{ S=seedState(); save(); rerender(); toast("Restored original Notion import ✓"); },"Reset");
+    const b=$("[data-msave]"); if(b){ b.classList.remove("primary"); b.classList.add("danger"); } }
+};
+const CHANGES={
+  "syl-status":(id,el)=>{ const t=topicById(id); if(!t) return; t.status=el.value; save(); renderSylList(); },
+  "syl-priority":(id,el)=>{ const t=topicById(id); if(!t) return; t.priority=el.value; save(); renderSylList(); },
+  "syl-weight":(id,el)=>{ const t=topicById(id); if(!t) return; t.weightage=el.value; save(); renderSylList(); },
+  "sess-logdate":(id,el)=>{ const s=S.sessions.find(x=>x.id===id); if(!s) return; s.logDate=el.value||null; save(); rerender(); },
+  "sess-reviewed":(id,el)=>{ const s=S.sessions.find(x=>x.id===id); if(!s) return; s.lastReviewed=el.value||null; save(); rerender(); },
+  "err-date":(id,el)=>{ const er=S.errors.find(x=>x.id===id); if(!er) return; er.date=el.value; save(); }
+};
+
+/* ==================== MAPS & INIT ==================== */
+const VIEWS={dashboard:viewDashboard,syllabus:viewSyllabus,radar:viewRadar,reviews:viewReviews,tasks:viewTasks,errors:viewErrors,mocks:viewMocks,system:viewSystem};
+const POST={syllabus:postSyllabus,reviews:postReviews,errors:postErrors,tasks:postTasks};
+
+try{
+  buildNav();
+  const sub=$("#brand-sub"); if(sub&&S.settings.userName) sub.textContent=S.settings.userName+" · CGL · CHSL · RBI";
+
+  document.addEventListener("click",e=>{
+    const b=e.target.closest("[data-nav]"); if(b){ e.preventDefault(); go(b.dataset.nav); return; }
+    const st=e.target.closest("[data-stab]"); if(st){ e.preventDefault(); sylTab=st.dataset.stab; rerender(); return; }
+  });
+  document.addEventListener("click",e=>{
+    const el=e.target.closest("[data-action]"); if(!el) return;
+    const fn=ACTIONS[el.dataset.action];
+    if(fn){ e.preventDefault(); fn(el.dataset.id,el,e); }
+  });
+  document.addEventListener("change",e=>{
+    const el=e.target.closest("[data-change]"); if(!el) return;
+    const fn=CHANGES[el.dataset.change]; if(fn) fn(el.dataset.id,el);
+  });
+  document.addEventListener("keydown",e=>{
+    const el=e.target&&e.target.closest?e.target.closest(".hcheck"):null;
+    if(el&&(e.key===" "||e.key==="Enter")){ e.preventDefault(); ACTIONS.habit(null,el); }
+  });
+
+  const sb=$("#settings-btn"); if(sb) sb.addEventListener("click",()=>openSettings());
+  const tp=$("#timer-pill"); if(tp) tp.addEventListener("click",()=>{ if(TMR.running) timerStop(false); else timerStart({label:"Focus"}); });
+  const sp=$("#sync-pill"); if(sp) sp.addEventListener("click",()=>openSettings());
+
+  window.addEventListener("hashchange",renderRoute);
+  if(!location.hash){ try{ history.replaceState(null,"","#/dashboard"); }catch(err){} }
+
+  renderRoute();
+  updateTimerUI();
+  updateSyncPill();
+
+  /* auto-connect if configured */
+  if(S.sync.enabled&&S.sync.room&&FBCFG.apiKey){ setTimeout(()=>startSync(),400); }
+}catch(err){
+  fatal("Startup: "+err.message);
+}
+</script>
+</body>
+</html>
