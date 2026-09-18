@@ -6728,5 +6728,193 @@ document.addEventListener("visibilitychange",function(){
   }
 });
 </script>
+<script>
+/* Apex Backup Health v3 - pure ASCII */
+;(function(){
+try{
+  if(window._apexBackupHealth)return;
+  if(typeof S==="undefined"||typeof ACTIONS==="undefined"){return;}
+  window._apexBackupHealth=true;
+  if(typeof S.settings.lastExport==="undefined")S.settings.lastExport="";
+  if(typeof S.settings.lastExportCount==="undefined")S.settings.lastExportCount=0;
+  if(typeof S.settings.dismissedBackupWeek==="undefined")S.settings.dismissedBackupWeek="";
+  if(typeof S.settings.autoExportEvery==="undefined")S.settings.autoExportEvery=20;
+
+  function weekKey(){
+    var d=new Date(),day=d.getDay(),off=(day===0?-6:1-day);
+    var mon=new Date(d.getFullYear(),d.getMonth(),d.getDate()+off);
+    return mon.getFullYear()+"-"+String(mon.getMonth()+1).padStart(2,"0")+"-"+String(mon.getDate()).padStart(2,"0");
+  }
+  function daysSince(iso){
+    if(!iso)return null;
+    var t=new Date(iso).getTime();
+    if(!t)return null;
+    return Math.floor((Date.now()-t)/86400000);
+  }
+  function hasData(){
+    return (S.sessions.length+S.errors.length+S.mocks.length+S.tasks.length+Object.keys(S.habits||{}).length+(S.focusLog||[]).length)>0;
+  }
+  function doExport(){
+    try{
+      var blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+      var a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download="apex-backup-"+todayISO()+".json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){URL.revokeObjectURL(a.href);},2500);
+      S.settings.lastExport=new Date().toISOString();
+      S.settings.lastExportCount=S.sessions.length;
+      S.settings.dismissedBackupWeek="";
+      try{store.set(KEY,JSON.stringify(S));}catch(e){}
+      info.textContent=dd===null?("No backup yet - "+cnt+" sessions on this device"):("Last export "+dd+"d ago - "+since+" sessions since");
+      var w=document.getElementById("apex-backup-warn");
+      if(w)w.remove();
+    }catch(e){toast("Export failed");}
+  }
+  function dismissWarn(){
+    S.settings.dismissedBackupWeek=weekKey();
+    try{store.set(KEY,JSON.stringify(S));}catch(e){}
+    var w=document.getElementById("apex-backup-warn");
+    if(w)w.remove();
+  }
+  function shouldWarn(){
+    if(S.settings.dismissedBackupWeek===weekKey())return false;
+    if(!hasData())return false;
+    var d=daysSince(S.settings.lastExport);
+    var since=S.sessions.length-(S.settings.lastExportCount||0);
+    var every=S.settings.autoExportEvery||20;
+    if(d===null)return true;
+    return d>=7||since>=every;
+  }
+  function injectBanner(){
+    if(route()!=="dashboard")return;
+    if(!shouldWarn()){
+      var ex=document.getElementById("apex-backup-warn");
+      if(ex)ex.remove();
+      return;
+    }
+    if(document.getElementById("apex-backup-warn"))return;
+    var v=document.getElementById("view");
+    if(!v)return;
+    var anchor=v.querySelector(".hero-head");
+    if(!anchor)return;
+    var d=daysSince(S.settings.lastExport);
+    var since=S.sessions.length-(S.settings.lastExportCount||0);
+    var every=S.settings.autoExportEvery||20;
+    var title,msg;
+    if(d===null){title="No backup yet";msg="You have data. Export once and you are safe from accidental browser clears.";}
+    else if(d>=30){title="Last export was "+d+" days ago";msg="Long gap. One click protects everything.";}
+    else if(since>=every){title=since+" new sessions since last export";msg="Routine backup keeps you safe from browser data clears.";}
+    else{title="Last export was "+d+" days ago";msg="Weekly backups keep you safe. Takes 2 seconds.";}
+    var b=document.createElement("div");
+    b.id="apex-backup-warn";
+    b.className="card";
+    b.style.cssText="border-left:3px solid var(--pri-medium-fg);padding:14px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap";
+    b.innerHTML="<div style=\"flex:1;min-width:220px\"><div style=\"font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:-.01em;margin-bottom:3px\">"+esc(title)+"</div><div class=\"tiny\" style=\"line-height:1.55\">"+esc(msg)+"</div></div><div style=\"display:flex;gap:8px;flex-wrap:wrap\"><button class=\"btn primary sm\" data-action=\"export-data\">Export now</button><button class=\"btn ghost sm\" data-action=\"dismiss-backup-warn\">Dismiss this week</button></div>";
+    anchor.parentNode.insertBefore(b,anchor.nextSibling);
+  }
+  function openTestImport(){
+    var inp=document.createElement("input");
+    inp.type="file";
+    inp.accept=".json,application/json";
+    inp.onchange=function(){
+      var f=inp.files[0];
+      if(!f)return;
+      var r=new FileReader();
+      r.onload=function(){
+        try{
+          var d=JSON.parse(r.result);
+          var err=(typeof validateImport==="function")?validateImport(d):null;
+          if(err){toast("Invalid backup",err);return;}
+          reportImport(d,f.name,f.size);
+        }catch(e){toast("Parse failed",e.message);}
+      };
+      r.readAsText(f);
+    };
+    inp.click();
+  }
+  function reportImport(d,filename,size){
+    var rows=[["Syllabus",(d.syllabus||[]).length,S.syllabus.length],["Sessions",(d.sessions||[]).length,S.sessions.length],["Errors",(d.errors||[]).length,S.errors.length],["Mocks",(d.mocks||[]).length,S.mocks.length],["Tasks",(d.tasks||[]).length,S.tasks.length],["Habits days",Object.keys(d.habits||{}).length,Object.keys(S.habits||{}).length],["Focus log",(d.focusLog||[]).length,(S.focusLog||[]).length],["Scratch items",(d.scratch||[]).length,(S.scratch||[]).length]];
+    var sv=(typeof SCHEMA_VERSION!=="undefined")?SCHEMA_VERSION:99;
+    var iv=d.schemaVersion||1;
+    var note=iv<=sv?"<span style=\"color:var(--pri-low-fg)\">Schema v"+iv+" compatible</span>":"<span style=\"color:var(--pri-critical-fg)\">Schema v"+iv+" newer than app v"+sv+"</span>";
+    var rowsHTML=rows.map(function(r){
+      var label=r[0],incoming=r[1],current=r[2],diff=incoming-current;
+      var dc=diff>0?"var(--pri-low-fg)":diff<0?"var(--pri-critical-fg)":"var(--text-3)";
+      var dt=diff===0?"0":(diff>0?"+":"")+diff;
+      return "<tr><td style=\"padding:8px 10px;font-family:JetBrains Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)\">"+esc(label)+"</td><td style=\"padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600\">"+incoming+"</td><td style=\"padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums;color:var(--text-3)\">"+current+"</td><td style=\"padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums;color:"+dc+";font-weight:700\">"+dt+"</td></tr>";
+    }).join("");
+    var body="<div class=\"sub-h\">"+esc(filename)+" - "+(size/1024).toFixed(1)+" KB</div><div style=\"margin:6px 0 16px;font-size:12.5px\">"+note+"</div><div class=\"detail-block\" style=\"padding:0;overflow:hidden\"><table style=\"width:100%;border-collapse:collapse\"><thead><tr><th style=\"padding:9px 10px;text-align:left;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)\">Section</th><th style=\"padding:9px 10px;text-align:right;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)\">In file</th><th style=\"padding:9px 10px;text-align:right;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)\">You now</th><th style=\"padding:9px 10px;text-align:right;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)\">Diff</th></tr></thead><tbody>"+rowsHTML+"</tbody></table></div><div class=\"tiny\" style=\"margin-top:14px;line-height:1.6;padding:10px 12px;background:var(--surface-2);border-radius:6px\"><b style=\"color:var(--text)\">Dry run - nothing changed.</b> Close this and use Settings - Data - Import to actually apply.</div>";
+    openModal("Test import - dry run",body,function(){},"Close");
+    var sv2=document.querySelector("[data-msave]");
+    if(sv2)sv2.style.display="none";
+  }
+
+  ACTIONS["export-data"]=doExport;
+  ACTIONS["test-import"]=openTestImport;
+  ACTIONS["dismiss-backup-warn"]=dismissWarn;
+
+  var viewEl=document.getElementById("view");
+  if(viewEl&&!window._apexViewObs){
+    var obs=new MutationObserver(function(){setTimeout(injectBanner,30);});
+    obs.observe(viewEl,{childList:true,subtree:false});
+    window._apexViewObs=obs;
+  }
+  if(typeof window.openSettings==="function"&&!window._apexSettingsPatched){
+    window._apexSettingsPatched=true;
+    var orig=window.openSettings;
+    window.openSettings=function(){
+      orig.apply(this,arguments);
+      setTimeout(function(){
+        var modal=document.querySelector(".modal");
+        if(!modal)return;
+        var secs=[].slice.call(modal.querySelectorAll(".sett-section"));
+        var ds=secs.filter(function(s){var h=s.querySelector("h4");return h&&/^Data/i.test(h.textContent);})[0];
+        if(!ds)return;
+        var chips=ds.querySelector(".chips");
+        if(chips&&!chips.querySelector("[data-action='test-import']")){
+          var b=document.createElement("button");
+          b.className="btn";
+          b.setAttribute("data-action","test-import");
+          b.textContent="Test import";
+          var rb=chips.querySelector("[data-action='reset-data']");
+          if(rb)chips.insertBefore(b,rb);
+          else chips.appendChild(b);
+        }
+        if(!ds.querySelector(".apex-last-export")){
+          var info=document.createElement("div");
+          info.className="apex-last-export hint";
+          info.style.cssText="margin-top:12px;font-family:JetBrains Mono,monospace;font-size:10.5px;letter-spacing:.04em;color:var(--text-3)";
+          var dd=daysSince(S.settings.lastExport);
+          var cnt=S.sessions.length;
+          var since=cnt-(S.settings.lastExportCount||0);
+          info.textContent=dd===null?("No export yet - "+cnt+" sessions on this device"):("Last export "+dd+"d ago - "+since+" sessions since");
+          ds.appendChild(info);
+        }
+      },80);
+    };
+  }
+  setTimeout(injectBanner,300);
+  if(!window._apexRenderHooked){
+    window._apexRenderHooked=true;
+    var _orig=window.renderRoute||renderRoute;
+    var _hook=function(){
+      try{_orig.apply(this,arguments);}catch(e){}
+      setTimeout(injectBanner,20);
+    };
+    if(typeof renderRoute==="function"&&window.renderRoute!==undefined){
+      window.renderRoute=_hook;
+    }else{
+      try{renderRoute=_hook;}catch(e){}
+    }
+  }
+  console.log("[Apex Backup Health] installed");
+}catch(e){console.error("[Apex Backup Health]",e);}
+})();
+</script>
+</body>
+</html>
 </body>
 </html>
