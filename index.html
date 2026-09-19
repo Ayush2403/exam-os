@@ -1003,7 +1003,7 @@ body.sb-collapsed #main{margin-left:0}
 .icon-btn svg{width:16px;height:16px;transition:transform .32s var(--ease-out)}
 .icon-btn:hover svg{transform:scale(1.14)}
 #settings-btn:hover svg{transform:rotate(65deg) scale(1.1)}
-#notes-btn:hover svg{transform:translateY(2px)}
+#notes-btn:hover svg{transform:scale(1.14) translateY(3px)}
 #notes-btn:hover{color:var(--accent-2);border-color:var(--accent-2)}
 #help-btn:hover svg{transform:scale(1.12) rotate(-7deg)}
 .sb-toggle.on{color:var(--accent-2);border-color:var(--accent-2);background:var(--accent-glow)}
@@ -4265,14 +4265,14 @@ const SYL_RAW=[
 <script>
 const DEV_CONTACT={name:"Ayush Tomar",email:"tomarayush209@gmail.com",telegram:"netajiputin",note:"Built for my fellow aspirants. If this helps you, or if something is broken or missing, reach out."};
 const NAV_INFO={
-  dashboard:"Today's Agenda + next-action hero + readiness projection + D-Day + urgent + weak radar preview + focus time + scratch pad. The only page you need to visit daily.",
-  syllabus:"All 552 topics nested subject → topic → subtopic. Collapse/expand, drag-reorder, + for subtopics, inline study notes with LaTeX. Every other feature depends on this being accurate.",
-  radar:"Weak topics ranked by friction × importance. Friction = recent/older errors + mock fails + recall failures + overdue pressure. Importance = priority + weightage + exam proximity. Click any topic for the exact math.",
-  reviews:"Adaptive spaced repetition. Again / Hard / Good / Easy. Intervals grow with ease, shrink on failure. Auto-capped when an exam nears — nothing goes cold before exam day. 📅 badge shows which cards are capped.",
-  tasks:"Time-blocked board. Next Up → In Progress → Completed. Focus button on every task. Routine template scaffolds a full day in one click.",
-  errors:"Structured mistake log — Question / My answer / Correct approach. Errors enter the same SRS queue as sessions. Unlinked errors are invisible to the Radar.",
-  mocks:"Log mocks with percentile + section scores per exam type. Weakest section highlighted. Suggested topics to tag. Section trends chart over time.",
-  habits:"Daily study hours + workout + introspection. Milestones at 4/8/12h auto-check. Week / month / year views. 50% goal marker. Consistency beats intensity."
+  dashboard:"Your daily starting point. One recommendation at the top — do that. Log sessions with the quick bar. See what's due, your exam countdown, and your readiness score.",
+  syllabus:"All your topics. Nested subject → topic → subtopic. Click any topic to see its sessions, errors, and notes. Drag the handle to reorder.",
+  reviews:"Cards due for revision. Rate each one Again / Hard / Good / Easy. The app schedules the next review automatically — sooner if hard, later if easy.",
+  errors:"Every mistake you've logged. Each one comes back for review just like a flashcard. Fix a mistake twice and you probably won't repeat it.",
+  radar:"Your weakest topics, ranked. Higher score = needs more attention. Click a topic to see exactly why it's ranked that way.",
+  mocks:"Log every mock with its section scores. Weakest section is highlighted. Weak topics get auto-suggested so you can tag them.",
+  habits:"Log study hours, workout, and introspection daily. Milestones tick automatically. Weekly/monthly/yearly views show your consistency.",
+  guide:"How Apex works. One page, plain English. Read it once when you start."
 };
 const DEFAULT_TAX={statuses:["Not started","Learning","Practicing","Reviewing","Mastered"],priorities:["Critical","High","Medium","Low"],weights:["High","Medium","Low"],exams:["CGL","CHSL","RBI GRADE B"],errTypes:["concept missed","forgot formula","calculation slip","time trap"],errSources:["Mock Test","Sectional Mock","PYQ","Discord doubt"],mockTypes:["CGL FULL","CGL SEC","CHSL FULL","CHSL SEC","RBI FULL","RBI SEC","SBI FULL","SBI SEC","SSC","Banking","IB ACIO"],taskPri:["High 🔥","Medium","Low"],taskStatus:["Next Up","In Progress","Completed"],resSources:["Takshila","Unacademy","IBT","Study Funda","Soldier Unplugged","EduTap","Other"],resTypes:["Notes","PDF","Video","Test Series","Book","Article"],subjects:["maths","reasoning","english grammar","descriptive english","general science","geography","history","polity","economics","economical issues","finance","management","social issues","environment","CA","misc GK","defence"]};
 const DEFAULT_HABIT_DEFS=[{id:"hg1",name:"CRACK THE EXAM",type:"hours",thresholds:[4,8,12]},{id:"hg2",name:"WORKOUT",items:[{id:"hi4",label:"Run"},{id:"hi5",label:"Stretching"}]},{id:"hg3",name:"INTROSPECTION",items:[{id:"hi6",label:"Journal introspect read"}]}];
@@ -4522,7 +4522,11 @@ function migrate_12_to_13(s){
 }
 function applyIdempotentTransforms(s){
   if(!s.settings)s.settings={};
-  if(!Array.isArray(s.settings.exams))s.settings.exams=[];
+  if(!Array.isArray(S.settings.exams))S.settings.exams=[];
+if(typeof S.settings.focusDailyGoal!=="number")S.settings.focusDailyGoal=120;
+if(typeof S.settings.focusWeeklyGoal!=="number")S.settings.focusWeeklyGoal=720;
+if(typeof S.settings.ambientSound!=="string")S.settings.ambientSound="off";
+if(typeof S.settings.ambientVolume!=="number")S.settings.ambientVolume=0.15;
   if(s.settings.examDate&&!s.settings.exams.length){
     s.settings.exams=[{id:"ex_legacy",label:s.settings.examLabel||"Exam",examTag:"",date:s.settings.examDate,priority:"Primary"}];
   }
@@ -4575,7 +4579,7 @@ function migrateState(s){
   return s;
 }
 
-function seedState(){return{schemaVersion:SCHEMA_VERSION,syllabus:SYL_RAW.map((r,i)=>({id:"t"+i,topic:r[0],subject:r[1],exams:r[2]?r[2].split("|"):[],priority:r[3]||"",status:r[4]||"Not started",weightage:r[5]||"",remarks:"",parentId:null})),sessions:[],errors:[],mocks:[],tasks:[],links:[],resources:[],focusLog:[],habits:{},scratch:[],scratchNote:"",habitDefs:JSON.parse(JSON.stringify(DEFAULT_HABIT_DEFS)),tax:JSON.parse(JSON.stringify(DEFAULT_TAX)),subjectOrder:[],settings:{userName:"",notifEnabled:false,notifTime:"08:00",lastNotif:"",theme:"obsidian",welcomeDone:false,tourDone:false,contactName:"",contactEmail:"",contactTelegram:"",contactNote:"",sbCollapsed:false,examDate:"",examLabel:"",focusMusicSource:"",urgentExam:"CGL",urgentPriority:"Critical",urgentWeightage:"",exams:[],mockSectionSets:JSON.parse(JSON.stringify(DEFAULT_MOCK_SECTION_SETS))},sync:{enabled:false,room:""}};}
+function seedState(){return{schemaVersion:SCHEMA_VERSION,syllabus:SYL_RAW.map((r,i)=>({id:"t"+i,topic:r[0],subject:r[1],exams:r[2]?r[2].split("|"):[],priority:r[3]||"",status:r[4]||"Not started",weightage:r[5]||"",remarks:"",parentId:null})),sessions:[],errors:[],mocks:[],tasks:[],links:[],resources:[],focusLog:[],pyqLog:[],habits:{},scratch:[],scratchNote:"",habitDefs:JSON.parse(JSON.stringify(DEFAULT_HABIT_DEFS)),tax:JSON.parse(JSON.stringify(DEFAULT_TAX)),subjectOrder:[],settings:{userName:"",notifEnabled:false,notifTime:"08:00",lastNotif:"",theme:"obsidian",welcomeDone:false,tourDone:false,contactName:"",contactEmail:"",contactTelegram:"",contactNote:"",sbCollapsed:false,examDate:"",examLabel:"",focusMusicSource:"",urgentExam:"CGL",urgentPriority:"Critical",urgentWeightage:"",exams:[],mockSectionSets:JSON.parse(JSON.stringify(DEFAULT_MOCK_SECTION_SETS))},sync:{enabled:false,room:""}};}
 const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}};
 let FBCFG;try{FBCFG=JSON.parse(store.get(FBCFG_KEY)||"{}")||{};}catch(e){FBCFG={};}
 function saveFBCFG(){store.set(FBCFG_KEY,JSON.stringify(FBCFG));}
@@ -4648,6 +4652,7 @@ try{
   if(!S.sync)S.sync={enabled:false,room:""};
   if(!S.focusLog)S.focusLog=[];
 if(!Array.isArray(S.activity))S.activity=[];
+if(!Array.isArray(S.pyqLog))S.pyqLog=[];
 }catch(e){S=seedState();}
 function applyTheme(id){const t=THEMES.find(x=>x.id===id)||THEMES[0];document.documentElement.setAttribute("data-theme",t.id);const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.setAttribute("content",t.colors[0]);}
 function getContact(){return{name:S.settings.contactName||DEV_CONTACT.name||"",email:S.settings.contactEmail||DEV_CONTACT.email||"",telegram:(S.settings.contactTelegram||DEV_CONTACT.telegram||"").replace(/^@/,""),note:S.settings.contactNote||DEV_CONTACT.note||""};}
@@ -4742,6 +4747,25 @@ function dueErrors(){
   });
 }
 function studyStreak(){const set=new Set();S.sessions.forEach(s=>{if(s.lastReviewed)set.add(s.lastReviewed);if(s.logDate)set.add(s.logDate);});S.mocks.forEach(m=>{if(m.date)set.add(m.date);});(S.focusLog||[]).forEach(f=>{if(f.startedAt)set.add(f.startedAt.slice(0,10));});Object.keys(S.habits||{}).forEach(k=>{const day=S.habits[k];if(!day||typeof day!=="object")return;if(typeof day.studyMinutes==="number"&&day.studyMinutes>0){set.add(k);return;}const hasOther=Object.keys(day).some(key=>{if(key==="studyMinutes"||key==="hours")return false;return day[key];});if(hasOther)set.add(k);});let streak=0,cur=todayISO();if(!set.has(cur))cur=addDays(cur,-1);while(set.has(cur)){streak++;cur=addDays(cur,-1);}return streak;}
+function pyqStatsFor(topicId){
+  var rows=(S.pyqLog||[]).filter(function(p){return p.topicId===topicId;});
+  if(!rows.length)return null;
+  var attempted=0,correct=0,totalSec=0,timedRows=0;
+  rows.forEach(function(r){
+    attempted+=(r.attempted||0);
+    correct+=(r.correct||0);
+    if(r.avgTimeSec){totalSec+=r.avgTimeSec*(r.attempted||0);timedRows+=(r.attempted||0);}
+  });
+  return{
+    batches:rows.length,
+    attempted:attempted,
+    correct:correct,
+    wrong:attempted-correct,
+    accuracy:attempted?Math.round(correct/attempted*100):null,
+    avgTimeSec:timedRows?Math.round(totalSec/timedRows):null,
+    lastDate:rows.reduce(function(a,r){return !a||(r.date||"")>a?(r.date||""):a;},"")
+  };
+}
 function topicEffectiveness(id){
   const t=topicById(id);if(!t)return null;
   const sess=S.sessions.filter(s=>s.topicId===id);
@@ -4934,6 +4958,123 @@ let _focusMusicOpenedAt=0;
 let _focusHiddenAt=0;
 let _focusDistractions=0;
 let FS={panel:false,zen:false,mode:"pomodoro",phase:"focus",preset:"pomodoro",focusSec:25*60,breakSec:5*60,remaining:25*60,elapsed:0,running:false,label:"Focus session",tick:null,taskId:null,topicId:null,startedAt:null};
+var _audioCtx=null,_ambientNode=null,_warnChimed=false;
+function focusTodayMinutes(){
+  var t=todayISO();
+  return (S.focusLog||[]).filter(function(f){return f.startedAt&&f.startedAt.slice(0,10)===t;}).reduce(function(a,f){return a+(f.minutes||0);},0);
+}
+function focusWeekMinutes(){
+  var s=iso(mondayOf(0));
+  return (S.focusLog||[]).filter(function(f){return f.startedAt&&f.startedAt.slice(0,10)>=s;}).reduce(function(a,f){return a+(f.minutes||0);},0);
+}
+function focusQuality(mins,distractions){
+  if(!mins)return null;
+  var penalty=Math.min(0.5,(distractions||0)*0.1);
+  var bonus=mins>=50?0.1:(mins>=25?0.05:0);
+  return Math.max(0,Math.min(100,Math.round((1-penalty+bonus)*100)));
+}
+function ambientStart(){
+  if(!S.settings.ambientSound||S.settings.ambientSound==="off")return;
+  try{
+    if(!_audioCtx)_audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(_audioCtx.state==="suspended")_audioCtx.resume();
+    if(_ambientNode)return;
+    var seconds=10;
+    var size=_audioCtx.sampleRate*seconds;
+    var buf=_audioCtx.createBuffer(1,size,_audioCtx.sampleRate);
+    var d=buf.getChannelData(0);
+    var s=S.settings.ambientSound;
+    if(s==="rain"){
+      var b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      for(var i=0;i<size;i++){
+        var w=Math.random()*2-1;
+        b0=0.99886*b0+w*0.0555179;
+        b1=0.99332*b1+w*0.0750759;
+        b2=0.96900*b2+w*0.1538520;
+        b3=0.86650*b3+w*0.3104856;
+        b4=0.55000*b4+w*0.5329522;
+        b5=-0.7616*b5-w*0.0168980;
+        d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;
+        b6=w*0.115926;
+      }
+    } else {
+      var last=0;
+      var coeff = s==="cafe" ? 0.008 : 0.02;
+      var mult  = s==="cafe" ? 6 : 7;
+      for(var i=0;i<size;i++){
+        var w=Math.random()*2-1;
+        last=(last+coeff*w)/(1+coeff);
+        d[i]=last*mult;
+      }
+    }
+    var fadeLen=Math.floor(_audioCtx.sampleRate*1.0);
+    for(var i=0;i<fadeLen;i++){
+      var k=i/fadeLen;
+      d[i]=d[i]*k+d[size-fadeLen+i]*(1-k);
+    }
+    var src=_audioCtx.createBufferSource();src.buffer=buf;src.loop=true;
+    var f=_audioCtx.createBiquadFilter();
+    var g=_audioCtx.createGain();
+    if(s==="rain"){f.type="lowpass";f.frequency.value=4500;}
+    else if(s==="cafe"){f.type="lowpass";f.frequency.value=900;}
+    else{f.type="lowpass";f.frequency.value=2000;}
+    var vol=Math.max(0.02,Math.min(0.4,(S.settings.ambientVolume||0.12)));
+    g.gain.value=0;
+    src.connect(f);f.connect(g);g.connect(_audioCtx.destination);
+    src.start();
+    g.gain.linearRampToValueAtTime(vol,_audioCtx.currentTime+2.5);
+    _ambientNode={src:src,gain:g,filter:f};
+    console.log("[ambient] started",s,"vol",vol,"loop",seconds+"s");
+  }catch(e){console.log("[ambient] error",e.message);}
+}
+function ambientStop(){
+  if(!_ambientNode)return;
+  var n=_ambientNode;_ambientNode=null;
+  try{
+    n.gain.gain.linearRampToValueAtTime(0,_audioCtx.currentTime+0.8);
+    setTimeout(function(){try{n.src.stop();}catch(e){}},1000);
+  }catch(e){}
+}
+function focusChime(){
+  try{
+    if(!_audioCtx)_audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    var o=_audioCtx.createOscillator(),g=_audioCtx.createGain();
+    o.connect(g);g.connect(_audioCtx.destination);
+    o.frequency.value=523.25;
+    g.gain.value=0.04;
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.001,_audioCtx.currentTime+0.6);
+    setTimeout(function(){try{o.stop();}catch(e){}},700);
+  }catch(e){}
+}
+function focusHistoryModal(){
+  var logs=(S.focusLog||[]).slice().sort(function(a,b){return (b.startedAt||"").localeCompare(a.startedAt||"");}).slice(0,40);
+  var totalToday=focusTodayMinutes(),totalWeek=focusWeekMinutes();
+  var body='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">'
+    +'<div class="detail-block" style="text-align:center;margin:0"><div class="tiny">Today</div><div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--accent-2)">'+totalToday+'m</div></div>'
+    +'<div class="detail-block" style="text-align:center;margin:0"><div class="tiny">This week</div><div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--accent-2)">'+totalWeek+'m</div></div>'
+    +'</div>';
+  if(!logs.length){body+='<div class="empty" style="padding:24px 12px"><b>Nothing yet</b><p>Complete a focus block to see it here.</p></div>';}
+  else{
+    body+='<div style="font:700 10px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px">Recent sessions</div>';
+    body+=logs.map(function(f){
+      var t=f.topicId?topicById(f.topicId):null;
+      var when=f.startedAt?f.startedAt.slice(0,10):"";
+      var time=f.startedAt?f.startedAt.slice(11,16):"";
+      var q=f.quality!=null?f.quality:null;
+      var qc=q!=null?(q>=80?"#10B981":q>=50?"#F59E0B":"#EF4444"):"var(--text-3)";
+      var qt=q!=null?(q+"%"):"—";
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--surface-2);margin-bottom:6px">'
+        +'<div style="flex:0 0 62px;font-family:JetBrains Mono,monospace;font-size:11px;color:var(--text-3);line-height:1.4">'+when+'<br>'+time+'</div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.label||"Focus session")+'</div><div class="tiny" style="margin-top:2px">'+(t?esc(t.topic):"No topic")+(f.win?' · ✓':"")+(f.gap?' · ⚠':"")+'</div></div>'
+        +'<div style="flex:0 0 46px;text-align:right"><div style="font-family:var(--font-display);font-weight:700;font-size:15px">'+(f.minutes||0)+'m</div><div class="tiny" style="color:'+qc+'">'+qt+'</div></div>'
+        +'</div>';
+    }).join("");
+  }
+  openModal("Focus history",body,function(){},"Close");
+  var sv=document.querySelector("[data-msave]");
+  if(sv)sv.style.display="none";
+}
 function focusPreset(id){return FOCUS_PRESETS.find(p=>p.id===id)||FOCUS_PRESETS[1];}
 function focusTotal(){return FS.phase==="focus"?FS.focusSec:FS.breakSec;}
 function focusClock(){if(FS.mode==="stopwatch"){const t=Math.max(0,FS.elapsed);const h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=t%60;return(h>0?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");}const m=Math.floor(Math.max(0,FS.remaining)/60),s=Math.max(0,FS.remaining)%60;return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");}
@@ -4972,14 +5113,15 @@ function focusPanelRender(){
     +'<div class="fp-label">'+esc(FS.label||"Focus session")+'</div>'
     +'<div class="fp-pomos" style="text-align:center;font-family:JetBrains Mono,monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-3);margin:-6px 0 10px"><span style="color:var(--accent-2);font-weight:700">'+_pomoCount()+'</span> blocks today</div>'
     +presetsHTML
-    +focusMusicHTML()
+    +focusTargetsHTML()
+    +focusSoundsHTML()
     +'<div class="fp-controls">'
       +(FS.running?'<button class="btn primary wide" data-action="focus-pause">⏸ Pause</button>':'<button class="btn primary wide" data-action="focus-start">▶ '+(FS.elapsed>0?"Resume":"Start")+'</button>')
       +'<button class="btn sm ghost" data-action="focus-reset">↺ Reset</button>'
       +(FS.mode==="pomodoro"?'<button class="btn sm ghost" data-action="focus-skip">Skip →</button>':'<span></span>')
       +'<button class="btn green wide" data-action="focus-complete">✓ Log &amp; Finish</button>'
     +'</div>'
-    +'<div class="fp-foot"><button class="fp-link" data-action="focus-zen">⛶ Zen mode</button></div>';
+    +'<div class="fp-foot"><button class="fp-link" data-action="focus-history">📊 History</button><button class="fp-link" data-action="focus-zen">⛶ Zen mode</button></div>';
 }
 function _pomoCount(){
   try{
@@ -5029,11 +5171,33 @@ function focusCheckResume(){
     window._focusPendingResume = r;
   }catch(e){}
 }
+function focusTargetsHTML(){
+  var today=focusTodayMinutes(),week=focusWeekMinutes();
+  var dg=S.settings.focusDailyGoal||120,wg=S.settings.focusWeeklyGoal||720;
+  var dPct=Math.min(100,Math.round(today/Math.max(1,dg)*100));
+  var wPct=Math.min(100,Math.round(week/Math.max(1,wg)*100));
+  return '<div class="fm-section" style="margin-bottom:10px"><div class="fm-label">Focus targets</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px;margin-bottom:4px"><span>Today</span><span><b style="color:var(--accent-2)">'+today+'</b> / '+dg+'m</span></div>'
+    +'<div style="height:5px;border-radius:99px;background:var(--surface-3);overflow:hidden"><div style="height:100%;width:'+dPct+'%;background:var(--accent-2);border-radius:99px;transition:width .4s"></div></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:10px;margin-bottom:4px"><span>This week</span><span><b style="color:var(--accent-2)">'+week+'</b> / '+wg+'m</span></div>'
+    +'<div style="height:5px;border-radius:99px;background:var(--surface-3);overflow:hidden"><div style="height:100%;width:'+wPct+'%;background:var(--accent-2);border-radius:99px;transition:width .4s"></div></div>'
+    +'</div>';
+}
+function focusSoundsHTML(){
+  var cur=S.settings.ambientSound||"off";
+  var opts=[["off","Off"],["brown","Brown"],["rain","Rain"],["cafe","Cafe"]];
+  var chips=opts.map(function(o){
+    return '<button class="fm-chip'+(cur===o[0]?" on":"")+'" data-action="focus-sound-pick" data-id="'+o[0]+'">'+o[1]+'</button>';
+  }).join("");
+  var vol = cur!=="off" ? ('<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span class="tiny" style="flex:0 0 auto">Vol</span><input type="range" min="0" max="100" value="'+Math.round((S.settings.ambientVolume||0.35)*100)+'" data-action="focus-sound-vol" style="flex:1;accent-color:var(--accent-2)"></div>') : "";
+  return '<div class="fm-section"><div class="fm-label">Ambient sound</div><div class="fm-chips">'+chips+'</div>'+vol+'</div>';
+}
 function focusMusicHTML(){
   const cur=S.settings.focusMusicSource||"";
   const chips=Object.keys(MUSIC_PRESETS).map(k=>{
     const m=MUSIC_PRESETS[k];
     return '<button class="fm-chip'+(cur===k?" on":"")+'" data-action="focus-music-pick" data-id="'+k+'">'+m.icon+' '+m.label+'</button>';
+    
   }).join("");
   const openBtn=cur?'<button class="fm-open" data-action="focus-music-open">▶ Open '+MUSIC_PRESETS[cur].label+'</button>':"";
   return '<div class="fm-section"><div class="fm-label">Ambient music</div><div class="fm-chips">'+chips+'</div>'+openBtn+'</div>';
@@ -5069,6 +5233,8 @@ function focusStart(){
   FS.startedAt=FS.startedAt||Date.now();
   FS._lastTickMs=Date.now();
   if(!FS.elapsed)_focusDistractions=0;
+_warnChimed=false;
+ambientStart();
   if(FS.tick)clearInterval(FS.tick);
   FS.tick=setInterval(focusTick,1000);
   focusUI();
@@ -5077,9 +5243,20 @@ function focusPause(){
   if(FS.tick){clearInterval(FS.tick);FS.tick=null;}
   FS.running=false;
   FS._lastTickMs=null;
+  ambientStop();
   focusUI();
 }
-function focusReset(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;if(FS.mode==="pomodoro")FS.remaining=focusTotal();FS.elapsed=0;FS.startedAt=null;_focusDistractions=0;focusUI();}
+function focusReset(){
+  if(FS.tick){clearInterval(FS.tick);FS.tick=null;}
+  FS.running=false;
+  if(FS.mode==="pomodoro")FS.remaining=focusTotal();
+  FS.elapsed=0;
+  FS.startedAt=null;
+  _focusDistractions=0;
+  _warnChimed=false;
+  ambientStop();
+  focusUI();
+}
 function focusSkip(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;FS.phase=FS.phase==="focus"?"break":"focus";FS.remaining=focusTotal();focusUI();}
 function focusTick(){
   if(!FS.running) return;
@@ -5092,12 +5269,13 @@ function focusTick(){
     if(FS.mode === "pomodoro"){
       FS.remaining -= deltaSec;
       if(FS.remaining <= 0){ focusFinishBlock(); return; }
+if(!_warnChimed && FS.remaining <= 60 && FS.remaining > 0){ _warnChimed=true; focusChime(); }
     }
     if(FS.elapsed % 30 < deltaSec) focusSaveResume();
   }
   focusTickUI();
 }
-function focusFinishBlock(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;focusBeep();if(FS.mode==="pomodoro"&&FS.phase==="focus"){const mins=Math.round(FS.elapsed/60);if(mins>=1){snapshot();S.focusLog.push({id:uid("f"),label:FS.label,taskId:FS.taskId,topicId:FS.topicId,startedAt:new Date(FS.startedAt||Date.now()).toISOString(),endedAt:new Date().toISOString(),minutes:mins});logActivity("focus.logged",FS.topicId||FS.taskId||null,{minutes:mins,label:FS.label});saveLocal();}FS.phase="break";FS.remaining=FS.breakSec;FS.elapsed=0;FS.startedAt=null;toast("⏱ Focus block done","+"+mins+" min logged · break started");focusStart();if(route()==="dashboard")rerender();}else if(FS.mode==="pomodoro"){FS.phase="focus";FS.remaining=FS.focusSec;FS.elapsed=0;FS.startedAt=null;toast("☕ Break over","Ready for the next block");focusUI();}}
+function focusFinishBlock(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;focusBeep();if(FS.mode==="pomodoro"&&FS.phase==="focus"){const mins=Math.round(FS.elapsed/60);if(mins>=1){snapshot();S.focusLog.push({id:uid("f"),label:FS.label,taskId:FS.taskId,topicId:FS.topicId,startedAt:new Date(FS.startedAt||Date.now()).toISOString(),endedAt:new Date().toISOString(),minutes:mins,quality:focusQuality(mins,_focusDistractions)});logActivity("focus.logged",FS.topicId||FS.taskId||null,{minutes:mins,label:FS.label,quality:focusQuality(mins,_focusDistractions)});saveLocal();}FS.phase="break";FS.remaining=FS.breakSec;FS.elapsed=0;FS.startedAt=null;ambientStop();toast("⏱ Focus block done","+"+mins+" min logged · break started");focusStart();if(route()==="dashboard")rerender();}else if(FS.mode==="pomodoro"){FS.phase="focus";FS.remaining=FS.focusSec;FS.elapsed=0;FS.startedAt=null;toast("☕ Break over","Ready for the next block");focusUI();}}
 function focusComplete(){
   if(FS.tick){clearInterval(FS.tick);FS.tick=null;}
   FS.running=false;
@@ -5125,7 +5303,8 @@ function focusShowCapture(mins){
       topicId: capTopicId,
       startedAt: new Date(capStartedAt || Date.now()).toISOString(),
       endedAt: new Date().toISOString(),
-      minutes: mins
+minutes: mins,
+      quality: focusQuality(mins, _focusDistractions)
     };
     if(win) entry.win = win;
     if(gap) entry.gap = gap;
@@ -5449,7 +5628,7 @@ function buildNav(){
       const items=g.ids.map(id=>{
         const n=navById[id];
         if(!n)return"";
-        return '<div class="nav-item" data-nav="'+n.id+'" role="button" tabindex="0">'+ICONS[n.icon]+'<span>'+n.label+'</span><span class="nav-badge" data-badge="'+n.id+'" hidden></span><button class="nav-info" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" style="display:none" data-info="'+n.id+'" aria-label="About '+esc(n.label)+'" >i</button></div>';
+       return '<div class="nav-item" data-nav="'+n.id+'" role="button" tabindex="0">'+ICONS[n.icon]+'<span>'+n.label+'</span><span class="nav-badge" data-badge="'+n.id+'" hidden></span><button class="nav-info" data-info="'+n.id+'" aria-label="About '+esc(n.label)+'">i</button></div>';
       }).join("");
       return '<div class="nav-group"><div class="nav-group-label">'+g.label+'</div>'+items+'</div>';
     }).join("");
@@ -5866,7 +6045,7 @@ function quickLogDo(forcedTopicId){
   }
   snapshot();
   const now=todayISO();
-  S.sessions.push({id:uid("s"),name:t.topic,topicId:t.id,logDate:now,lastReviewed:now,duration:parsed.minutes||0,interval:0,ease:2.5,nextReview:now,stage:"1st Time Study",history:[{date:now,grade:"good"}]});
+  S.sessions.push({id:uid("s"),name:t.topic,topicId:t.id,logDate:now,lastReviewed:null,duration:parsed.minutes||0,interval:0,ease:2.5,nextReview:now,stage:"1st Time Study",history:[]});
   saveLocal();
   inp.value="";
   const box=document.querySelector("[data-quicklog-suggest]");
@@ -5902,16 +6081,21 @@ function examReadiness(){
     if(priorErrs===0)errorTrend=30;
     else errorTrend=Math.max(0,Math.min(100,Math.round(100-(recentErrs/Math.max(1,priorErrs))*50)));
   }
+  const confReviews=Math.min(1,totalReviews/40);
+  const confMocks=Math.min(1,recentMocks.length/5);
+  const confSections=Math.min(1,recentMocks.length/3);
   const parts=[],weights=[];
   parts.push(coveragePct);weights.push(0.15);
-  parts.push(masteryPct);weights.push(0.25);
-  if(recallPct!==null){parts.push(recallPct);weights.push(0.20);}
-  if(mockAccuracyPct!==null){parts.push(mockAccuracyPct);weights.push(0.25);}
-  if(sectionPct!==null){parts.push(sectionPct);weights.push(0.10);}
+  parts.push(masteryPct);weights.push(0.30);
+  if(recallPct!==null&&confReviews>0){parts.push(recallPct);weights.push(0.20*confReviews);}
+  if(mockAccuracyPct!==null&&confMocks>0){parts.push(mockAccuracyPct);weights.push(0.20*confMocks);}
+  if(sectionPct!==null&&confSections>0){parts.push(sectionPct);weights.push(0.10*confSections);}
   if(errorTrend!==null){parts.push(errorTrend);weights.push(0.05);}
   let num=0,den=0;
   for(let i=0;i<parts.length;i++){num+=parts[i]*weights[i];den+=weights[i];}
-  const composite=den>0?Math.round(num/den):0;
+  let composite=den>0?Math.round(num/den):0;
+  const masteryCeiling=Math.min(100,Math.round(masteryPct*2.5+15));
+  if(composite>masteryCeiling)composite=masteryCeiling;
   return{composite,coveragePct,masteryPct,recallPct,mockAccuracyPct,sectionPct,errorTrend,totalReviews,recentMocks:recentMocks.length};
 }
 function readinessHTML(){
@@ -6008,7 +6192,7 @@ function viewDashboard(){
   const kindLabel={overdue:"OVERDUE — START NOW",today:"DUE TODAY",weak:"WEAK SPOT",continue:"CONTINUE",clear:"ALL CLEAR",mock:"MOCK TIME","error-hygiene":"DATA HYGIENE",error:"MISTAKE TO FIX"};
   const heroHTML='<div class="next-hero '+rec.kind+'" data-tour="hero"><div class="nh-kind">'+esc(kindLabel[rec.kind]||"RIGHT NOW")+'</div><div class="nh-title">'+esc(rec.title)+'</div><div class="nh-sub">'+esc(rec.subtitle)+'</div>'+(rec.reason?'<div class="nh-reason">why: '+esc(rec.reason)+'</div>':"")+'<div class="nh-actions"><button class="btn primary" data-action="'+rec.primaryAction.a+'" data-id="'+rec.primaryAction.id+'"'+(rec.primaryAction.grade?' data-grade="'+rec.primaryAction.grade+'"':"")+'>'+rec.primaryAction.label+'</button>'+(rec.secondaryAction?'<button class="btn" data-action="'+rec.secondaryAction.a+'" data-id="'+rec.secondaryAction.id+'"'+(rec.secondaryAction.grade?' data-grade="'+rec.secondaryAction.grade+'"':"")+'>'+rec.secondaryAction.label+'</button>':"")+'</div></div>';
   return welcomeOverlay(),viewWelcomeCard()
-  +'<div class="hero-head" style="margin-bottom:14px"><div><h2>'+greet+' <span style="font-style:italic">'+esc(name)+'</span></h2><div class="sub">'+(due.length+dueErrors().length)+' due · '+openTasks+' task'+(openTasks===1?"":"s")+' open</div></div><button class="btn primary" style="margin-left:auto" data-action="open-add-session">'+ICONS.plus+' Log Session</button></div>'
+  +'<div class="hero-head" style="margin-bottom:14px"><div><h2>'+greet+' <span style="font-style:italic">'+esc(name)+'</span></h2><div class="sub">'+(due.length+dueErrors().length)+' due · '+openTasks+' task'+(openTasks===1?"":"s")+' open</div></div><button class="btn primary" style="margin-left:auto" data-action="open-add-session">'+ICONS.plus+' Log Session</button><button class="btn" style="margin-left:6px" data-action="open-pyq-log">📝 PYQ</button></div>'
   +quickLogHTML()
   +heroHTML
   +ddayHTML
@@ -6429,7 +6613,8 @@ function notesEditor(topicId){
       toast("Notes saved");
     },"Save");
 }
-function topicDetail(id){const t=topicById(id);if(!t)return;const sess=S.sessions.filter(s=>s.topicId===id);const errs=S.errors.filter(e=>e.topicId===id);const mocks=S.mocks.filter(m=>(m.weak||[]).indexOf(id)>-1);const fmin=topicFocusMin(id);const parent=t.parentId?topicById(t.parentId):null;const children=S.syllabus.filter(x=>x.parentId===id);const body='<div class="sub-h">'+esc(t.subject)+(t.priority?" · "+esc(t.priority):"")+(t.weightage?" · "+esc(t.weightage):"")+'</div><div class="chips" style="margin-bottom:16px"><span class="pill" style="background:'+statusColor(t.status)+';color:#fff;border-color:transparent">'+esc(t.status)+'</span>'+(fmin?'<span class="pill">'+fmtMin(fmin)+'</span>':"")+(parent?'<button class="rel-pill" data-action="topic-detail" data-id="'+parent.id+'">↰ '+esc(parent.topic)+'</button>':"")+'<button class="btn sm" data-action="timer-start-topic" data-id="'+t.id+'">Focus</button><button class="btn sm" data-action="edit-topic" data-id="'+t.id+'">'+ICONS.pencil+' Edit</button></div>'+(children.length?'<div class="detail-block"><h5>Sub-topics<span class="cnt">'+children.length+'</span></h5>'+children.map(c=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(c.topic)+'</span>'+stagePill(c.status)+'</div>').join("")+'</div>':"")+'<div class="detail-block"><h5>Sessions<span class="cnt">'+sess.length+'</span></h5>'+(sess.length?sess.map(s=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(s.name)+'</span>'+stagePill(s.stage)+'<span class="tiny">'+fmtD(reviewState(s).nr||s.logDate)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">No sessions yet</div>')+'<button class="btn ghost sm" style="margin-top:8px" data-action="session-for-topic" data-id="'+t.id+'">+ Log session</button></div><div class="detail-block"><h5>Errors<span class="cnt">'+errs.length+'</span></h5>'+(errs.length?errs.map(e=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(e.title)+'</span><span class="pill">'+esc(e.type)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">No errors logged</div>')+'<button class="btn ghost sm" style="margin-top:8px" data-action="error-for-topic" data-id="'+t.id+'">+ Log error</button></div><div class="detail-block"><h5>Mock weak tags<span class="cnt">'+mocks.length+'</span></h5>'+(mocks.length?mocks.map(m=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(m.title)+'</span><span class="tiny">'+fmtD(m.date)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">Not tagged</div>')+'</div>'+effectivenessBlockHTML(id)
+function topicDetail(id){const t=topicById(id);if(!t)return;const sess=S.sessions.filter(s=>s.topicId===id);const errs=S.errors.filter(e=>e.topicId===id);const mocks=S.mocks.filter(m=>(m.weak||[]).indexOf(id)>-1);const fmin=topicFocusMin(id);const parent=t.parentId?topicById(t.parentId):null;const children=S.syllabus.filter(x=>x.parentId===id);const body='<div class="sub-h">'+esc(t.subject)+(t.priority?" · "+esc(t.priority):"")+(t.weightage?" · "+esc(t.weightage):"")+'</div><div class="chips" style="margin-bottom:16px"><span class="pill" style="background:'+statusColor(t.status)+';color:#fff;border-color:transparent">'+esc(t.status)+'</span>'+(fmin?'<span class="pill">'+fmtMin(fmin)+'</span>':"")+(parent?'<button class="rel-pill" data-action="topic-detail" data-id="'+parent.id+'">↰ '+esc(parent.topic)+'</button>':"")+'<button class="btn sm" data-action="timer-start-topic" data-id="'+t.id+'">Focus</button><button class="btn sm" data-action="edit-topic" data-id="'+t.id+'">'+ICONS.pencil+' Edit</button></div>'+(children.length?'<div class="detail-block"><h5>Sub-topics<span class="cnt">'+children.length+'</span></h5>'+children.map(c=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(c.topic)+'</span>'+stagePill(c.status)+'</div>').join("")+'</div>':"")+'<div class="detail-block"><h5>Sessions<span class="cnt">'+sess.length+'</span></h5>'+(sess.length?sess.map(s=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(s.name)+'</span>'+stagePill(s.stage)+'<span class="tiny">'+fmtD(reviewState(s).nr||s.logDate)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">No sessions yet</div>')+'<button class="btn ghost sm" style="margin-top:8px" data-action="session-for-topic" data-id="'+t.id+'">+ Log session</button></div>'+ICONS.plus+' Log Session</button><button class="btn" style="margin-left:6px" data-action="open-pyq-log">📝 PYQ</button></div>'+ICONS.plus+' Log Session</button><button class="btn" style="margin-left:6px" data-action="open-pyq-log">📝 PYQ</button></div>'+ICONS.plus+' Log Session</button><button class="btn" style="margin-left:6px" data-action="open-pyq-log">📝 PYQ</button></div><div class="detail-block"><h5>Errors<span class="cnt">'+errs.length+'</span></h5>'+(errs.length?errs.map(e=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(e.title)+'</span><span class="pill">'+esc(e.type)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">No errors logged</div>')+'<button class="btn ghost sm" style="margin-top:8px" data-action="error-for-topic" data-id="'+t.id+'">+ Log error</button></div><div class="detail-block"><h5>Mock weak tags<span class="cnt">'+mocks.length+'</span></h5>'+(mocks.length?mocks.map(m=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(m.title)+'</span><span class="tiny">'+fmtD(m.date)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">Not tagged</div>')+'</div>'+effectivenessBlockHTML(id)
++'<div class="detail-block"><h5>PYQ batches<span class="cnt">'+(function(){var s=pyqStatsFor(id);return s?s.batches:0;})()+'</span></h5>'+(function(){var s=pyqStatsFor(id);if(!s)return '<div class="tiny" style="padding:6px 8px">No PYQ batches yet</div>';return '<div style="display:flex;gap:10px;padding:6px 8px;font-size:12.5px;flex-wrap:wrap"><span><b>' + s.attempted + '</b> attempted</span><span><b style="color:#10B981">' + s.correct + '</b> correct</span><span><b style="color:#EF4444">' + s.wrong + '</b> wrong</span><span><b>' + s.accuracy + '%</b> accuracy</span>' + (s.avgTimeSec ? '<span><b>' + s.avgTimeSec + 's</b> avg</span>' : '') + '</div>';})()+'<button class="btn ghost sm" style="margin-top:8px" data-action="open-pyq-for-topic" data-id="' + t.id + '">+ Log PYQ batch</button></div>'
 +(t.notes?'<div class="detail-block" style="border-left:2px solid var(--accent-2)"><h5>Study notes</h5><div style="font-size:12.5px;line-height:1.65;padding:4px 8px;white-space:pre-wrap;color:var(--text)">'+renderMath(t.notes).replace(/\n/g,"<br>")+'</div></div>':"")
 +(t.remarks?'<div class="detail-block"><h5>Remarks</h5><div class="tiny" style="padding:4px 8px;white-space:pre-wrap">'+esc(t.remarks)+'</div></div>':"");openModal(t.topic,body,()=>{},"Done");}
 function viewGuide(){
@@ -6488,11 +6673,40 @@ function viewGuide(){
 +'<footer class="app-foot"><span>Designed &amp; built by <b style="font-weight:700;color:var(--text)">Ayush Tomar</b> · Apex · The Exam OS · Built for aspirants who want a system, not a to-do list.</span><span><button class="btn ghost sm" data-action="open-settings">Settings</button><button class="btn ghost sm" data-action="start-tour">Tour</button></span></footer>';}
 function viewRadar(){const list=weakTopics(30);return'<div class="hero-head"><div><h2>Weak Topic <span style="font-style:italic">Radar</span></h2><div class="sub">Ranked by friction (errors, mock fails, recall) × importance. Click any topic for a full breakdown.</div></div></div><div class="stat-grid stagger"><div class="stat"><div class="k">Flagged</div><div class="v" style="color:#EF4444">'+list.length+'</div><div class="f">score &gt; 0</div></div><div class="stat"><div class="k">Errors</div><div class="v">'+S.errors.length+'</div><div class="f">logged</div></div><div class="stat"><div class="k">Mock weak tags</div><div class="v">'+S.mocks.reduce((a,m)=>a+((m.weak||[]).length),0)+'</div><div class="f">across mocks</div></div><div class="stat"><div class="k">Critical left</div><div class="v">'+S.syllabus.filter(t=>t.priority==="Critical"&&t.status!=="Mastered").length+'</div><div class="f">not mastered</div></div></div><div class="card section-gap"><div class="card-h"><h2>Ranked</h2><span class="sub">click topic to see breakdown</span></div>'+(list.length?'<div style="display:grid;gap:6px">'+list.map((x,i)=>{const t=x.t;const errs=S.errors.filter(e=>e.topicId===t.id).length;const mw=S.mocks.filter(m=>(m.weak||[]).indexOf(t.id)>-1).length;return'<div class="weak-item"><span class="weak-score">'+x.score+'</span><span class="tiny" style="min-width:22px;text-align:right">#'+(i+1)+'</span><div class="weak-t" data-action="radar-breakdown" data-id="'+t.id+'" style="cursor:pointer">'+esc(t.topic)+'<div class="tiny" style="font-weight:500">'+esc(t.subject)+(t.priority?' · <span class="'+priClass(t.priority)+'" style="padding:1px 6px;border-radius:4px">'+esc(t.priority)+'</span>':"")+(errs?' · <span style="color:#fca5a5">'+errs+' err</span>':"")+(mw?' · <span style="color:#F59E0B">'+mw+' mock</span>':"")+'</div></div><button class="mini-icon" data-action="goto-topic" data-id="'+t.id+'">'+ICONS.pencil+'</button><button class="mini-icon accent" data-action="focus-start-topic" data-id="'+t.id+'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button></div>';}).join("")+'</div>':'<div class="empty"><div class="ic">'+emptyArt("radar")+'</div><b>Nothing flagged</b><p>Log errors and mock weak areas to build your radar.</p></div>')+'</div>';}
 let rtab="all";
-function viewReviews(){return'<div class="hero-head"><div><h2>Spaced <span style="font-style:italic">Repetition</span></h2><div class="sub">Adaptive · rate Again / Hard / Good / Easy. Mastered → +90d → +180d → +365d.</div></div><button class="btn primary" style="margin-left:auto" data-action="open-add-session">'+ICONS.plus+' Log Session</button></div><div class="page-tabs" id="rtabs"></div><div id="sess-list" style="display:grid;gap:14px"></div>';}
+function viewReviews(){return'<div class="hero-head"><div><h2>Spaced <span style="font-style:italic">Repetition</span></h2><div class="sub">Adaptive · rate Again / Hard / Good / Easy. Mastered → +90d → +180d → +365d.</div></div><button class="btn primary" style="margin-left:auto" data-action="open-add-session">'+ICONS.plus+' Log Session</button><button class="btn" style="margin-left:6px" data-action="open-pyq-log">📝 PYQ</button></div><div class="page-tabs" id="rtabs"></div><div id="sess-list" style="display:grid;gap:14px"></div>';}
 function rtabCount(k){if(k==="today")return dueSessions().length+dueErrors().length;if(k==="upcoming")return S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;}).length;if(k==="mastered")return S.sessions.filter(s=>s.stage==="Mastered").length;return S.sessions.length;}
 function renderTabs(){const el=$("#rtabs");if(!el)return;el.innerHTML=[["all","All Sessions"],["today","Today"],["upcoming","Upcoming 7d"],["mastered","Mastered"]].map(p=>'<button class="page-tab'+(rtab===p[0]?" on":"")+'" data-rtab="'+p[0]+'">'+p[1]+' ('+rtabCount(p[0])+')</button>').join("");}
 function renderSessList(){const el=$("#sess-list");if(!el)return;let html="";if(rtab==="today"){const due=dueSessions();const dueErr=dueErrors();const combined=[];dueErr.forEach(e=>combined.push({kind:"error",item:e,r:reviewState(e)}));due.forEach(s=>combined.push({kind:"session",item:s,r:reviewState(s)}));combined.sort((a,b)=>{const da=a.r.st==="overdue"?-a.r.days-1000:(a.r.st==="new"?-500:0);const db=b.r.st==="overdue"?-b.r.days-1000:(b.r.st==="new"?-500:0);return da-db;});html=combined.length?combined.map(u=>u.kind==="error"?errorCard(u.item):sessCard(u.item)).join(""):'<div class="empty"><div class="ic">'+emptyArt("check")+'</div><b>All clear</b><p>Nothing due today.</p></div>';}else if(rtab==="upcoming"){const up=S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;}).sort((a,b)=>{const x=reviewState(a).nr,y=reviewState(b).nr;return x<y?-1:1;});if(!up.length)html='<div class="empty"><div class="ic">'+emptyArt("cal")+'</div><b>Nothing this week</b></div>';else{let cur="";html=up.map(s=>{const nr=reviewState(s).nr;let head="";if(nr!==cur){cur=nr;head='<div class="date-grp"><div class="date-grp-h">'+fmtD(nr)+' · '+relD(nr)+'</div></div>';}return head+sessCard(s);}).join("");}}else if(rtab==="mastered"){const m=S.sessions.filter(s=>s.stage==="Mastered");html=m.length?m.map(sessCard).join(""):'<div class="empty"><div class="ic">'+emptyArt("check")+'</div><b>Nothing mastered yet</b></div>';}else{const all=S.sessions.slice().sort((a,b)=>{const ra=reviewState(a),rb=reviewState(b);if(!ra.nr)return 1;if(!rb.nr)return-1;return ra.nr<rb.nr?-1:1;});html=all.length?all.map(sessCard).join(""):'<div class="empty"><div class="ic">'+emptyArt("book")+'</div><b>No sessions yet</b><p>Log your first study session to start the repetition cycle.</p></div>';}el.innerHTML=html;}
 function postReviews(){renderTabs();renderSessList();const el=$("#rtabs");if(el)el.addEventListener("click",e=>{const b=e.target.closest("[data-rtab]");if(!b)return;rtab=b.dataset.rtab;renderTabs();renderSessList();});}
+function pyqModal(prefillTopicId){
+  openModal("Log PYQ batch",
+    '<div class="frow"><label>Topic</label>'+pickerHTML("topicIds",prefillTopicId?[prefillTopicId]:[],false)+'</div>'
+    +'<div class="f2"><div class="frow"><label>Attempted</label><input class="inp" type="number" min="1" name="attempted" placeholder="20" autofocus></div><div class="frow"><label>Correct</label><input class="inp" type="number" min="0" name="correct" placeholder="17"></div></div>'
+    +'<div class="f2"><div class="frow"><label>Avg time / Q (sec)</label><input class="inp" type="number" min="0" name="avgTimeSec" placeholder="45"></div><div class="frow"><label>Date</label>'+dateFieldHTML("date",todayISO())+'</div></div>'
+    +'<div class="frow"><label>Source</label><input class="inp" name="source" placeholder="e.g. Kiran PYQ 2019"></div>',
+    function(v){
+      var ids=pickVals(v.topicIds);
+      var att=parseInt(v.attempted,10)||0;
+      var cor=parseInt(v.correct,10)||0;
+      if(!ids[0]){toast("Pick a topic");return false;}
+      if(att<1){toast("Attempted must be ≥ 1");return false;}
+      if(cor>att){toast("Correct can't exceed attempted");return false;}
+      snapshot();
+      S.pyqLog.push({
+        id:uid("p"),
+        topicId:ids[0],
+        date:v.date||todayISO(),
+        attempted:att,
+        correct:cor,
+        avgTimeSec:parseInt(v.avgTimeSec,10)||null,
+        source:(v.source||"").trim()
+      });
+      logActivity("pyq.logged",ids[0],{attempted:att,correct:cor});
+      saveLocal();
+      rerender();
+      toast("Logged","+"+att+" Q · "+Math.round(cor/att*100)+"% correct");
+    },"Log");
+}
 function sessionModal(s,prefillTopicId){openModal(s?"Edit Session":"Log Study Session",'<div class="frow"><label>Session name</label><input class="inp" name="name" value="'+esc(s?s.name:"")+'" placeholder="e.g. Percentage PYQs — Kiran"></div><div class="frow"><label>Linked topic</label>'+pickerHTML("topicIds",s&&s.topicId?[s.topicId]:(prefillTopicId?[prefillTopicId]:[]),false)+'</div><div class="f2"><div class="frow"><label>Log date</label>'+dateFieldHTML("logDate",(s&&s.logDate)||todayISO())+'</div><div class="frow"><label>Last reviewed</label>'+dateFieldHTML("lastReviewed",(s&&s.lastReviewed)||todayISO())+'</div></div><div class="frow"><label>Duration (optional)</label><input class="inp" type="number" min="0" max="1440" step="5" name="duration" value="'+((s&&s.duration)||"")+'" placeholder="minutes" data-noclear><div class="chips" style="margin-top:8px" id="dur-chips">'+[15,30,45,60,90,120].map(m=>'<button type="button" class="chip'+(s&&s.duration===m?" on":"")+'" data-dur="'+m+'" style="padding:6px 12px;min-height:32px;font-size:12px">'+m+'m</button>').join("")+'</div><div id="focus-dur-hint" style="display:none;margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--pri-medium-bg);border:1px solid var(--pri-medium-bd);color:var(--pri-medium-fg);font-size:11.5px;line-height:1.5"></div><div class="hint">Skip if you don\'t track time.</div></div>',v=>{if(!v.name){toast("⚠️ Name required");return false;}const ids=pickVals(v.topicIds);const dur=Math.max(0,Math.min(1440,parseInt(v.duration,10)||0));const base={name:v.name,topicId:ids[0]||null,logDate:v.logDate||null,lastReviewed:v.lastReviewed||null,duration:dur};if(s)Object.assign(s,base);else{const fresh=Object.assign({id:uid("s"),interval:0,ease:2.5,nextReview:v.lastReviewed||todayISO(),stage:"1st Time Study",history:v.lastReviewed?[{date:v.lastReviewed,grade:"good"}]:[]},base);S.sessions.push(fresh);}const _lastId=s?s.id:(S.sessions[S.sessions.length-1]?S.sessions[S.sessions.length-1].id:null);logActivity(s?"session.edited":"session.logged",_lastId,{duration:(S.sessions.find(x=>x.id===_lastId)||{}).duration||0,topicId:(S.sessions.find(x=>x.id===_lastId)||{}).topicId||null});edit(()=>{});toast(s?"Session updated":"Session logged");},s?"Save":"Log");
   const picker=document.querySelector('.modal .tpick');
   const hint=document.querySelector('#focus-dur-hint');
@@ -7042,6 +7256,8 @@ const ACTIONS={
   "grade-review":(id,el)=>gradeReview(id,el.dataset.grade),
   "focus-start-topic":id=>{const t=topicById(id);if(!t)return;focusOpen({label:t.topic,topicId:id,autostart:true});toast("⚡ Focus started");},
   "open-add-session":()=>sessionModal(),
+"open-pyq-log":()=>pyqModal(),
+"open-pyq-for-topic":id=>{closeModal();setTimeout(()=>pyqModal(id),150);},
   "quicklog-go":()=>quickLogDo(),
   "session-for-topic":id=>{closeModal();setTimeout(()=>sessionModal(null,id),150);},
   "error-for-topic":id=>{closeModal();setTimeout(()=>errorModal(null,id),150);},
@@ -7140,7 +7356,13 @@ const ACTIONS={
   "timer-start-topic":id=>{const t=topicById(id);if(!t)return;focusOpen({label:t.topic,topicId:id,autostart:true});toast("⚡ Focus started");},
   "timer-start-session":id=>{const s=S.sessions.find(x=>x.id===id);if(!s)return;focusOpen({label:s.name,topicId:s.topicId||null,autostart:true});toast("⚡ Focus started");},
   "focus-task-from-review":id=>{const s=S.sessions.find(x=>x.id===id);if(!s)return;focusOpen({label:s.name,topicId:s.topicId||null,autostart:true});toast("⚡ Focus started");},
-    "focus-music-pick":id=>{S.settings.focusMusicSource=id;store.set(KEY,JSON.stringify(S));focusUI();},
+  "focus-music-pick":id=>{S.settings.focusMusicSource=id;store.set(KEY,JSON.stringify(S));focusUI();},
+  "focus-sound-pick":(id)=>{S.settings.ambientSound=id;store.set(KEY,JSON.stringify(S));if(id==="off")ambientStop();else{ambientStop();ambientStart();}if(FS.panel)focusPanelRender();},
+"focus-sound-vol":(id,el)=>{S.settings.ambientVolume=Math.max(0,Math.min(1,(parseFloat(el.value)||0)/100));store.set(KEY,JSON.stringify(S));if(_ambientNode){var v=S.settings.ambientVolume;try{_ambientNode.gain.gain.linearRampToValueAtTime(v,_audioCtx.currentTime+0.2);}catch(e){}}},
+"focus-history":()=>{focusHistoryModal();},
+  "focus-sound-pick":(id)=>{S.settings.ambientSound=id;store.set(KEY,JSON.stringify(S));if(id==="off")ambientStop();else{ambientStop();ambientStart();}if(FS.panel)focusPanelRender();},
+  "focus-sound-vol":(id,el)=>{S.settings.ambientVolume=Math.max(0,Math.min(1,(parseFloat(el.value)||0)/100));store.set(KEY,JSON.stringify(S));if(_ambientNode){var v=S.settings.ambientVolume;try{_ambientNode.gain.gain.linearRampToValueAtTime(v,_audioCtx.currentTime+0.2);}catch(e){}}},
+  "focus-history":()=>{focusHistoryModal();},
   "focus-music-open":()=>{const cur=S.settings.focusMusicSource;if(!cur)return;const m=MUSIC_PRESETS[cur];if(!m)return;_focusMusicOpenedAt=Date.now();window.open(m.url,"_blank","noopener");},
   "focus-preset":id=>focusApplyPreset(id),
   "focus-mode":id=>focusMode(id),
@@ -7338,6 +7560,8 @@ document.addEventListener("focusout",e=>{
 });
 document.addEventListener("click",e=>{const pick=e.target.closest("[data-quicklog-pick]");if(pick){e.preventDefault();e.stopPropagation();quickLogDo(pick.dataset.quicklogPick);return;}});
 document.addEventListener("input",e=>{const el=e.target;if(el&&el.classList&&el.classList.contains("inp"))updateClearState(el);const hours=e.target.closest("[data-hours-day]");if(hours){const dayIdx=parseInt(hours.dataset.hoursDay,10);const val=Math.max(0,Math.min(24,parseFloat(hours.value)||0));const mins=Math.round(val*60);const start=mondayOf(weekOff);const dISO=iso(new Date(start.getFullYear(),start.getMonth(),start.getDate()+dayIdx));if(!S.habits[dISO])S.habits[dISO]={};S.habits[dISO].studyMinutes=mins;delete S.habits[dISO].hours;store.set(KEY,JSON.stringify(S));const card=hours.closest("[data-daycard]");if(card){card.querySelectorAll(".hours-milestone").forEach(elm=>{const thr=parseFloat(elm.dataset.threshold);elm.classList.toggle("on",mins>=thr*60);});const hd=card.querySelector('[data-hours-display="'+dayIdx+'"]');if(hd)hd.textContent=mins%60===0?String(mins/60):(Math.round(mins/6)/10).toFixed(1);const ds=dayStats(dISO);const dp=card.querySelector("[data-daypct]");if(dp)dp.textContent=ds.pct+"%";}const st=weekStats();const pv=$("#wk-pct");if(pv){pv.textContent=st.pct+"%";pv.style.color=st.pct>=50?"#10B981":"var(--text)";}const pc=$("#wk-cnt");if(pc)pc.textContent=fmtMin(st.studyMins)+" studied · goal "+fmtMin(st.goalMins);const gf=document.querySelector(".goal-fill");if(gf)gf.style.width=Math.min(100,st.pct)+"%";updateBadges();queueSync();return;}});
+document.addEventListener("input",function(e){var el=e.target;if(!el||!el.dataset||el.dataset.action!=="focus-sound-vol")return;S.settings.ambientVolume=Math.max(0,Math.min(1,(parseFloat(el.value)||0)/100));store.set(KEY,JSON.stringify(S));if(_ambientNode){try{var v=Math.max(0.02,Math.min(0.6,S.settings.ambientVolume));_ambientNode.gain.gain.linearRampToValueAtTime(v,_audioCtx.currentTime+0.2);}catch(e){}}});
+document.addEventListener("input",function(e){var el=e.target;if(!el||!el.dataset||el.dataset.action!=="focus-sound-vol")return;S.settings.ambientVolume=Math.max(0,Math.min(1,(parseFloat(el.value)||0)/100));store.set(KEY,JSON.stringify(S));if(_ambientNode){var v=S.settings.ambientVolume*0.5;try{_ambientNode.gain.gain.linearRampToValueAtTime(v,_audioCtx.currentTime+0.2);}catch(e){}}});
 document.addEventListener("click",e=>{
   const infoBtn=e.target.closest(".nav-info");if(infoBtn){e.preventDefault();e.stopPropagation();showInfoPop(infoBtn,infoBtn.dataset.info);return;}
   if(e.target.closest("[data-tour-skip]")){tourFinish();return;}
@@ -7518,6 +7742,7 @@ function renderMath(str){
 function logActivity(kind, ref, meta){
   try{
     if(!Array.isArray(S.activity))S.activity=[];
+if(!Array.isArray(S.pyqLog))S.pyqLog=[];
     S.activity.push({id:uid("a"),ts:Date.now(),kind:kind,ref:ref||null,meta:meta||{}});
     if(S.activity.length>5000)S.activity=S.activity.slice(-5000);
   }catch(e){}
