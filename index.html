@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Apex">
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Apex%20%E2%80%94%20The%20Exam%20OS%22%2C%22short_name%22%3A%22Apex%22%2C%22description%22%3A%22Exam%20OS%20for%20SSC%2FRBI%2FSBI%2FIBPS%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait%22%2C%22background_color%22%3A%22%230C0C0E%22%2C%22theme_color%22%3A%22%230C0C0E%22%2C%22start_url%22%3A%22.%2F%22%2C%22scope%22%3A%22.%2F%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520fill%253D%2527%25230C0C0E%2527%2F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527340%2527%2520font-family%253D%2527Georgia%252Cserif%2527%2520font-size%253D%2527320%2527%2520fill%253D%2527%2523E5E5E7%2527%2520text-anchor%253D%2527middle%2527%253EA%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%2520maskable%22%7D%5D%7D">
+<link rel="manifest" href="manifest.json">
 <title>Apex — The Exam OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1054,7 +1054,7 @@ body.sb-collapsed #main{margin-left:0}
 .card-h h2{font-size:16px;font-weight:700;letter-spacing:-.015em}
 .card-h .sub{font-size:12px;color:var(--text-3);margin-left:auto;font-weight:500;font-family:"Inter",sans-serif}
 .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;grid-auto-flow:dense}
-.card[data-tour="agenda"]{height:100%;max-height:none;overflow-y:auto}
+.card[data-tour="agenda"]{overflow:visible}
 .card[data-tour="agenda"]::-webkit-scrollbar{width:6px}
 .card[data-tour="agenda"]::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px}
 .bento>*{grid-column:span 2}
@@ -1292,6 +1292,13 @@ textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
 @keyframes popIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
 .modal h3{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:20px}
 .modal .sub-h{font-size:12.5px;font-weight:600;color:var(--text-3);margin-bottom:16px;margin-top:-10px;font-family:"Inter",sans-serif}
+.sett-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.sett-tabs::-webkit-scrollbar{display:none}
+.sett-tab{padding:10px 14px;font-size:12.5px;font-weight:600;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all .18s var(--ease-out);font-family:Inter,sans-serif;background:none;border-top:none;border-left:none;border-right:none}
+.sett-tab:hover{color:var(--text)}
+.sett-tab.on{color:var(--text);border-bottom-color:var(--text)}
+.sett-pane{display:none}
+.sett-pane.on{display:block}
 .sett-section{border-top:1px solid var(--border);padding-top:18px;margin-top:18px}
 .sett-section:first-of-type{border-top:none;padding-top:0;margin-top:0}
 .sett-section h4{font-family:"Inter",sans-serif;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
@@ -6008,13 +6015,12 @@ function viewDashboard(){
   +readinessHTML()
     +'<div class="bento stagger">'
     +'<div class="b3" style="display:flex;flex-direction:column;gap:14px">'
-    +'<div class="card b3 hover" data-tour="agenda"><div class="card-h"><h2>Today\'s Agenda</h2><span class="sub">'+totalDue+' due'+(dueErr.length?" · "+dueErr.length+" error"+(dueErr.length===1?"":"s"):"")+'</span></div>'+agendaHTML+'</div>'
-    +'<div class="card b2 hover"><div class="card-h"><h2>'+esc(urgentExam)+' Urgent</h2><button class="mini-icon accent" data-action="edit-urgent-filter" title="Customize filter" style="margin-left:auto">'+ICONS.pencil+'</button></div>'+urgHTML+'</div>'
+    +'<div class="card b3 hover" data-tour="agenda" style="flex:1 1 auto"><div class="card-h"><h2>Today\'s Agenda</h2><span class="sub">'+totalDue+' due'+(dueErr.length?" · "+dueErr.length+" error"+(dueErr.length===1?"":"s"):"")+'</span></div>'+agendaHTML+'</div>'
+    +'<div class="card b2 hover" style="display:flex;flex-direction:column;flex:1 1 auto"><div class="card-h"><h2>Weak Radar</h2><span class="sub">top '+weak.length+'</span></div>'+weakHTML+(weak.length?'<div style="margin-top:auto;padding-top:14px;text-align:center"><button class="btn ghost sm" data-action="goto-radar">See full radar →</button></div>':'')+'</div>'
     +'</div>'
     +'<div class="b3" style="display:flex;flex-direction:column;gap:14px">'
       +'<div class="card hover" style="flex:0 0 auto"><div class="card-h"><h2>Today\'s Plan</h2><span class="sub">time blocks</span></div>'+todayPlanHTML()+'</div>'
       +'<div class="card hover" style="flex:1 1 auto;min-height:120px;display:flex;flex-direction:column"><div class="card-h"><h2>Scratch Pad</h2><button class="mini-icon accent" data-action="scratch-open" title="Open">'+ICONS.plus+'</button></div><div style="flex:1 1 auto;min-height:0;overflow:auto">'+scratchHTML+'</div></div>'
-        +'<div class="card b2 hover"><div class="card-h"><h2>Weak Radar</h2><span class="sub">top '+weak.length+'</span></div>'+weakHTML+(weak.length?'<div style="margin-top:12px"><button class="btn ghost sm" data-action="goto-radar">See full radar →</button></div>':'')+'</div>'
             +'<div class="card b2 hover"><div class="card-h"><h2>Quick Links</h2><button class="mini-icon accent" data-action="add-link" title="Add link"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>'+linksHTML+'</div>'
       +'</div>'
     +(function(){const m=momentumHTML();return m?'<div class="card b2 hover"><div class="card-h"><h2>Momentum</h2><span class="sub">30d trend</span></div>'+m+'</div>':'';})()
@@ -6970,22 +6976,35 @@ function examTargetModal(t){
 function openSettings(){
   const c=getContact();const hasRoom=!!S.sync.room;const hasCfg=!!(FBCFG.apiKey&&FBCFG.projectId);const enabled=S.sync.enabled&&hasRoom&&hasCfg;const locked=enabled&&!syncKey;
   const syncHint=enabled?(locked?'🔒 Configured but <b>locked</b>. Click the Sync pill in the top bar to enter your passphrase.':'🔓 <b>Unlocked</b> and syncing. Your data is encrypted before upload.'):'Not configured yet. Paste your Firebase config and set a room code + passphrase below.';
-  const body='<div class="sett-section"><h4>You</h4><div class="frow"><label>Your name</label><input class="inp" name="userName" value="'+esc(S.settings.userName||"")+'" placeholder="e.g. Ayush"></div></div>'
-+'<div class="sett-section"><h4>Exam targets</h4><div class="hint" style="margin-bottom:10px;line-height:1.55">Add every exam you\'re preparing for. The D-Day banner shows your Primary target; the smart engine uses the nearest relevant exam for each topic.</div>'+examTargetsSummaryHTML()+'<button class="btn" data-action="open-exams-manager" style="margin-top:8px">'+ICONS.pencil+' Manage exams</button></div>'
-    +'<div class="sett-section"><h4>Theme — '+THEMES.length+' palettes</h4><div class="theme-grid">'+THEMES.map(t=>'<div class="theme-sw'+(S.settings.theme===t.id?" on":"")+'" data-theme-pick="'+t.id+'"><div class="sw">'+t.colors.map(cc=>'<span style="background:'+cc+'"></span>').join("")+'</div><div class="tn">'+t.name+'</div><div class="td">'+t.desc+'</div></div>').join("")+'</div></div>'
-    +'<div class="sett-section"><h4>Contact — shown to anyone using your copy</h4><div class="frow"><label>Name</label><input class="inp" name="contactName" value="'+esc(c.name)+'"></div><div class="frow"><label>Email</label><input class="inp" type="email" name="contactEmail" value="'+esc(c.email)+'"></div><div class="frow"><label>Telegram handle</label><input class="inp" name="contactTelegram" value="'+esc(c.telegram?"@"+c.telegram:"")+'"></div><div class="frow"><label>Short note</label><textarea class="inp" name="contactNote" rows="2">'+esc(c.note)+'</textarea></div></div>'
-    +'<div class="sett-section"><h4>Cloud Sync (advanced)</h4><div style="background:var(--pri-medium-bg);border:1px solid var(--pri-medium-bd);color:var(--pri-medium-fg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.55"><b>⚠️ Beta — no server-side authentication.</b><br>Data is encrypted with your passphrase before upload, but anyone with your Firebase config + room code + passphrase can access it. If you don\'t need cross-device sync, skip this. <b>Forget the passphrase → cloud copy is permanently unrecoverable.</b></div><p class="hint" style="line-height:1.6;margin-bottom:12px"><b>Apex works perfectly offline.</b> Cloud sync is only for keeping 2+ of your <i>own</i> devices in step. Each person who uses Apex needs their own free Firebase project. Data is AES-GCM encrypted with your passphrase.</p>'
-      +'<div class="frow"><label>Firebase config</label><textarea class="inp" name="fbcfg" rows="5" placeholder=\'{"apiKey":"...","projectId":"..."}\'>'+esc(FBCFG.apiKey?JSON.stringify(FBCFG,null,2):"")+'</textarea></div>'
-      +'<div class="frow"><label>Room code</label><div style="display:flex;gap:8px"><input class="inp" name="roomCode" value="'+esc(S.sync.room||"")+'" placeholder="e.g. ABC-123-XYZ"><button class="btn" data-action="gen-room">New</button></div></div>'
-      +'<div class="frow"><label>Passphrase</label><input class="inp" type="password" name="syncPass" id="sync-pass-field" placeholder="'+(enabled?'Leave blank to keep current':'At least 6 characters')+'" autocomplete="new-password"></div>'
-      +'<div class="chips"><button class="btn" data-action="sync-push">⬆ Push</button><button class="btn" data-action="sync-pull">⬇ Pull</button>'+(syncKey?'<button class="btn ghost" data-action="sync-lock">🔒 Lock</button>':'')+(enabled?'<button class="btn danger" data-action="sync-disable">Disconnect</button>':'')+'</div>'
-      +'<div class="hint" style="margin-top:10px">Status: <b>'+esc(syncStatus)+(syncKey?" · unlocked":" · locked")+'</b><br>'+syncHint+'</div></div>'
-    +'<div class="sett-section"><h4>Notifications</h4><div class="frow"><label>Reminder time</label><input class="inp" type="time" name="notifTime" value="'+esc(S.settings.notifTime||"08:00")+'"></div><div class="chips"><button class="btn" data-action="notif-enable">'+(S.settings.notifEnabled?"✓ Enabled":"Enable")+'</button><button class="btn ghost" data-action="notif-test">Test</button></div></div>'
-    +'<div class="sett-section"><h4>Data · schema '+SCHEMA_VERSION+'</h4><div class="chips"><button class="btn" data-action="export-data">⬇ Export</button><button class="btn" data-action="import-data">⬆ Import</button><button class="btn danger" data-action="reset-data">Reset</button></div></div>'
-    +'<div class="sett-section"><h4>Onboarding</h4><div class="chips"><button class="btn" data-action="start-tour">Restart tour</button><button class="btn" data-action="show-guide">Show welcome</button></div></div>';
+  const body='<div class="sett-tabs">'
+    +'<button class="sett-tab on" data-sett-tab-btn="personal">Personal</button>'
+    +'<button class="sett-tab" data-sett-tab-btn="appearance">Appearance</button>'
+    +'<button class="sett-tab" data-sett-tab-btn="sync">Sync</button>'
+    +'<button class="sett-tab" data-sett-tab-btn="data">Data</button>'
+    +'</div>'
+    +'<div class="sett-pane on" data-sett-pane="personal">'
+      +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>You</h4><div class="frow"><label>Your name</label><input class="inp" name="userName" value="'+esc(S.settings.userName||"")+'" placeholder="e.g. Ayush"></div></div>'
+      +'<div class="sett-section"><h4>Exam targets</h4><div class="hint" style="margin-bottom:10px;line-height:1.55">Add every exam you\'re preparing for. The D-Day banner shows your Primary target; the smart engine uses the nearest relevant exam for each topic.</div>'+examTargetsSummaryHTML()+'<button class="btn" data-action="open-exams-manager" style="margin-top:8px">'+ICONS.pencil+' Manage exams</button></div>'
+      +'<div class="sett-section"><h4>Contact — shown to anyone using your copy</h4><div class="frow"><label>Name</label><input class="inp" name="contactName" value="'+esc(c.name)+'"></div><div class="frow"><label>Email</label><input class="inp" type="email" name="contactEmail" value="'+esc(c.email)+'"></div><div class="frow"><label>Telegram handle</label><input class="inp" name="contactTelegram" value="'+esc(c.telegram?"@"+c.telegram:"")+'"></div><div class="frow"><label>Short note</label><textarea class="inp" name="contactNote" rows="2">'+esc(c.note)+'</textarea></div></div>'
+    +'</div>'
+    +'<div class="sett-pane" data-sett-pane="appearance">'
+      +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>Theme — '+THEMES.length+' palettes</h4><div class="theme-grid">'+THEMES.map(t=>'<div class="theme-sw'+(S.settings.theme===t.id?" on":"")+'" data-theme-pick="'+t.id+'"><div class="sw">'+t.colors.map(cc=>'<span style="background:'+cc+'"></span>').join("")+'</div><div class="tn">'+t.name+'</div><div class="td">'+t.desc+'</div></div>').join("")+'</div></div>'
+    +'</div>'
+    +'<div class="sett-pane" data-sett-pane="sync">'
+      +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>Notifications</h4><div class="frow"><label>Reminder time</label><input class="inp" type="time" name="notifTime" value="'+esc(S.settings.notifTime||"08:00")+'"></div><div class="chips"><button class="btn" data-action="notif-enable">'+(S.settings.notifEnabled?"✓ Enabled":"Enable")+'</button><button class="btn ghost" data-action="notif-test">Test</button></div></div>'
+      +'<div class="sett-section"><h4>Cloud Sync (advanced)</h4><div style="background:var(--pri-medium-bg);border:1px solid var(--pri-medium-bd);color:var(--pri-medium-fg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.55"><b>⚠️ Beta — no server-side authentication.</b><br>Data is encrypted with your passphrase before upload, but anyone with your Firebase config + room code + passphrase can access it. If you don\'t need cross-device sync, skip this. <b>Forget the passphrase → cloud copy is permanently unrecoverable.</b></div><p class="hint" style="line-height:1.6;margin-bottom:12px"><b>Apex works perfectly offline.</b> Cloud sync is only for keeping 2+ of your <i>own</i> devices in step. Each person who uses Apex needs their own free Firebase project. Data is AES-GCM encrypted with your passphrase.</p>'
+        +'<div class="frow"><label>Firebase config</label><textarea class="inp" name="fbcfg" rows="5" placeholder=\'{"apiKey":"...","projectId":"..."}\'>'+esc(FBCFG.apiKey?JSON.stringify(FBCFG,null,2):"")+'</textarea></div>'
+        +'<div class="frow"><label>Room code</label><div style="display:flex;gap:8px"><input class="inp" name="roomCode" value="'+esc(S.sync.room||"")+'" placeholder="e.g. ABC-123-XYZ"><button class="btn" data-action="gen-room">New</button></div></div>'
+        +'<div class="frow"><label>Passphrase</label><input class="inp" type="password" name="syncPass" id="sync-pass-field" placeholder="'+(enabled?'Leave blank to keep current':'At least 6 characters')+'" autocomplete="new-password"></div>'
+        +'<div class="chips"><button class="btn" data-action="sync-push">⬆ Push</button><button class="btn" data-action="sync-pull">⬇ Pull</button>'+(syncKey?'<button class="btn ghost" data-action="sync-lock">🔒 Lock</button>':'')+(enabled?'<button class="btn danger" data-action="sync-disable">Disconnect</button>':'')+'</div>'
+        +'<div class="hint" style="margin-top:10px">Status: <b>'+esc(syncStatus)+(syncKey?" · unlocked":" · locked")+'</b><br>'+syncHint+'</div></div>'
+    +'</div>'
+    +'<div class="sett-pane" data-sett-pane="data">'
+      +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>Data · schema '+SCHEMA_VERSION+'</h4><div class="chips"><button class="btn" data-action="export-data">⬇ Export</button><button class="btn" data-action="import-data">⬆ Import</button><button class="btn danger" data-action="reset-data">Reset</button></div></div>'
+      +'<div class="sett-section"><h4>Onboarding</h4><div class="chips"><button class="btn" data-action="start-tour">Restart tour</button><button class="btn" data-action="show-guide">Show welcome</button></div></div>'
+    +'</div>';
   openModal("Settings",body,async v=>{
     S.settings.userName=v.userName||"";S.settings.notifTime=v.notifTime||"08:00";
-    // exam targets live in S.settings.exams; managed via the exams manager modal
     S.settings.contactName=v.contactName||"";S.settings.contactEmail=v.contactEmail||"";S.settings.contactTelegram=v.contactTelegram||"";S.settings.contactNote=v.contactNote||"";
     const rawFb=(v.fbcfg||"").trim();
     if(rawFb){try{let clean=rawFb.replace(/^\s*\/\/.*$/gm,"").replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");FBCFG=JSON.parse(clean);saveFBCFG();}catch(e){toast("⚠️ Invalid Firebase config");return false;}}else if(!FBCFG.apiKey){FBCFG={};saveFBCFG();}
@@ -6997,6 +7016,15 @@ function openSettings(){
     if(S.sync.enabled){if(syncKey)startSync();else setSyncStatus("locked");}else{stopSync();}
     updateSyncPill();toast("✓ Saved");
   },"Save");
+  const _r=$("#modal-root");
+  $$("[data-sett-tab-btn]",_r).forEach(function(btn){
+    btn.onclick=function(){
+      var id=btn.dataset.settTabBtn;
+      $$("[data-sett-tab-btn]",_r).forEach(function(b){b.classList.toggle("on",b===btn);});
+      $$("[data-sett-pane]",_r).forEach(function(p){p.classList.toggle("on",p.dataset.settPane===id);});
+      var m=document.querySelector(".modal");if(m)m.scrollTop=0;
+    };
+  });
 }
 function toggleSidebar(force){const next=(typeof force==="boolean")?force:!document.body.classList.contains("sb-collapsed");document.body.classList.toggle("sb-collapsed",next);S.settings.sbCollapsed=next;store.set(KEY,JSON.stringify(S));const t=$("#sb-toggle");if(t)t.classList.toggle("on",next);const c=$("#collapse-btn");if(c)c.classList.toggle("on",next);}
 let _drag={active:false,id:null,overId:null,subject:null,row:null,ghost:null};
@@ -8208,32 +8236,10 @@ try{
   if(isFile){
     console.log("[Apex PWA] file:// origin — service worker disabled. Host over http(s) to enable.");
   } else {
-    var swSource = [
-      'self.addEventListener("install",function(e){self.skipWaiting();});',
-      'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
-      'self.addEventListener("fetch",function(e){',
-      '  if(e.request.method!=="GET")return;',
-      '  e.respondWith(',
-      '    caches.open("apex-v1").then(function(c){',
-      '      return fetch(e.request).then(function(r){',
-      '        if(r && r.status===200 && e.request.url.indexOf(location.origin)===0){',
-      '          var clone=r.clone();c.put(e.request,clone);',
-      '        }',
-      '        return r;',
-      '      }).catch(function(){return c.match(e.request);});',
-      '    })',
-      '  );',
-      '});'
-    ].join("");
-    var blob = new Blob([swSource], {type:"application/javascript"});
-    var swUrl = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(swUrl, {scope:"./"}).then(function(){
-      console.log("[Apex PWA] service worker registered");
-      URL.revokeObjectURL(swUrl);
-    }).catch(function(e){
-      console.log("[Apex PWA] SW registration failed:", e.message);
-    });
-  }
+  navigator.serviceWorker.register("./sw.js", {scope:"./"})
+    .then(function(){ console.log("[Apex PWA] service worker registered"); })
+    .catch(function(e){ console.log("[Apex PWA] SW registration failed:", e.message); });
+}
   var deferredPrompt = null;
   window.addEventListener("beforeinstallprompt", function(e){
     e.preventDefault();
