@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Apex">
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Apex%22%2C%22short_name%22%3A%22Apex%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230C0C0E%22%2C%22theme_color%22%3A%22%230C0C0E%22%7D">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Apex%20%E2%80%94%20The%20Exam%20OS%22%2C%22short_name%22%3A%22Apex%22%2C%22description%22%3A%22Exam%20OS%20for%20SSC%2FRBI%2FSBI%2FIBPS%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait%22%2C%22background_color%22%3A%22%230C0C0E%22%2C%22theme_color%22%3A%22%230C0C0E%22%2C%22start_url%22%3A%22.%2F%22%2C%22scope%22%3A%22.%2F%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520fill%253D%2527%25230C0C0E%2527%2F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527340%2527%2520font-family%253D%2527Georgia%252Cserif%2527%2520font-size%253D%2527320%2527%2520fill%253D%2527%2523E5E5E7%2527%2520text-anchor%253D%2527middle%2527%253EA%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%2520maskable%22%7D%5D%7D">
 <title>Apex — The Exam OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4177,6 +4177,7 @@ footer.app-foot{margin-top:36px;padding-top:18px;border-top:1px solid var(--bord
 </head>
 <body>
 <div id="errbar"></div>
+<div id="savebar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9998;background:#7A2E2E;color:#ffd9d6;border-bottom:1px solid rgba(239,68,68,.6);padding:10px 16px;font-size:12.5px;font-weight:600"></div>
 <div id="app">
   <aside id="sidebar">
     <div class="brand">
@@ -4414,8 +4415,6 @@ function cmdOpenResult(r){
   else if(r.type==="task"){go("tasks");}
 }
 function fatal(msg){var b=document.getElementById("errbar");if(!b)return;b.style.display="block";b.textContent="⚠️ "+(b.textContent?b.textContent+"\n":"")+msg;}
-function fatal(msg){var b=document.getElementById("errbar");if(!b)return;b.style.display="block";b.textContent="⚠️ "+(b.textContent?b.textContent+"\n":"")+msg;}
-window.addEventListener("error",e=>{if(!e.message||e.message==="Script error.")return;fatal(e.message+(e.lineno?"  (line "+e.lineno+")":""));});
 window.addEventListener("unhandledrejection",e=>fatal("Promise: "+((e.reason&&e.reason.message)||e.reason)));
 
 const APP_VERSION="v22.0.0";
@@ -4577,10 +4576,31 @@ let syncKey=null;let syncSalt=null;
 function bufToB64(buf){const bytes=new Uint8Array(buf);let s="";for(let i=0;i<bytes.length;i++)s+=String.fromCharCode(bytes[i]);return btoa(s);}
 function b64ToBuf(b64){const s=atob(b64);const bytes=new Uint8Array(s.length);for(let i=0;i<s.length;i++)bytes[i]=s.charCodeAt(i);return bytes;}
 async function deriveKey(passphrase,saltBytes){const enc=new TextEncoder();const baseKey=await crypto.subtle.importKey("raw",enc.encode(passphrase),{name:"PBKDF2"},false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt:saltBytes,iterations:250000,hash:"SHA-256"},baseKey,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
-async function setPassphrase(pass){if(!S.sync.room)throw new Error("Set a room code first");const saltKey="apex-salt-"+S.sync.room;let saltB64=localStorage.getItem(saltKey);if(!saltB64){const salt=new Uint8Array(16);crypto.getRandomValues(salt);saltB64=bufToB64(salt);localStorage.setItem(saltKey,saltB64);}syncSalt=b64ToBuf(saltB64);syncKey=await deriveKey(pass,syncSalt);}
+async function setPassphrase(pass){
+  if(!S.sync.room)throw new Error("Set a room code first");
+  const saltKey="apex-salt-"+S.sync.room;
+  let saltB64=null;
+  try{
+    if(await initFirebase()){
+      const snap=await firebase.firestore().collection("exam_os_rooms").doc(S.sync.room).get();
+      if(snap.exists){
+        const data=snap.data();
+        if(data&&data.salt)saltB64=data.salt;
+      }
+    }
+  }catch(e){}
+  if(!saltB64)saltB64=localStorage.getItem(saltKey);
+  if(!saltB64){
+    const salt=new Uint8Array(16);
+    crypto.getRandomValues(salt);
+    saltB64=bufToB64(salt);
+  }
+  localStorage.setItem(saltKey,saltB64);
+  syncSalt=b64ToBuf(saltB64);
+  syncKey=await deriveKey(pass,syncSalt);
+}
 async function encryptState(obj){if(!syncKey)throw new Error("Locked");const iv=new Uint8Array(12);crypto.getRandomValues(iv);const plain=new TextEncoder().encode(JSON.stringify(obj));const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},syncKey,plain);return{v:1,iv:bufToB64(iv),ct:bufToB64(ct)};}
 async function decryptState(payload){if(!syncKey)throw new Error("Locked");const iv=b64ToBuf(payload.iv);const ct=b64ToBuf(payload.ct);const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv},syncKey,ct);return JSON.parse(new TextDecoder().decode(plain));}
-function clearSyncKey(){syncKey=null;syncSalt=null;}
 function clearSyncKey(){syncKey=null;syncSalt=null;}
 
 let S;
@@ -4620,6 +4640,7 @@ try{
   if(!Array.isArray(S.settings.exams))S.settings.exams=[];
   if(!S.sync)S.sync={enabled:false,room:""};
   if(!S.focusLog)S.focusLog=[];
+if(!Array.isArray(S.activity))S.activity=[];
 }catch(e){S=seedState();}
 function applyTheme(id){const t=THEMES.find(x=>x.id===id)||THEMES[0];document.documentElement.setAttribute("data-theme",t.id);const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.setAttribute("content",t.colors[0]);}
 function getContact(){return{name:S.settings.contactName||DEV_CONTACT.name||"",email:S.settings.contactEmail||DEV_CONTACT.email||"",telegram:(S.settings.contactTelegram||DEV_CONTACT.telegram||"").replace(/^@/,""),note:S.settings.contactNote||DEV_CONTACT.note||""};}
@@ -4792,9 +4813,9 @@ function readinessProjection(){
   const nearest=withDays.slice().sort((a,b)=>a.days-b.days)[0];
   const hero=prim||nearest;
   if(!hero||hero.days<0)return null;
-  const totalTopics=S.syllabus.length;
+  const totalTopics=S.syllabus.filter(t=>!t.archived).length;  
   if(!totalTopics)return null;
-  const mastered=S.syllabus.filter(t=>t.status==="Mastered").length;
+  const mastered=S.syllabus.filter(t=>t.status==="Mastered"&&!t.archived).length;
   const cutoff30=addDays(todayISO(),-30);
   const masteredRecent=S.sessions.filter(s=>s.masteredAt&&s.masteredAt>=cutoff30).length;
   const pacePerWeek=Math.round(masteredRecent/30*7*10)/10;
@@ -4889,7 +4910,7 @@ const examPct=Math.round(examUrg*15);
 if(examPct>=4)impNotes.push("Exam proximity +"+examPct+"%");
   return{errors:{recent:recentErrs,older:olderErrs,score:errorScore},mocks:{recent:recentMocks,older:olderMocks,score:mockScore},recall:{again,hard,good,easy,score:recallScore},overdueDays,overdueScore,friction,importance,importanceNotes:impNotes,status:t.status,priority:t.priority,weightage:t.weightage,statusMultiplier:(function(){var m={"Not started":0.7,"Learning":1.0,"Practicing":0.9,"Reviewing":0.7,"Mastered":0};return m[t.status]!==undefined?m[t.status]:1.0;})(),sectionBias:sectionBiasForSubject(t.subject)};
 }
-function weakTopics(limit){return S.syllabus.filter(t=>t.status!=="Mastered").map(t=>({t:t,score:weaknessScore(t)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,limit||10);}
+function weakTopics(limit){return S.syllabus.filter(t=>t.status!=="Mastered"&&!t.archived).map(t=>({t:t,score:weaknessScore(t)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,limit||10);}
 function getSubjectOrder(){if(!S.subjectOrder)S.subjectOrder=[];const used=[...new Set(S.syllabus.map(t=>t.subject))];used.forEach(s=>{if(S.subjectOrder.indexOf(s)<0)S.subjectOrder.push(s);});S.subjectOrder=S.subjectOrder.filter(s=>used.indexOf(s)>-1);return used.slice().sort((a,b)=>{const ia=S.subjectOrder.indexOf(a),ib=S.subjectOrder.indexOf(b);if(ia<0&&ib<0)return a.localeCompare(b);if(ia<0)return 1;if(ib<0)return-1;return ia-ib;});}
 function moveSubject(sub,dir){const order=getSubjectOrder();const idx=order.indexOf(sub);const ti=idx+dir;if(ti<0||ti>=order.length){toast("Already at the "+(dir<0?"top":"bottom"));return;}snapshot();S.subjectOrder=order.slice();const tmp=S.subjectOrder[idx];S.subjectOrder[idx]=S.subjectOrder[ti];S.subjectOrder[ti]=tmp;saveLocal();rerender();toast(dir<0?"Moved up":"Moved down");}
 function taxList(k){return(S.tax&&S.tax[k])||DEFAULT_TAX[k]||[];}
@@ -5034,21 +5055,42 @@ function focusTickUI(){updateTimerUI();const pct=focusProgress();if(FS.panel){co
 function focusApplyPreset(id){if(FS.mode!=="pomodoro")FS.mode="pomodoro";const p=focusPreset(id);FS.preset=id;FS.focusSec=p.focus*60;FS.breakSec=p.brk*60;if(!FS.running){FS.remaining=focusTotal();FS.elapsed=0;}focusUI();}
 function focusMode(mode){if(FS.running)return toast("Stop the timer first");if(mode===FS.mode)return;FS.mode=mode;if(mode==="stopwatch"){FS.phase="focus";}else{FS.phase="focus";FS.remaining=focusTotal();}FS.elapsed=0;focusUI();}
 function focusOpen(opts){opts=opts||{};if(!FS.running&&FS.elapsed===0){const p=focusPreset(FS.preset);FS.focusSec=p.focus*60;FS.breakSec=p.brk*60;FS.phase="focus";FS.remaining=FS.focusSec;}FS.label=opts.label||FS.label||"Focus session";FS.taskId=opts.taskId||null;FS.topicId=opts.topicId||null;if(!FS.panel&&!FS.zen)focusPanelOpen();if(opts.autostart)focusStart();else focusUI();}
-function focusStart(){if(FS.running)return;if(FS.mode==="pomodoro"&&FS.remaining<=0)FS.remaining=focusTotal();FS.running=true;FS.startedAt=FS.startedAt||Date.now();if(!FS.elapsed)_focusDistractions=0;if(FS.tick)clearInterval(FS.tick);FS.tick=setInterval(focusTick,1000);focusUI();}
-function focusPause(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;focusUI();}
+function focusStart(){
+  if(FS.running)return;
+  if(FS.mode==="pomodoro"&&FS.remaining<=0)FS.remaining=focusTotal();
+  FS.running=true;
+  FS.startedAt=FS.startedAt||Date.now();
+  FS._lastTickMs=Date.now();
+  if(!FS.elapsed)_focusDistractions=0;
+  if(FS.tick)clearInterval(FS.tick);
+  FS.tick=setInterval(focusTick,1000);
+  focusUI();
+}
+function focusPause(){
+  if(FS.tick){clearInterval(FS.tick);FS.tick=null;}
+  FS.running=false;
+  FS._lastTickMs=null;
+  focusUI();
+}
 function focusReset(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;if(FS.mode==="pomodoro")FS.remaining=focusTotal();FS.elapsed=0;FS.startedAt=null;_focusDistractions=0;focusUI();}
 function focusSkip(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;FS.phase=FS.phase==="focus"?"break":"focus";FS.remaining=focusTotal();focusUI();}
 function focusTick(){
   if(!FS.running) return;
-  FS.elapsed++;
-  if(FS.mode==="pomodoro"){
-    FS.remaining--;
-    if(FS.remaining<=0){ focusFinishBlock(); return; }
+  const nowMs = Date.now();
+  if(!FS._lastTickMs) FS._lastTickMs = nowMs;
+  const deltaSec = Math.max(0, Math.round((nowMs - FS._lastTickMs) / 1000));
+  FS._lastTickMs = nowMs;
+  if(deltaSec > 0){
+    FS.elapsed += deltaSec;
+    if(FS.mode === "pomodoro"){
+      FS.remaining -= deltaSec;
+      if(FS.remaining <= 0){ focusFinishBlock(); return; }
+    }
+    if(FS.elapsed % 30 < deltaSec) focusSaveResume();
   }
   focusTickUI();
-  if(FS.elapsed % 30 === 0) focusSaveResume();
 }
-function focusFinishBlock(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;focusBeep();if(FS.mode==="pomodoro"&&FS.phase==="focus"){const mins=Math.round(FS.elapsed/60);if(mins>=1){snapshot();S.focusLog.push({id:uid("f"),label:FS.label,taskId:FS.taskId,topicId:FS.topicId,startedAt:new Date(FS.startedAt||Date.now()).toISOString(),endedAt:new Date().toISOString(),minutes:mins});saveLocal();}FS.phase="break";FS.remaining=FS.breakSec;FS.elapsed=0;FS.startedAt=null;toast("⏱ Focus block done","+"+mins+" min logged · break started");focusStart();if(route()==="dashboard")rerender();}else if(FS.mode==="pomodoro"){FS.phase="focus";FS.remaining=FS.focusSec;FS.elapsed=0;FS.startedAt=null;toast("☕ Break over","Ready for the next block");focusUI();}}
+function focusFinishBlock(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;focusBeep();if(FS.mode==="pomodoro"&&FS.phase==="focus"){const mins=Math.round(FS.elapsed/60);if(mins>=1){snapshot();S.focusLog.push({id:uid("f"),label:FS.label,taskId:FS.taskId,topicId:FS.topicId,startedAt:new Date(FS.startedAt||Date.now()).toISOString(),endedAt:new Date().toISOString(),minutes:mins});logActivity("focus.logged",FS.topicId||FS.taskId||null,{minutes:mins,label:FS.label});saveLocal();}FS.phase="break";FS.remaining=FS.breakSec;FS.elapsed=0;FS.startedAt=null;toast("⏱ Focus block done","+"+mins+" min logged · break started");focusStart();if(route()==="dashboard")rerender();}else if(FS.mode==="pomodoro"){FS.phase="focus";FS.remaining=FS.focusSec;FS.elapsed=0;FS.startedAt=null;toast("☕ Break over","Ready for the next block");focusUI();}}
 function focusComplete(){
   if(FS.tick){clearInterval(FS.tick);FS.tick=null;}
   FS.running=false;
@@ -5424,7 +5466,7 @@ function renderRoute(){
     V.innerHTML='<div class="view-anim">'+VIEWS[r]()+'</div>';
     if(POST[r])POST[r]();
     updateBadges();updateTimerUI();updateUndoBtn();updateSyncPill();
-    if(window.katex){try{renderMathIn(V);}catch(e){}}
+    
   }catch(e){fatal("Render: "+e.message);}
 }
 function go(id){
@@ -5439,14 +5481,117 @@ function updateSyncPill(){const el=$("#sync-pill");if(!el)return;const map={off:
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("Failed: "+src));document.head.appendChild(s);});}
 async function initFirebase(){if(fbReady)return true;if(!FBCFG.apiKey||!FBCFG.projectId)return false;if(!window.firebase){await loadScript("https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js");await loadScript("https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js");}if(!window.firebase)return false;if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(FBCFG);fbReady=true;return true;}
 function queueSync(){if(!S.sync.enabled||!syncKey||_applyingRemote)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushNow(true),2500);}
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden && S.sync.enabled && syncKey && syncTimer){
+    clearTimeout(syncTimer);
+    syncTimer=null;
+    pushNow(true);
+  }
+});
 async function pullNow(silent){if(!S.sync.enabled||!S.sync.room||!syncKey)return;try{setSyncStatus("connecting");if(!await initFirebase()){setSyncStatus("error");if(!silent)toast("⚠️ Firebase not configured");return;}const db=firebase.firestore();const ref=db.collection("exam_os_rooms").doc(S.sync.room);const snap=await ref.get();if(!snap.exists){if(!silent)toast("No cloud copy yet");setSyncStatus("synced");return;}const data=snap.data();if(!data||!data.enc){if(!silent)toast("⚠️ Cloud copy unreadable");setSyncStatus("error");return;}let remote;try{remote=await decryptState(data.enc);}catch(e){if(!silent)toast("❌ Wrong passphrase","Could not decrypt cloud copy");setSyncStatus("error");return;}if(!silent&&!confirm("Replace this device's data with the cloud copy?")){setSyncStatus("synced");return;}_applyingRemote=true;Object.keys(remote).forEach(k=>{S[k]=remote[k];});S.schemaVersion=SCHEMA_VERSION;S.sync={enabled:true,room:ref.id};S._lastSync=data.updatedAt;_applyingRemote=false;applyTheme(S.settings.theme||"obsidian");store.set(KEY,JSON.stringify(S));rerender();setSyncStatus("synced");if(!silent)toast("⬇ Pulled (decrypted)");}catch(e){setSyncStatus("error");if(!silent)toast("⚠️ Pull failed",e.message);}}
-async function startSync(){if(!S.sync.enabled||!S.sync.room){setSyncStatus("off");return;}if(!syncKey){setSyncStatus("locked");return;}try{setSyncStatus("connecting");if(!await initFirebase()){setSyncStatus("error");toast("⚠️ Paste Firebase config in Settings");return;}const db=firebase.firestore();const ref=db.collection("exam_os_rooms").doc(S.sync.room);if(syncUnsub)syncUnsub();syncUnsub=ref.onSnapshot(doc=>{if(!doc.exists||_applyingRemote)return;const d=doc.data();if(!d||!d.enc||!d.updatedAt)return;if(!S._lastSync||d.updatedAt>S._lastSync){decryptState(d.enc).then(remote=>{const localDirty=S._lastLocalEdit&&S._lastSync&&S._lastLocalEdit>S._lastSync;if(localDirty&&!confirm("A newer version exists in the cloud.\n\nReplace this device's data with the cloud copy?\n\n(Cancel to keep local — you'll be prompted again next sync)")){setSyncStatus("synced");return;}_applyingRemote=true;Object.keys(remote).forEach(k=>{S[k]=remote[k];});S.schemaVersion=SCHEMA_VERSION;S.sync={enabled:true,room:ref.id};S._lastSync=d.updatedAt;_applyingRemote=false;applyTheme(S.settings.theme||"obsidian");store.set(KEY,JSON.stringify(S));rerender();setSyncStatus("synced");}).catch(()=>setSyncStatus("error"));}});setSyncStatus("synced");}catch(e){setSyncStatus("error");toast("⚠️ Sync error",e.message);}}
+async function startSync(){
+  if(!S.sync.enabled||!S.sync.room){setSyncStatus("off");return;}
+  if(!syncKey){setSyncStatus("locked");return;}
+  try{
+    setSyncStatus("connecting");
+    if(!await initFirebase()){setSyncStatus("error");toast("⚠️ Paste Firebase config in Settings");return;}
+    const db=firebase.firestore();
+    const ref=db.collection("exam_os_rooms").doc(S.sync.room);
+    if(syncUnsub)syncUnsub();
+    syncUnsub=ref.onSnapshot(doc=>{
+      if(!doc.exists||_applyingRemote)return;
+      if(doc.metadata&&doc.metadata.hasPendingWrites)return;
+      const d=doc.data();
+      if(!d||!d.enc||!d.updatedAt)return;
+      if(S._lastSync && d.updatedAt <= S._lastSync)return;
+      decryptState(d.enc).then(remote=>{
+        const localDirty=S._lastLocalEdit&&S._lastSync&&S._lastLocalEdit>S._lastSync;
+        _applyingRemote=true;
+        if(localDirty){
+          S=mergeForSync(S,remote);
+        }else{
+          Object.keys(remote).forEach(k=>{S[k]=remote[k];});
+          S.schemaVersion=SCHEMA_VERSION;
+          S.sync={enabled:true,room:ref.id};
+        }
+        S._lastSync=d.updatedAt;
+        _applyingRemote=false;
+        applyTheme(S.settings.theme||"obsidian");
+        store.set(KEY,JSON.stringify(S));
+        rerender();
+        setSyncStatus("synced");
+      }).catch(()=>setSyncStatus("error"));
+    });
+    setSyncStatus("synced");
+  }catch(e){setSyncStatus("error");toast("⚠️ Sync error",e.message);}
+}
 function stopSync(){if(syncUnsub){syncUnsub();syncUnsub=null;}clearSyncKey();setSyncStatus("off");}
 async function unlockSync(pass){if(!S.sync.room)return false;await setPassphrase(pass);sessionStorage.setItem("apex-sync-pass",pass);toast("🔓 Sync unlocked");startSync();return true;}
 function lockSync(){clearSyncKey();sessionStorage.removeItem("apex-sync-pass");if(syncUnsub){syncUnsub();syncUnsub=null;}setSyncStatus("locked");toast("🔒 Sync locked");}
+async function firstSyncCheck(){
+  try{
+    if(!S.sync.enabled||!S.sync.room||!syncKey)return false;
+    if(S._lastSync)return false;
+    if(!await initFirebase())return false;
+    const snap=await firebase.firestore().collection("exam_os_rooms").doc(S.sync.room).get();
+    if(!snap.exists)return false;
+    const d=snap.data();
+    if(!d||!d.enc)return false;
+    const total=(S.syllabus||[]).length+(S.sessions||[]).length+(S.errors||[]).length+(S.mocks||[]).length+(S.tasks||[]).length;
+    return total>0;
+  }catch(e){return false;}
+}
+function showFirstSyncDialog(){
+  (async function(){
+    let remoteCounts="Unable to read cloud copy";
+    try{
+      const snap=await firebase.firestore().collection("exam_os_rooms").doc(S.sync.room).get();
+      if(snap.exists&&snap.data()&&snap.data().enc){
+        const remote=await decryptState(snap.data().enc);
+        remoteCounts=((remote.syllabus||[]).length)+" topics · "+((remote.sessions||[]).length)+" sessions · "+((remote.errors||[]).length)+" errors";
+      }
+    }catch(e){remoteCounts="Could not decrypt — check passphrase";}
+    const el=document.getElementById("fs-remote-counts");
+    if(el)el.textContent=remoteCounts;
+  })();
+  const localCounts=((S.syllabus||[]).length)+" topics · "+((S.sessions||[]).length)+" sessions · "+((S.errors||[]).length)+" errors";
+  const body='<p class="muted small" style="line-height:1.6;margin-bottom:14px">You have data on <b>this device</b> AND in the <b>cloud</b> for this room. This is the first sync — you need to pick how to combine them. It only happens once.</p>'
+    +'<div class="detail-block" style="border-left:3px solid var(--accent-2)"><div style="font-weight:700;margin-bottom:4px">This device</div><div class="tiny">'+esc(localCounts)+'</div></div>'
+    +'<div class="detail-block" style="border-left:3px solid var(--pri-medium-fg)"><div style="font-weight:700;margin-bottom:4px">Cloud</div><div class="tiny" id="fs-remote-counts">Loading…</div></div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">'
+    +'<button class="btn primary" data-action="fs-merge">Merge — keep everything from both</button>'
+    +'<button class="btn" data-action="fs-local">Use Local — replace cloud with this device</button>'
+    +'<button class="btn danger" data-action="fs-cloud">Use Cloud — replace this device with cloud</button>'
+    +'</div>'
+    +'<div class="hint" style="margin-top:14px;line-height:1.55">If unsure, pick <b>Merge</b>. It keeps every topic, session, error, and mock from both sides.</div>';
+  openModal("First sync — pick what happens",body,function(){},null);
+  const sv=document.querySelector("[data-msave]");if(sv)sv.style.display="none";
+  const cl=document.querySelector("[data-mclose]");
+  if(cl){cl.textContent="Decide later";cl.onclick=function(){closeModal();setSyncStatus("locked");toast("Sync deferred","Open Settings → Sync when ready");};}
+}
 
 function requestNotifPerm(){if(!("Notification"in window)){toast("⚠️ Not supported");return Promise.resolve(false);}if(Notification.permission==="granted")return Promise.resolve(true);return Notification.requestPermission().then(p=>p==="granted");}
-function checkAndNotify(){try{if(!S.settings||!S.settings.notifEnabled)return;if(!("Notification"in window)||Notification.permission!=="granted")return;const today=todayISO();if(S.settings.lastNotif===today)return;const due=dueSessions().length;if(due===0)return;const now=new Date();const parts=(S.settings.notifTime||"08:00").split(":").map(Number);if(now.getHours()<parts[0]||(now.getHours()===parts[0]&&now.getMinutes()<parts[1]))return;new Notification("Apex — "+due+" review"+(due>1?"s":"")+" due",{body:"Clear today's agenda.",tag:"apex-daily"});S.settings.lastNotif=today;store.set(KEY,JSON.stringify(S));}catch(e){}}
+function checkAndNotify(){
+  try{
+    if(!S.settings||!S.settings.notifEnabled)return;
+    if(!("Notification"in window)||Notification.permission!=="granted")return;
+    const today=todayISO();
+    if(S.settings.lastNotif===today)return;
+    const sN=dueSessions().length;
+    const eN=dueErrors().length;
+    const total=sN+eN;
+    if(total===0)return;
+    const now=new Date();
+    const parts=(S.settings.notifTime||"08:00").split(":").map(Number);
+    if(now.getHours()<parts[0]||(now.getHours()===parts[0]&&now.getMinutes()<parts[1]))return;
+    const bits=[];
+    if(sN)bits.push(sN+" review"+(sN>1?"s":""));
+    if(eN)bits.push(eN+" error fix"+(eN>1?"es":""));
+    new Notification("Apex — "+total+" item"+(total>1?"s":"")+" due",{body:bits.join(" · "),tag:"apex-daily"});
+    S.settings.lastNotif=today;
+    store.set(KEY,JSON.stringify(S));
+  }catch(e){}
+}
 setInterval(checkAndNotify,60000);setTimeout(checkAndNotify,4000);
 function mondayOf(off){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+(off||0)*7);return d;}
 let weekOff=0,monthOff=0,yearOff=0,hTab="week";
@@ -5722,26 +5867,77 @@ function quickLogDo(forcedTopicId){
   rerender();
   toast("✓ Logged",t.topic+(parsed.minutes?" · "+parsed.minutes+"m":" · no duration"));
 }
+function examReadiness(){
+  const total=S.syllabus.filter(t=>!t.archived).length;
+  if(!total)return null;
+  const started=S.syllabus.filter(t=>!t.archived&&t.status!=="Not started").length;
+  const coveragePct=Math.round(started/total*100);
+  const mastered=S.syllabus.filter(t=>!t.archived&&t.status==="Mastered").length;
+  const masteryPct=Math.round(mastered/total*100);
+  const cutoff60=addDays(todayISO(),-60);
+  let totalReviews=0,goodReviews=0;
+  S.sessions.forEach(s=>(s.history||[]).forEach(h=>{
+    if(!h.date||h.date<cutoff60)return;
+    totalReviews++;
+    if(h.grade==="good"||h.grade==="easy")goodReviews++;
+  }));
+  const recallPct=totalReviews?Math.round(goodReviews/totalReviews*100):null;
+  const recentMocks=S.mocks.filter(m=>m.date).sort((a,b)=>a.date<b.date?1:-1).slice(0,3);
+  const mockAccuracyPct=recentMocks.length?Math.round(recentMocks.reduce((a,m)=>a+(+m.accuracy||0),0)/recentMocks.length):null;
+  const sw=sectionWeakness();
+  const sectionPct=sw&&sw.weakestAvg!==null?sw.weakestAvg:null;
+  const c30=addDays(todayISO(),-30);
+  const c60=addDays(todayISO(),-60);
+  const recentErrs=S.errors.filter(e=>e.date&&e.date>=c30).length;
+  const priorErrs=S.errors.filter(e=>e.date&&e.date>=c60&&e.date<c30).length;
+  let errorTrend=null;
+  if(recentErrs+priorErrs>0){
+    if(priorErrs===0)errorTrend=30;
+    else errorTrend=Math.max(0,Math.min(100,Math.round(100-(recentErrs/Math.max(1,priorErrs))*50)));
+  }
+  const parts=[],weights=[];
+  parts.push(coveragePct);weights.push(0.15);
+  parts.push(masteryPct);weights.push(0.25);
+  if(recallPct!==null){parts.push(recallPct);weights.push(0.20);}
+  if(mockAccuracyPct!==null){parts.push(mockAccuracyPct);weights.push(0.25);}
+  if(sectionPct!==null){parts.push(sectionPct);weights.push(0.10);}
+  if(errorTrend!==null){parts.push(errorTrend);weights.push(0.05);}
+  let num=0,den=0;
+  for(let i=0;i<parts.length;i++){num+=parts[i]*weights[i];den+=weights[i];}
+  const composite=den>0?Math.round(num/den):0;
+  return{composite,coveragePct,masteryPct,recallPct,mockAccuracyPct,sectionPct,errorTrend,totalReviews,recentMocks:recentMocks.length};
+}
 function readinessHTML(){
-  const r=readinessProjection();
-  if(!r)return"";
-  const behind=r.ratio<1&&r.requiredPerWeek>0;
-  const closeTo=r.ratio>=1&&r.ratio<1.15;
-  const cls=behind?"behind":(closeTo?"close":"ontrack");
-  const statusLine=!r.pacePerWeek&&!r.mastered
-    ? "Rate your first review to start tracking pace"
-    : (behind
-        ? "⚠ Need "+r.requiredPerWeek.toFixed(1)+"/week — running at "+(r.pacePerWeek||0).toFixed(1)+"/week"
-        : (closeTo
-            ? "Just barely on track — "+(r.pacePerWeek||0).toFixed(1)+"/week vs "+(r.requiredPerWeek||0).toFixed(1)+" needed"
-            : "✓ On track — "+(r.pacePerWeek||0).toFixed(1)+"/week vs "+(r.requiredPerWeek||0).toFixed(1)+" needed"));
-  const masteredPct=r.masteredPct;
-  const projPct=Math.max(r.projectedPct,masteredPct);
-  return '<div class="ready-card '+cls+'">'
-    +'<div class="ready-head"><div><div class="ready-title">Readiness</div><div class="ready-sub">D-'+r.daysLeft+' · '+esc(r.examLabel)+'</div></div><div class="ready-pct">'+masteredPct+'<span class="ready-pct-sign">%</span></div></div>'
-    +'<div class="ready-bar"><div class="ready-fill" style="width:'+masteredPct+'%"></div><div class="ready-proj" style="left:'+projPct+'%"></div></div>'
-    +'<div class="ready-legend"><span><b>'+r.mastered+'</b> / '+r.totalTopics+' mastered</span><span><b>'+r.projectedTotal+'</b> projected at D-Day</span></div>'
-    +'<div class="ready-status">'+esc(statusLine)+'</div>'
+  const proj=readinessProjection();
+  const ready=examReadiness();
+  if(!proj&&!ready)return"";
+  const projPart=proj?('<div class="ready-legend" style="margin-bottom:8px"><span><b>'+proj.mastered+'</b> / '+proj.totalTopics+' mastered</span><span>D-'+proj.daysLeft+' · '+esc(proj.examLabel)+'</span></div>'
+    +'<div class="ready-bar"><div class="ready-fill" style="width:'+proj.masteredPct+'%"></div><div class="ready-proj" style="left:'+Math.max(proj.projectedPct,proj.masteredPct)+'%"></div></div>'
+    +'<div class="ready-legend"><span>Projected <b>'+proj.projectedPct+'%</b> at D-Day</span><span>'+(proj.requiredPerWeek>0?('Need <b>'+proj.requiredPerWeek.toFixed(1)+'</b>/wk'):'')+'</span></div>'):"";
+  const composite=ready?ready.composite:0;
+  const cls=!ready?"":(composite<40?"behind":composite<70?"close":"ontrack");
+  const rows=ready?[
+    ["Coverage",ready.coveragePct],
+    ["Mastery",ready.masteryPct],
+    ["Recall (60d)",ready.recallPct],
+    ["Mock accuracy",ready.mockAccuracyPct],
+    ["Weakest section",ready.sectionPct],
+    ["Error trend",ready.errorTrend]
+  ]:null;
+  const breakdown=rows?rows.map(function(row){
+    var label=row[0],val=row[1];
+    if(val===null||val===undefined)return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px"><span>'+label+'</span><span class="tiny">no data</span></div>';
+    var c=val>=70?"#10B981":val>=50?"#F59E0B":"#EF4444";
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px"><span>'+label+'</span><b style="color:'+c+'">'+val+'%</b></div>';
+  }).join(""):"";
+  return '<div class="ready-card '+cls+'" style="padding:22px 26px">'
+    +'<div class="ready-head" style="margin-bottom:10px"><div><div class="ready-title">Exam Readiness</div><div class="ready-sub">Composite — coverage × recall × mocks × errors</div></div><div class="ready-pct">'+composite+'<span class="ready-pct-sign">%</span></div></div>'
+    +'<div class="ready-bar" style="height:10px"><div class="ready-fill" style="width:'+composite+'%;background:'+(composite>=70?"#10B981":composite>=40?"#F59E0B":"#EF4444")+'"></div></div>'
+    +breakdown
+    +'<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)">'
+      +'<div class="tiny" style="font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-bottom:8px">Syllabus projection</div>'
+      +projPart
+    +'</div>'
     +((function(){const m=studyMixAnalysis();return m?renderMixLine(m):"";})())
   +'</div>';
 }
@@ -5771,7 +5967,7 @@ function viewDashboard(){
   const name=S.settings.userName||"Aspirant";
   const due=dueSessions();
   const openTasks=S.tasks.filter(t=>t.status!=="Completed").length;
-  const mastered=S.syllabus.filter(t=>t.status==="Mastered").length;
+  const mastered=S.syllabus.filter(t=>t.status==="Mastered"&&!t.archived).length;
   const mpct=S.syllabus.length?Math.round(mastered/S.syllabus.length*100):0;
   const rec=recommend();
   const urgentExam=S.settings.urgentExam||"CGL";
@@ -5957,10 +6153,10 @@ function todayPlanHTML(){
 function weakRow(x){const t=x.t;return'<div class="weak-item"><span class="weak-score">'+x.score+'</span><div class="weak-t" data-action="radar-breakdown" data-id="'+t.id+'" style="cursor:pointer">'+esc(t.topic)+'</div><button class="mini-icon" data-action="goto-topic" data-id="'+t.id+'">'+ICONS.pencil+'</button><button class="mini-icon accent" data-action="timer-start-topic" data-id="'+t.id+'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button></div>';}
 
 const SF_KEY="apex-syl-state-v1";
-const sf=(function(){try{const raw=localStorage.getItem(SF_KEY);if(raw){const p=JSON.parse(raw);return{q:"",exam:"All",status:"All",priority:"All",closed:p.closed||{},closedTopics:p.closedTopics||{}};}}catch(e){}return{q:"",exam:"All",status:"All",priority:"All",closed:{},closedTopics:{}};})();
+const sf=(function(){try{const raw=localStorage.getItem(SF_KEY);if(raw){const p=JSON.parse(raw);return{q:"",exam:"All",status:"All",priority:"All",archived:false,closed:p.closed||{},closedTopics:p.closedTopics||{}};}}catch(e){}return{q:"",exam:"All",status:"All",priority:"All",archived:false,closed:{},closedTopics:{}};})();
 function saveSF(){try{localStorage.setItem(SF_KEY,JSON.stringify({closed:sf.closed,closedTopics:sf.closedTopics}));}catch(e){}}
-function sylFiltered(){return S.syllabus.filter(t=>(sf.exam==="All"||t.exams.indexOf(sf.exam)>-1)&&(sf.status==="All"||t.status===sf.status)&&(sf.priority==="All"||t.priority===sf.priority)&&(!sf.q||t.topic.toLowerCase().indexOf(sf.q)>-1||t.subject.toLowerCase().indexOf(sf.q)>-1));}
-function viewSyllabus(){return'<div class="toolbar"><div class="row"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="inp" id="syl-q" placeholder="Search topics or subjects…" value="'+esc(sf.q)+'" autocomplete="off"></div><button class="btn" data-action="add-subject">'+ICONS.plus+' Subject</button><button class="btn primary" data-action="open-add-topic">'+ICONS.plus+' Topic</button><button class="btn" data-action="open-bulk-import" title="Bulk import"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></button><button class="btn" data-action="syl-collapse-all" title="Collapse all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 11-5-5-5 5"/><path d="m17 18-5-5-5 5"/></svg></button><button class="btn" data-action="syl-expand-all" title="Expand all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></button></div><div class="chips-scroll">'+["All"].concat(taxList("exams")).map(e=>'<button class="chip'+(sf.exam===e?" on":"")+'" data-exam="'+esc(e)+'">'+esc(e==="RBI GRADE B"?"RBI":e)+'</button>').join("")+'<span style="width:8px"></span><select class="inp" id="syl-status" style="width:auto;min-width:135px"><option value="All">All statuses</option>'+selOpts(taxList("statuses"),sf.status)+'</select><button class="add-opt-btn" data-addopt="status" data-taxkey="statuses" data-addlabel="Status" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);display:grid;place-items:center;flex-shrink:0">'+ICONS.plus+'</button><span style="width:8px"></span><div class="chips" style="gap:6px;margin-left:2px">'+taxList("priorities").map(p=>'<button class="chip '+(sf.priority===p?"on ":"")+priClass(p)+'" data-pri="'+esc(p)+'">'+esc(p)+'</button>').join("")+'</div><button class="add-opt-btn" data-addopt="priority" data-taxkey="priorities" data-addlabel="Priority" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);display:grid;place-items:center;flex-shrink:0">'+ICONS.plus+'</button></div></div><div id="syl-list" data-tour="syllabus"></div><footer class="app-foot"><span>Syllabus · drag ☰ to reorder · ▶ to expand parents · ↑↓ on subject headers to reorder subjects</span><span id="syl-count"></span></footer>';}
+function sylFiltered(){return S.syllabus.filter(t=>(sf.archived?t.archived===true:t.archived!==true)&&(sf.exam==="All"||t.exams.indexOf(sf.exam)>-1)&&(sf.status==="All"||t.status===sf.status)&&(sf.priority==="All"||t.priority===sf.priority)&&(!sf.q||t.topic.toLowerCase().indexOf(sf.q)>-1||t.subject.toLowerCase().indexOf(sf.q)>-1));}
+function viewSyllabus(){return'<div class="toolbar"><div class="row"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="inp" id="syl-q" placeholder="Search topics or subjects…" value="'+esc(sf.q)+'" autocomplete="off"></div><button class="btn" data-action="add-subject">'+ICONS.plus+' Subject</button><button class="btn primary" data-action="open-add-topic">'+ICONS.plus+' Topic</button><button class="btn" data-action="open-bulk-import" title="Bulk import"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></button><button class="btn" data-action="syl-collapse-all" title="Collapse all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 11-5-5-5 5"/><path d="m17 18-5-5-5 5"/></svg></button><button class="btn" data-action="syl-expand-all" title="Expand all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></button></div><div class="chips-scroll">'+["All"].concat(taxList("exams")).map(e=>'<button class="chip'+(sf.exam===e?" on":"")+'" data-exam="'+esc(e)+'">'+esc(e==="RBI GRADE B"?"RBI":e)+'</button>').join("")+'<span style="width:8px"></span><select class="inp" id="syl-status" style="width:auto;min-width:135px"><option value="All">All statuses</option>'+selOpts(taxList("statuses"),sf.status)+'</select><button class="add-opt-btn" data-addopt="status" data-taxkey="statuses" data-addlabel="Status" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);display:grid;place-items:center;flex-shrink:0">'+ICONS.plus+'</button><span style="width:8px"></span><div class="chips" style="gap:6px;margin-left:2px">'+taxList("priorities").map(p=>'<button class="chip '+(sf.priority===p?"on ":"")+priClass(p)+'" data-pri="'+esc(p)+'">'+esc(p)+'</button>').join("")+'</div><button class="add-opt-btn" data-addopt="priority" data-taxkey="priorities" data-addlabel="Priority" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);display:grid;place-items:center;...flex-shrink:0">'+ICONS.plus+'</button><button class="chip'+(sf.archived?" on":"")+'" data-archived-toggle style="flex-shrink:0">Archived</button></div></div><div id="syl-list" data-tour="syllabus"></div><footer class="app-foot"><span>Syllabus · drag ☰ to reorder · ▶ to expand parents · ↑↓ on subject headers to reorder subjects</span><span id="syl-count"></span></footer>';}
 function isRedundantContainer(topicName,subject){
   const a=String(topicName||"").toLowerCase().trim();
   const b=String(subject||"").toLowerCase().trim();
@@ -5987,7 +6183,7 @@ function topicRow(t,depth,hasChildren,isCollapsed,childCount,focusMin){
       +'<select class="mini-sel" data-change="syl-status" data-id="'+t.id+'">'+selOpts(taxList("statuses"),t.status)+'</select>'
       +'<select class="mini-sel '+pc+'" data-change="syl-priority" data-id="'+t.id+'"><option value="">Priority</option>'+selOpts(taxList("priorities"),t.priority)+'</select>'
       +'<select class="mini-sel" data-change="syl-weight" data-id="'+t.id+'"><option value="">Wt</option>'+selOpts(taxList("weights"),t.weightage)+'</select>'
-      +'<div class="row-actions"><button class="mini-icon" data-action="add-subtopic" data-id="'+t.id+'" title="Add subtopic">'+ICONS.plus+'</button><button class="mini-icon accent" data-action="timer-start-topic" data-id="'+t.id+'" title="Focus"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button><button class="mini-icon" data-action="edit-topic" data-id="'+t.id+'" title="Edit">'+ICONS.pencil+'</button><button class="mini-icon danger" data-action="del-topic" data-id="'+t.id+'" title="Delete">'+ICONS.trash+'</button></div>'
+      +'<div class="row-actions">'+(t.archived?'<button class="mini-icon" data-action="unarchive-topic" data-id="'+t.id+'" title="Restore">↺</button><button class="mini-icon danger" data-action="hard-del-topic" data-id="'+t.id+'" title="Delete permanently">'+ICONS.trash+'</button>':'<button class="mini-icon" data-action="add-subtopic" data-id="'+t.id+'" title="Add subtopic">'+ICONS.plus+'</button><button class="mini-icon accent" data-action="timer-start-topic" data-id="'+t.id+'" title="Focus"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button><button class="mini-icon" data-action="edit-topic" data-id="'+t.id+'" title="Edit">'+ICONS.pencil+'</button><button class="mini-icon danger" data-action="del-topic" data-id="'+t.id+'" title="Archive">'+ICONS.trash+'</button>')+'</div>'
     +'</div>'
   +'</div>';
 }
@@ -6052,7 +6248,7 @@ function renderSylList(){
   el.innerHTML=out||'<div class="empty"><div class="ic">'+emptyArt("search")+'</div><b>No topics match</b><p>Clear a filter or search term.</p></div>';
   const c=$("#syl-count");if(c)c.textContent=list.length+" of "+S.syllabus.length+" topics";
 }
-function postSyllabus(){renderSylList();const q=$("#syl-q");if(q){let _sylSearchTmr;q.addEventListener("input",()=>{clearTimeout(_sylSearchTmr);_sylSearchTmr=setTimeout(()=>{sf.q=q.value.toLowerCase();renderSylList();},140);});}$$(".chips-scroll [data-exam]").forEach(b=>b.addEventListener("click",()=>{sf.exam=b.dataset.exam;$$("[data-exam]").forEach(c=>c.classList.toggle("on",c===b));renderSylList();}));const st=$("#syl-status");if(st)st.addEventListener("change",e=>{sf.status=e.target.value;renderSylList();});$$("[data-pri]").forEach(b=>b.addEventListener("click",()=>{const p=b.dataset.pri;sf.priority=sf.priority===p?"All":p;rerender();}));}
+function postSyllabus(){renderSylList();const q=$("#syl-q");if(q){let _sylSearchTmr;q.addEventListener("input",()=>{clearTimeout(_sylSearchTmr);_sylSearchTmr=setTimeout(()=>{sf.q=q.value.toLowerCase();renderSylList();},140);});}$$(".chips-scroll [data-exam]").forEach(b=>b.addEventListener("click",()=>{sf.exam=b.dataset.exam;$$("[data-exam]").forEach(c=>c.classList.toggle("on",c===b));renderSylList();}));const st=$("#syl-status");if(st)st.addEventListener("change",e=>{sf.status=e.target.value;renderSylList();});$$("[data-pri]").forEach(b=>b.addEventListener("click",()=>{const p=b.dataset.pri;sf.priority=sf.priority===p?"All":p;rerender();}));var _archBtn=$("[data-archived-toggle]");if(_archBtn)_archBtn.addEventListener("click",()=>{sf.archived=!sf.archived;rerender();});}
 function subjChangeGuard(){
   const subjectSel=document.querySelector('.modal [name="subject"]');
   const picker=document.querySelector('.modal .tpick');
@@ -6291,7 +6487,7 @@ function rtabCount(k){if(k==="today")return dueSessions().length+dueErrors().len
 function renderTabs(){const el=$("#rtabs");if(!el)return;el.innerHTML=[["all","All Sessions"],["today","Today"],["upcoming","Upcoming 7d"],["mastered","Mastered"]].map(p=>'<button class="page-tab'+(rtab===p[0]?" on":"")+'" data-rtab="'+p[0]+'">'+p[1]+' ('+rtabCount(p[0])+')</button>').join("");}
 function renderSessList(){const el=$("#sess-list");if(!el)return;let html="";if(rtab==="today"){const due=dueSessions();const dueErr=dueErrors();const combined=[];dueErr.forEach(e=>combined.push({kind:"error",item:e,r:reviewState(e)}));due.forEach(s=>combined.push({kind:"session",item:s,r:reviewState(s)}));combined.sort((a,b)=>{const da=a.r.st==="overdue"?-a.r.days-1000:(a.r.st==="new"?-500:0);const db=b.r.st==="overdue"?-b.r.days-1000:(b.r.st==="new"?-500:0);return da-db;});html=combined.length?combined.map(u=>u.kind==="error"?errorCard(u.item):sessCard(u.item)).join(""):'<div class="empty"><div class="ic">'+emptyArt("check")+'</div><b>All clear</b><p>Nothing due today.</p></div>';}else if(rtab==="upcoming"){const up=S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;}).sort((a,b)=>{const x=reviewState(a).nr,y=reviewState(b).nr;return x<y?-1:1;});if(!up.length)html='<div class="empty"><div class="ic">'+emptyArt("cal")+'</div><b>Nothing this week</b></div>';else{let cur="";html=up.map(s=>{const nr=reviewState(s).nr;let head="";if(nr!==cur){cur=nr;head='<div class="date-grp"><div class="date-grp-h">'+fmtD(nr)+' · '+relD(nr)+'</div></div>';}return head+sessCard(s);}).join("");}}else if(rtab==="mastered"){const m=S.sessions.filter(s=>s.stage==="Mastered");html=m.length?m.map(sessCard).join(""):'<div class="empty"><div class="ic">'+emptyArt("check")+'</div><b>Nothing mastered yet</b></div>';}else{const all=S.sessions.slice().sort((a,b)=>{const ra=reviewState(a),rb=reviewState(b);if(!ra.nr)return 1;if(!rb.nr)return-1;return ra.nr<rb.nr?-1:1;});html=all.length?all.map(sessCard).join(""):'<div class="empty"><div class="ic">'+emptyArt("book")+'</div><b>No sessions yet</b><p>Log your first study session to start the repetition cycle.</p></div>';}el.innerHTML=html;}
 function postReviews(){renderTabs();renderSessList();const el=$("#rtabs");if(el)el.addEventListener("click",e=>{const b=e.target.closest("[data-rtab]");if(!b)return;rtab=b.dataset.rtab;renderTabs();renderSessList();});}
-function sessionModal(s,prefillTopicId){openModal(s?"Edit Session":"Log Study Session",'<div class="frow"><label>Session name</label><input class="inp" name="name" value="'+esc(s?s.name:"")+'" placeholder="e.g. Percentage PYQs — Kiran"></div><div class="frow"><label>Linked topic</label>'+pickerHTML("topicIds",s&&s.topicId?[s.topicId]:(prefillTopicId?[prefillTopicId]:[]),false)+'</div><div class="f2"><div class="frow"><label>Log date</label>'+dateFieldHTML("logDate",(s&&s.logDate)||todayISO())+'</div><div class="frow"><label>Last reviewed</label>'+dateFieldHTML("lastReviewed",(s&&s.lastReviewed)||todayISO())+'</div></div><div class="frow"><label>Duration (optional)</label><input class="inp" type="number" min="0" max="1440" step="5" name="duration" value="'+((s&&s.duration)||"")+'" placeholder="minutes" data-noclear><div class="chips" style="margin-top:8px" id="dur-chips">'+[15,30,45,60,90,120].map(m=>'<button type="button" class="chip'+(s&&s.duration===m?" on":"")+'" data-dur="'+m+'" style="padding:6px 12px;min-height:32px;font-size:12px">'+m+'m</button>').join("")+'</div><div id="focus-dur-hint" style="display:none;margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--pri-medium-bg);border:1px solid var(--pri-medium-bd);color:var(--pri-medium-fg);font-size:11.5px;line-height:1.5"></div><div class="hint">Skip if you don\'t track time.</div></div>',v=>{if(!v.name){toast("⚠️ Name required");return false;}const ids=pickVals(v.topicIds);const dur=Math.max(0,Math.min(1440,parseInt(v.duration,10)||0));const base={name:v.name,topicId:ids[0]||null,logDate:v.logDate||null,lastReviewed:v.lastReviewed||null,duration:dur};if(s)Object.assign(s,base);else{const fresh=Object.assign({id:uid("s"),interval:0,ease:2.5,nextReview:v.lastReviewed||todayISO(),stage:"1st Time Study",history:v.lastReviewed?[{date:v.lastReviewed,grade:"good"}]:[]},base);S.sessions.push(fresh);}edit(()=>{});toast(s?"Session updated":"Session logged");},s?"Save":"Log");
+function sessionModal(s,prefillTopicId){openModal(s?"Edit Session":"Log Study Session",'<div class="frow"><label>Session name</label><input class="inp" name="name" value="'+esc(s?s.name:"")+'" placeholder="e.g. Percentage PYQs — Kiran"></div><div class="frow"><label>Linked topic</label>'+pickerHTML("topicIds",s&&s.topicId?[s.topicId]:(prefillTopicId?[prefillTopicId]:[]),false)+'</div><div class="f2"><div class="frow"><label>Log date</label>'+dateFieldHTML("logDate",(s&&s.logDate)||todayISO())+'</div><div class="frow"><label>Last reviewed</label>'+dateFieldHTML("lastReviewed",(s&&s.lastReviewed)||todayISO())+'</div></div><div class="frow"><label>Duration (optional)</label><input class="inp" type="number" min="0" max="1440" step="5" name="duration" value="'+((s&&s.duration)||"")+'" placeholder="minutes" data-noclear><div class="chips" style="margin-top:8px" id="dur-chips">'+[15,30,45,60,90,120].map(m=>'<button type="button" class="chip'+(s&&s.duration===m?" on":"")+'" data-dur="'+m+'" style="padding:6px 12px;min-height:32px;font-size:12px">'+m+'m</button>').join("")+'</div><div id="focus-dur-hint" style="display:none;margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--pri-medium-bg);border:1px solid var(--pri-medium-bd);color:var(--pri-medium-fg);font-size:11.5px;line-height:1.5"></div><div class="hint">Skip if you don\'t track time.</div></div>',v=>{if(!v.name){toast("⚠️ Name required");return false;}const ids=pickVals(v.topicIds);const dur=Math.max(0,Math.min(1440,parseInt(v.duration,10)||0));const base={name:v.name,topicId:ids[0]||null,logDate:v.logDate||null,lastReviewed:v.lastReviewed||null,duration:dur};if(s)Object.assign(s,base);else{const fresh=Object.assign({id:uid("s"),interval:0,ease:2.5,nextReview:v.lastReviewed||todayISO(),stage:"1st Time Study",history:v.lastReviewed?[{date:v.lastReviewed,grade:"good"}]:[]},base);S.sessions.push(fresh);}const _lastId=s?s.id:(S.sessions[S.sessions.length-1]?S.sessions[S.sessions.length-1].id:null);logActivity(s?"session.edited":"session.logged",_lastId,{duration:(S.sessions.find(x=>x.id===_lastId)||{}).duration||0,topicId:(S.sessions.find(x=>x.id===_lastId)||{}).topicId||null});edit(()=>{});toast(s?"Session updated":"Session logged");},s?"Save":"Log");
   const picker=document.querySelector('.modal .tpick');
   const hint=document.querySelector('#focus-dur-hint');
   const updateHint=()=>{
@@ -6490,7 +6686,7 @@ function debriefModal(mockId){
   if(backdrop)backdrop.addEventListener("mousedown",e=>{if(e.target===backdrop)closeModal();});
   if(titleInput)setTimeout(()=>titleInput.focus(),80);
 }
-function errorModal(er,prefillTopicId){openModal(er?"Edit Error":"Log an Error",'<div class="frow"><label>Question — what was asked?</label><input class="inp" name="title" value="'+esc(er?er.title:"")+'" placeholder="e.g. CI vs SI difference on ₹5000 at 8% for 2 years"></div><div class="frow"><label>My answer — what did I actually do?</label><input class="inp" name="myAnswer" value="'+esc(er&&er.myAnswer||"")+'" placeholder="e.g. Used SI formula — multiplied principal × rate × time"></div><div class="frow"><label>Correct approach — why it was wrong</label><textarea class="inp" name="whyWrong" rows="2" placeholder="e.g. Should compound — year 2 interest applies to P+I, not P">'+esc(er&&er.whyWrong||"")+'</textarea></div><div class="f2"><div class="frow"><label>Type</label>'+selPlus("type",taxList("errTypes"),er?er.type:"","errTypes","Error type")+'</div><div class="frow"><label>Source</label>'+selPlus("source",taxList("errSources"),er?er.source:"","errSources","Error source")+'</div></div><div class="f2"><div class="frow"><label>Date</label>'+dateFieldHTML("date",(er&&er.date)||todayISO())+'</div><div class="frow"><label>Link</label><input class="inp" name="link" value="'+esc(er?er.link:"")+'" placeholder="Optional"></div></div><div class="frow"><label>Linked topic</label>'+pickerHTML("topicIds",er&&er.topicId?[er.topicId]:(prefillTopicId?[prefillTopicId]:[]),false)+'</div>',v=>{if(!v.title){toast("⚠️ Question required");return false;}const ids=pickVals(v.topicIds);const data={title:v.title,myAnswer:(v.myAnswer||"").trim(),whyWrong:(v.whyWrong||"").trim(),type:v.type,source:v.source,date:v.date||"",link:v.link||"",topicId:ids[0]||null};edit(()=>{if(er)Object.assign(er,data);else S.errors.push(Object.assign({id:uid("e")},data));});toast(er?"Error updated":"Error logged");},er?"Save":"Log");}
+function errorModal(er,prefillTopicId){openModal(er?"Edit Error":"Log an Error",'<div class="frow"><label>Question — what was asked?</label><input class="inp" name="title" value="'+esc(er?er.title:"")+'" placeholder="e.g. CI vs SI difference on ₹5000 at 8% for 2 years"></div><div class="frow"><label>My answer — what did I actually do?</label><input class="inp" name="myAnswer" value="'+esc(er&&er.myAnswer||"")+'" placeholder="e.g. Used SI formula — multiplied principal × rate × time"></div><div class="frow"><label>Correct approach — why it was wrong</label><textarea class="inp" name="whyWrong" rows="2" placeholder="e.g. Should compound — year 2 interest applies to P+I, not P">'+esc(er&&er.whyWrong||"")+'</textarea></div><div class="f2"><div class="frow"><label>Type</label>'+selPlus("type",taxList("errTypes"),er?er.type:"","errTypes","Error type")+'</div><div class="frow"><label>Source</label>'+selPlus("source",taxList("errSources"),er?er.source:"","errSources","Error source")+'</div></div><div class="f2"><div class="frow"><label>Date</label>'+dateFieldHTML("date",(er&&er.date)||todayISO())+'</div><div class="frow"><label>Link</label><input class="inp" name="link" value="'+esc(er?er.link:"")+'" placeholder="Optional"></div></div><div class="frow"><label>Linked topic</label>'+pickerHTML("topicIds",er&&er.topicId?[er.topicId]:(prefillTopicId?[prefillTopicId]:[]),false)+'</div>',v=>{if(!v.title){toast("⚠️ Question required");return false;}const ids=pickVals(v.topicIds);const data={title:v.title,myAnswer:(v.myAnswer||"").trim(),whyWrong:(v.whyWrong||"").trim(),type:v.type,source:v.source,date:v.date||"",link:v.link||"",topicId:ids[0]||null};edit(()=>{if(er)Object.assign(er,data);else S.errors.push(Object.assign({id:uid("e")},data));logActivity("error.logged",er?er.id:S.errors[S.errors.length-1].id,{type:data.type,topicId:data.topicId});});toast(er?"Error updated":"Error logged");},er?"Save":"Log");}
 function mockSectionsHTML(m){
   const set=getMockSectionSet(m);
   const sec=m.sections||{};
@@ -6581,7 +6777,7 @@ function mockModal(m){
       const sections={};
       set.sections.forEach(s=>{const raw=v["sec_"+s.key];if(raw!==""&&raw!==undefined){const n=parseFloat(raw);if(!isNaN(n))sections[s.key]=Math.max(0,Math.min(100,n));}});
       const data={title:v.title,date:v.date||todayISO(),type:v.type,raw:parseFloat(v.raw)||0,percentile:parseFloat(v.percentile)||0,accuracy:parseFloat(v.accuracy)||0,weak:pickVals(v.weak),sections:sections,sectionSet:setId};
-      edit(()=>{if(m)Object.assign(m,data);else S.mocks.push(Object.assign({id:uid("m")},data));});
+      edit(()=>{if(m)Object.assign(m,data);else S.mocks.push(Object.assign({id:uid("m")},data));logActivity("mock.logged",m?m.id:S.mocks[S.mocks.length-1].id,{title:data.title,type:data.type,percentile:data.percentile});});
       toast(m?"Mock updated":"Mock logged");
     },m?"Save":"Log");
   const setSel=document.querySelector("#mock-section-set");
@@ -6794,7 +6990,7 @@ function openSettings(){
     const rawFb=(v.fbcfg||"").trim();
     if(rawFb){try{let clean=rawFb.replace(/^\s*\/\/.*$/gm,"").replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");FBCFG=JSON.parse(clean);saveFBCFG();}catch(e){toast("⚠️ Invalid Firebase config");return false;}}else if(!FBCFG.apiKey){FBCFG={};saveFBCFG();}
     const newRoom=(v.roomCode||"").trim();
-    if(newRoom!==(S.sync.room||"")){S.sync.room=newRoom;if(newRoom){localStorage.removeItem("apex-salt-"+newRoom);}}
+    if(newRoom!==(S.sync.room||"")){S.sync.room=newRoom;}
     S.sync.enabled=!!(FBCFG.apiKey&&S.sync.room);store.set(KEY,JSON.stringify(S));
     const pass=(v.syncPass||"").trim();
     if(pass){if(pass.length<6){toast("⚠️ Passphrase must be at least 6 characters");return false;}try{await setPassphrase(pass);sessionStorage.setItem("apex-sync-pass",pass);if(!localStorage.getItem("apex-sync-warned")){alert("⚠️ IMPORTANT\n\nYour sync passphrase is NOT stored anywhere.\n\nIf you forget it, the cloud copy is permanently unreadable.");localStorage.setItem("apex-sync-warned","1");}toast("🔓 Sync unlocked");}catch(e){toast("⚠️ Could not set passphrase",e.message);return false;}}
@@ -6828,7 +7024,9 @@ const ACTIONS={
   "edit-topic":id=>topicModal(topicById(id)),
   "topic-detail":id=>topicDetail(id),
   "edit-notes-inline":id=>notesEditor(id),
-  "del-topic":id=>{const parent=topics_by_id(id);if(!parent)return;snapshot();const newParentId=parent.parentId||null;S.syllabus.forEach(x=>{if(x.parentId===id)x.parentId=newParentId;});S.sessions.forEach(s=>{if(s.topicId===id)s.topicId=null;});S.errors.forEach(e=>{if(e.topicId===id)e.topicId=null;});S.mocks.forEach(m=>{m.weak=(m.weak||[]).filter(w=>w!==id);});S.syllabus=S.syllabus.filter(x=>x.id!==id);saveLocal();renderSylList();toast("Deleted","⌘Z to undo");},
+"del-topic":id=>{const t=topics_by_id(id);if(!t)return;snapshot();t.archived=true;t.archivedAt=todayISO();saveLocal();renderSylList();rerender();toast("Archived","History preserved · ⌘Z to undo");},
+"unarchive-topic":id=>{const t=topics_by_id(id);if(!t)return;snapshot();t.archived=false;delete t.archivedAt;saveLocal();renderSylList();rerender();toast("Restored");},
+"hard-del-topic":id=>{const t=topics_by_id(id);if(!t)return;if(!t.archived){toast("Archive first");return;}if(!confirm("Permanently delete '"+t.topic+"'?\n\nAll its sessions, errors, and mock tags will be unlinked.\n\nThis cannot be undone."))return;snapshot();const newParentId=t.parentId||null;S.syllabus.forEach(x=>{if(x.parentId===id)x.parentId=newParentId;});S.sessions.forEach(s=>{if(s.topicId===id)s.topicId=null;});S.errors.forEach(e=>{if(e.topicId===id)e.topicId=null;});S.mocks.forEach(m=>{m.weak=(m.weak||[]).filter(w=>w!==id);});S.syllabus=S.syllabus.filter(x=>x.id!==id);saveLocal();renderSylList();rerender();toast("Permanently deleted");},
   "subj-up":id=>moveSubject(id,-1),
   "subj-down":id=>moveSubject(id,1),
   "add-subject":()=>addSubjectModal(),
@@ -6974,6 +7172,34 @@ const ACTIONS={
   "sync-pull":()=>{if(!syncKey){toast("⚠️ Unlock first");return;}pullNow(false);},
   "sync-disable":()=>{S.sync.enabled=false;store.set(KEY,JSON.stringify(S));stopSync();updateSyncPill();toast("Disconnected");closeModal();},
   "sync-lock":()=>{lockSync();closeModal();openSettings();},
+"fs-merge":async()=>{
+  try{
+    const snap=await firebase.firestore().collection("exam_os_rooms").doc(S.sync.room).get();
+    if(snap.exists&&snap.data().enc){
+      const remote=await decryptState(snap.data().enc);
+      _applyingRemote=true;
+      S=mergeForSync(S,remote);
+      S.schemaVersion=SCHEMA_VERSION;
+      S.sync={enabled:true,room:S.sync.room};
+      _applyingRemote=false;
+      store.set(KEY,JSON.stringify(S));
+      applyTheme(S.settings.theme||"obsidian");
+      rerender();
+    }
+    closeModal();
+    await pushNow(true);
+    startSync();
+    toast("Merged ✓","Both sides combined · syncing now");
+  }catch(e){toast("⚠️ Merge failed",e.message);}
+},
+"fs-local":async()=>{
+  closeModal();
+  try{await pushNow(false);startSync();toast("Pushed ✓","Cloud now matches this device");}catch(e){toast("⚠️ Push failed",e.message);}
+},
+"fs-cloud":async()=>{
+  closeModal();
+  try{await pullNow(true);startSync();toast("Pulled ✓","This device now matches cloud");}catch(e){toast("⚠️ Pull failed",e.message);}
+},
   "notif-enable":async()=>{const ok=await requestNotifPerm();if(ok){S.settings.notifEnabled=true;store.set(KEY,JSON.stringify(S));toast("✓ On");closeModal();openSettings();}},
   "notif-test":async()=>{const ok=await requestNotifPerm();if(!ok)return;try{new Notification("Apex — test",{body:"Notifications work."});toast("✓ Sent");}catch(e){toast("⚠️ Failed");}},
   "export-data":()=>{try{const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="apex-backup-"+todayISO()+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast("Exported ⬇");}catch(e){toast("⚠️ Export failed");}},
@@ -6995,6 +7221,52 @@ const ACTIONS={
   "gcal-review":id=>{const s=S.sessions.find(x=>x.id===id);if(!s)return;const t=s.topicId?topicById(s.topicId):null;const date=s.lastReviewed||todayISO();const next=nextReview(s)||date;openGCal({title:"Revise — "+s.name,date:next,startTime:"18:00",endTime:"19:00",details:"Stage: "+s.stage+"\nTopic: "+(t?t.topic:"—")+"\nLogged from Apex"});},
   "gcal-task":id=>{const t=S.tasks.find(x=>x.id===id);if(!t)return;const date=t.due||todayISO();openGCal({title:t.title,date:date,startTime:t.tbS||"09:00",endTime:t.tbE||"10:00",details:"Progress: "+(t.progress||"—")+"\nLogged from Apex"});}
 };
+;(function(){
+  try{
+    var _origActions=ACTIONS;
+    var _kindMap={
+      "grade-review":"review.graded",
+      "grade-error":"error.graded",
+      "open-add-session":"session.opened",
+      "open-add-error":"error.opened",
+      "open-add-mock":"mock.opened",
+      "open-add-task":"task.opened",
+      "open-add-topic":"topic.opened",
+      "edit-session":"session.edited",
+      "edit-error":"error.edited",
+      "edit-topic":"topic.edited",
+      "edit-mock":"mock.edited",
+      "edit-task":"task.edited",
+      "del-session":"session.deleted",
+      "del-error":"error.deleted",
+      "del-topic":"topic.archived",
+      "del-mock":"mock.deleted",
+      "del-task":"task.deleted",
+      "debrief-mock":"mock.debriefed",
+      "focus-start":"focus.started",
+      "focus-complete":"focus.completed",
+      "focus-resume":"focus.resumed",
+      "start-topic":"topic.started",
+      "quicklog-go":"session.quicklogged",
+      "scratch-add":"scratch.added"
+    };
+    Object.keys(_origActions).forEach(function(name){
+      var orig=_origActions[name];
+      if(typeof orig!=="function")return;
+      ACTIONS[name]=function(id,el,ev){
+        var kind=_kindMap[name];
+        var meta={};
+        if(name==="grade-review"||name==="grade-error"){
+          try{if(el&&el.dataset&&el.dataset.grade)meta.grade=el.dataset.grade;}catch(e){}
+        }
+        if(kind){
+          try{logActivity(kind,id,meta);}catch(e){}
+        }
+        return orig.apply(this,arguments);
+      };
+    });
+  }catch(e){}
+})();
 document.addEventListener("change",e=>{
   const el = e.target.closest("[data-datewrap]");
   if(!el) return;
@@ -7112,14 +7384,7 @@ try{
     return e.returnValue;
   }
 });
-document.addEventListener("visibilitychange",()=>{
-  if(document.hidden&&S.sync.enabled&&syncKey&&syncTimer){
-    // Pending push exists — flush now (fire-and-forget)
-    clearTimeout(syncTimer);
-    syncTimer=null;
-    pushNow(true);
-  }
-});
+
   if(!location.hash){try{history.replaceState(null,"","#/dashboard");}catch(err){}}
   renderRoute();
   updateTimerUI();updateSyncPill();updateUndoBtn();
@@ -7129,16 +7394,18 @@ document.addEventListener("visibilitychange",()=>{
   const cached=sessionStorage.getItem("apex-sync-pass");
   if(cached){
     setPassphrase(cached).then(async()=>{
-      // If local is clean (no edits since last sync), pull fresh copy
-      const localDirty=S._lastLocalEdit&&S._lastSync&&S._lastLocalEdit>S._lastSync;
-      if(!localDirty){
-        await pullNow(true);
-      }else{
-        // Local has unsynced edits — don't pull. Push instead (which will merge if needed).
-        await pushNow(true);
-      }
-      startSync();
-    }).catch(()=>setSyncStatus("locked"));
+  if(await firstSyncCheck()){
+    showFirstSyncDialog();
+    return;
+  }
+  const localDirty=S._lastLocalEdit&&S._lastSync&&S._lastLocalEdit>S._lastSync;
+  if(!localDirty){
+    await pullNow(true);
+  }else{
+    await pushNow(true);
+  }
+  startSync();
+}).catch(()=>setSyncStatus("locked"));
   }else{
     setSyncStatus("locked");
   }
@@ -7220,7 +7487,40 @@ function renderMath(str){
   if(last<src.length)out.push(esc(src.slice(last)));
   return out.join("");
 }
-function saveLocal(){S._lastLocalEdit=new Date().toISOString();getDeviceId();store.set(KEY,JSON.stringify(S));updateBadges();queueSync();}
+function logActivity(kind, ref, meta){
+  try{
+    if(!Array.isArray(S.activity))S.activity=[];
+    S.activity.push({id:uid("a"),ts:Date.now(),kind:kind,ref:ref||null,meta:meta||{}});
+    if(S.activity.length>5000)S.activity=S.activity.slice(-5000);
+  }catch(e){}
+}
+function activitySince(ms){
+  if(!Array.isArray(S.activity))return[];
+  return S.activity.filter(function(x){return x.ts>=ms;});
+}
+function activitySummary(sinceMs){
+  const events=activitySince(sinceMs||0);
+  const byKind={};
+  events.forEach(function(e){byKind[e.kind]=(byKind[e.kind]||0)+1;});
+  return byKind;
+}
+function saveLocal(){
+  S._lastLocalEdit=new Date().toISOString();
+  getDeviceId();
+  const ok=store.set(KEY,JSON.stringify(S));
+  const bar=document.getElementById("savebar");
+  if(!ok){
+    if(bar){
+      bar.style.display="block";
+      bar.textContent="⚠️ SAVE FAILED — recent changes are NOT on disk. Free up browser storage or export a backup now.";
+    }
+  } else if(bar && bar.style.display==="block"){
+    bar.style.display="none";
+    bar.textContent="";
+  }
+  updateBadges();
+  queueSync();
+}
 async function pushNow(silent){
   if(!S.sync.enabled||!S.sync.room||!syncKey)return;
   try{
@@ -7249,7 +7549,7 @@ async function pushNow(silent){
     delete payload._lastSync;
     const encrypted=await encryptState(payload);
     const now=new Date().toISOString();
-    await ref.set({enc:encrypted,updatedAt:now});
+    await ref.set({enc:encrypted,updatedAt:now,salt:bufToB64(syncSalt)});
     S._lastSync=now;
     store.set(KEY,JSON.stringify(S));
     setSyncStatus("synced");
@@ -7293,53 +7593,7 @@ function mergeForSync(local,remote){
   out.sync=local.sync||remote.sync;
   return out;
 }
-function saveLocal(){S._lastLocalEdit=new Date().toISOString();getDeviceId();store.set(KEY,JSON.stringify(S));updateBadges();queueSync();}
-async function pushNow(silent){
-  if(!S.sync.enabled||!S.sync.room||!syncKey)return;
-  try{
-    setSyncStatus("syncing");
-    if(!await initFirebase()){setSyncStatus("error");if(!silent)toast("⚠️ Firebase not configured");return;}
-    const db=firebase.firestore();
-    const ref=db.collection("exam_os_rooms").doc(S.sync.room);
-    let needMerge=false;
-    try{
-      const snap=await ref.get();
-      if(snap.exists){
-        const data=snap.data();
-        if(data&&data.updatedAt&&S._lastSync&&data.updatedAt>S._lastSync&&S._lastLocalEdit&&S._lastLocalEdit>S._lastSync){
-          needMerge=true;
-          let remote=null;
-          try{remote=await decryptState(data.enc);}catch(e){}
-          if(remote){
-            S=mergeForSync(S,remote);
-            if(!silent)toast("🔀 Merged with cloud","Local + cloud preserved");
-          }
-        }
-      }
-    }catch(e){}
-    const payload=JSON.parse(JSON.stringify(S));
-    delete payload.sync;
-    delete payload._lastSync;
-    const encrypted=await encryptState(payload);
-    const now=new Date().toISOString();
-    await ref.set({enc:encrypted,updatedAt:now});
-    S._lastSync=now;
-    store.set(KEY,JSON.stringify(S));
-    setSyncStatus("synced");
-    if(!silent&&!needMerge)toast("☁️ Pushed (encrypted)");
-    if(!silent&&needMerge)rerender();
-  }catch(e){
-    setSyncStatus("error");
-    if(!silent)toast("⚠️ Push failed",e.message);
-  }
-}
-document.addEventListener("visibilitychange",function(){
-  if(document.hidden&&S.sync.enabled&&syncKey&&syncTimer){
-    clearTimeout(syncTimer);
-    syncTimer=null;
-    pushNow(true);
-  }
-});
+
 </script>
 <script>
 /* Apex Backup Health v3 - pure ASCII */
@@ -7610,45 +7864,38 @@ try{
       });
     });
   }
+function writeBackup(handle, filename, blob){
+  return ensurePermission(handle).then(function(ok){
+    if(!ok) throw new Error("Folder permission denied");
 
-  function writeBackup(handle, filename, blob){
-    return ensurePermission(handle).then(function(ok){
-      if(!ok) throw new Error("Folder permission denied");
-
+    return handle.getFileHandle(filename, { create: true }).then(function(fh){
+      return fh.createWritable().then(function(w){
+        return w.write(blob).then(function(){ return w.close(); });
+      });
+    }).then(function(){
       var deleted = 0;
       var it = handle.values();
-      var chain = Promise.resolve();
-      var names = [];
-
+      var toDelete = [];
       var collect = function(){
         return it.next().then(function(res){
-          if(res.done){
-            return Promise.all(names.map(function(n){
-              return handle.removeEntry(n).then(function(){ deleted++; }).catch(function(){});
-            })).then(function(){
-              return handle.getFileHandle(filename, { create: true });
-            });
-          }
+          if(res.done) return;
           var entry = res.value;
-          if(entry && entry.kind === "file" && FILE_PATTERN.test(entry.name)){
-            names.push(entry.name);
+          if(entry && entry.kind === "file" && FILE_PATTERN.test(entry.name) && entry.name !== filename){
+            toDelete.push(entry.name);
           }
           return collect();
         });
       };
-
-      return collect().then(function(fileHandle){
-        return fileHandle.createWritable().then(function(writable){
-          return writable.write(blob).then(function(){
-            return writable.close();
-          });
-        });
+      return collect().then(function(){
+        return Promise.all(toDelete.map(function(n){
+          return handle.removeEntry(n).then(function(){ deleted++; }).catch(function(){});
+        }));
       }).then(function(){
         return { deleted: deleted };
       });
     });
-  }
-
+  });
+}
   // Wrap the current export-data action
   var _origExport = ACTIONS["export-data"];
   ACTIONS["export-data"] = function(){
@@ -7771,6 +8018,239 @@ setInterval(function(){
   });
 }, 400);
 console.log('[Apex Tooltip Only] installed');
+</script>
+<script>
+/* Apex Sync Integrity v1 - _ts + tombstones + ts-aware merge */
+;(function(){
+try{
+  if(window._apexSyncIntegrity)return;
+  if(typeof S==="undefined"||typeof ACTIONS==="undefined")return;
+  window._apexSyncIntegrity=true;
+
+  var COLLECTIONS = ["syllabus","sessions","errors","mocks","tasks","links","scratch","focusLog"];
+  var _hashes = {};
+
+  function _simpleHash(s){
+    var h=0;
+    for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}
+    return h;
+  }
+  function _hashable(rec){
+    var c = Object.assign({},rec);
+    delete c._ts;
+    return c;
+  }
+  function primeHashes(){
+    COLLECTIONS.forEach(function(coll){
+      if(!Array.isArray(S[coll]))return;
+      if(!_hashes[coll])_hashes[coll]={};
+      S[coll].forEach(function(rec){
+        if(!rec||!rec.id)return;
+        _hashes[coll][rec.id] = _simpleHash(JSON.stringify(_hashable(rec)));
+      });
+    });
+  }
+  function stampChanges(){
+    var nowMs = Date.now();
+    COLLECTIONS.forEach(function(coll){
+      if(!Array.isArray(S[coll]))return;
+      if(!_hashes[coll])_hashes[coll]={};
+      var hashes = _hashes[coll];
+      var seen = {};
+      S[coll].forEach(function(rec){
+        if(!rec||!rec.id)return;
+        seen[rec.id]=true;
+        var h = _simpleHash(JSON.stringify(_hashable(rec)));
+        if(hashes[rec.id] !== h){
+          rec._ts = nowMs;
+          hashes[rec.id] = h;
+        }
+      });
+      Object.keys(hashes).forEach(function(id){if(!seen[id])delete hashes[id];});
+    });
+  }
+
+  // Tombstones init
+  if(!S.tombstones||typeof S.tombstones!=="object")S.tombstones={};
+  COLLECTIONS.forEach(function(coll){
+    if(!S.tombstones[coll]||typeof S.tombstones[coll]!=="object")S.tombstones[coll]={};
+  });
+
+  primeHashes();
+
+  // Wrap saveLocal
+  var _origSave = window.saveLocal;
+  window.saveLocal = function(){
+    try{stampChanges();}catch(e){}
+    return _origSave.apply(this,arguments);
+  };
+
+  // Full replacement of mergeForSync with _ts-aware resolution
+  window.mergeForSync = function(local, remote){
+    function mergeByIdTs(a,b){
+      if(!Array.isArray(a)&&!Array.isArray(b))return a||b||[];
+      if(!Array.isArray(a))return b||[];
+      if(!Array.isArray(b))return a||[];
+      var map = new Map();
+      b.forEach(function(x){if(x&&x.id)map.set(x.id,x);});
+      a.forEach(function(x){
+        if(!x||!x.id)return;
+        var ex = map.get(x.id);
+        if(!ex){map.set(x.id,x);return;}
+        var tA = x._ts||0, tB = ex._ts||0;
+        if(tA >= tB)map.set(x.id,x);
+      });
+      return Array.from(map.values());
+    }
+    var out = Object.assign({},remote,local);
+    out._deviceId = local._deviceId||remote._deviceId;
+    out._lastLocalEdit = local._lastLocalEdit||remote._lastLocalEdit;
+    out._lastSync = new Date().toISOString();
+
+    COLLECTIONS.forEach(function(k){
+      out[k] = mergeByIdTs(local[k], remote[k]);
+    });
+
+    // Union tombstones (newer delete wins)
+    out.tombstones = {};
+    COLLECTIONS.forEach(function(coll){
+      var merged = Object.assign({},
+        (remote.tombstones&&remote.tombstones[coll])||{},
+        (local.tombstones&&local.tombstones[coll])||{}
+      );
+      var rt = (remote.tombstones&&remote.tombstones[coll])||{};
+      Object.keys(rt).forEach(function(id){
+        if(!merged[id]||rt[id]>merged[id])merged[id]=rt[id];
+      });
+      out.tombstones[coll]=merged;
+    });
+
+    // Drop any record whose _ts <= its tombstone time
+    COLLECTIONS.forEach(function(coll){
+      if(!Array.isArray(out[coll]))return;
+      var t = out.tombstones[coll]||{};
+      out[coll] = out[coll].filter(function(rec){
+        if(!rec||!rec.id)return true;
+        var ts = rec._ts||0;
+        var del = t[rec.id]||0;
+        return !(del && ts <= del);
+      });
+    });
+
+    out.habits = Object.assign({}, remote.habits||{});
+    Object.keys(local.habits||{}).forEach(function(date){
+      if(!out.habits[date])out.habits[date]=local.habits[date];
+      else out.habits[date]=Object.assign({},out.habits[date],local.habits[date]);
+    });
+    out.tax = Object.assign({}, remote.tax||{});
+    Object.keys(local.tax||{}).forEach(function(k){
+      var s = new Set([].concat(out.tax[k]||[], local.tax[k]||[]));
+      out.tax[k] = Array.from(s);
+    });
+    out.habitDefs = local.habitDefs && local.habitDefs.length ? local.habitDefs : (remote.habitDefs||[]);
+    out.settings = Object.assign({}, remote.settings||{}, local.settings||{});
+    out.sync = local.sync||remote.sync;
+    return out;
+  };
+
+  // Wrap delete actions to record tombstones
+  var DELETABLE = {
+    "del-session":"sessions",
+    "del-error":"errors",
+    "del-mock":"mocks",
+    "del-task":"tasks",
+    "del-link":"links",
+    "hard-del-topic":"syllabus",
+    "del-subject":"syllabus"
+  };
+  Object.keys(DELETABLE).forEach(function(action){
+    var _origAction = ACTIONS[action];
+    if(typeof _origAction !== "function")return;
+    var coll = DELETABLE[action];
+    ACTIONS[action] = function(id){
+      var before = Array.isArray(S[coll]) ? S[coll].slice() : null;
+      var result = _origAction.apply(this, arguments);
+      if(!before)return result;
+      var after = {};
+      (S[coll]||[]).forEach(function(r){if(r&&r.id)after[r.id]=true;});
+      var nowMs = Date.now();
+      var anyDeleted = false;
+      before.forEach(function(r){
+        if(r&&r.id&&!after[r.id]){
+          if(!S.tombstones)S.tombstones={};
+          if(!S.tombstones[coll])S.tombstones[coll]={};
+          S.tombstones[coll][r.id]=nowMs;
+          anyDeleted = true;
+        }
+      });
+      if(anyDeleted){
+        S._lastLocalEdit = new Date().toISOString();
+        try{store.set(KEY, JSON.stringify(S));}catch(e){}
+        queueSync();
+      }
+      return result;
+    };
+  });
+
+  console.log("[Apex Sync Integrity] installed · tombstones + _ts active");
+}catch(e){console.error("[Apex Sync Integrity]",e);}
+})();
+</script>
+<script>
+/* Apex PWA v1 - dormant on file://, active when hosted */
+;(function(){
+try{
+  var isFile = location.protocol === "file:";
+  if(!("serviceWorker" in navigator)){
+    console.log("[Apex PWA] service worker unsupported");
+    return;
+  }
+  if(isFile){
+    console.log("[Apex PWA] file:// origin — service worker disabled. Host over http(s) to enable.");
+  } else {
+    var swSource = [
+      'self.addEventListener("install",function(e){self.skipWaiting();});',
+      'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
+      'self.addEventListener("fetch",function(e){',
+      '  if(e.request.method!=="GET")return;',
+      '  e.respondWith(',
+      '    caches.open("apex-v1").then(function(c){',
+      '      return fetch(e.request).then(function(r){',
+      '        if(r && r.status===200 && e.request.url.indexOf(location.origin)===0){',
+      '          var clone=r.clone();c.put(e.request,clone);',
+      '        }',
+      '        return r;',
+      '      }).catch(function(){return c.match(e.request);});',
+      '    })',
+      '  );',
+      '});'
+    ].join("");
+    var blob = new Blob([swSource], {type:"application/javascript"});
+    var swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl, {scope:"./"}).then(function(){
+      console.log("[Apex PWA] service worker registered");
+      URL.revokeObjectURL(swUrl);
+    }).catch(function(e){
+      console.log("[Apex PWA] SW registration failed:", e.message);
+    });
+  }
+  var deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    console.log("[Apex PWA] install prompt available");
+  });
+  window.apexInstall = function(){
+    if(!deferredPrompt){console.log("[Apex PWA] no install prompt yet");return false;}
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(c){
+      console.log("[Apex PWA] install choice:", c.outcome);
+      deferredPrompt = null;
+    });
+    return true;
+  };
+}catch(e){console.log("[Apex PWA] init error:", e.message);}
+})();
 </script>
 </body>
 </html>
