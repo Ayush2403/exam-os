@@ -1750,10 +1750,13 @@ textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
 .subj-body{padding:2px 0 8px;overflow:hidden;max-height:8000px;opacity:1;transition:max-height .35s cubic-bezier(.16,1,.3,1),opacity .25s ease}
 .subj-group.closed .subj-body{max-height:0;opacity:0;padding-top:0;padding-bottom:0}
 .topic-row{animation:topicFadeIn .12s var(--ease-out)}
-.topic-row{display:grid;grid-template-columns:auto 32px minmax(0,1fr) auto;gap:6px 10px;align-items:center;padding:6px 12px;border-radius:var(--r-sm);border:1px solid transparent;transition:background-color .15s var(--ease),border-color .15s var(--ease);content-visibility:auto;contain-intrinsic-size:auto 90px}
+.topic-row{display:grid;grid-template-columns:auto 32px minmax(0,1fr) auto;gap:6px 10px;align-items:start;padding:6px 12px;border-radius:var(--r-sm);border:1px solid transparent;transition:background-color .15s var(--ease),border-color .15s var(--ease);content-visibility:auto;contain-intrinsic-size:auto 90px}
 .topic-row:hover{background:var(--surface-2);border-color:var(--border)}
 .topic-row.bulk-sel{background:color-mix(in srgb,var(--accent-2) 8%,transparent);border-color:var(--accent-2)}
-.topic-row .name{font-size:13.5px;font-weight:500;line-height:1.45;cursor:pointer;transition:color .18s;flex:1;min-width:0}
+.topic-row{display:grid;grid-template-columns:auto 32px minmax(0,1fr) auto;gap:6px 10px;align-items:start;padding:6px 12px;border-radius:var(--r-sm);border:1px solid transparent;transition:background-color .15s var(--ease),border-color .15s var(--ease);content-visibility:auto;contain-intrinsic-size:auto 90px}
+.topic-row > .mini-icon[data-action="toggle-topic"],
+.topic-row > .drag-handle{margin-top:4px}
+.topic-row .topic-controls{margin-top:2px}
 .topic-row .name:hover{color:var(--text-2);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
 .topic-row .tags{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;align-items:center}
 .exam-tag{font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:var(--surface-2);color:var(--text-3);font-family:"Inter",sans-serif}
@@ -6434,7 +6437,7 @@ const NAV_INFO={
   habits:"Log study hours, workout, and introspection daily. Milestones tick automatically. Weekly/monthly/yearly views show your consistency.",
   guide:"How Apex works. One page, plain English. Read it once when you start."
 };
-const DEFAULT_TAX={statuses:["Not started","Learning","Practicing","Reviewing","Mastered"],priorities:["Critical","High","Medium","Low"],weights:["High","Medium","Low"],exams:["CGL","CHSL","RBI GRADE B"],errTypes:["concept missed","forgot formula","calculation slip","time trap"],errSources:["Mock Test","Sectional Mock","PYQ","Discord doubt"],mockTypes:["CGL Full","CGL Sectional","CHSL Full","CHSL Sectional","RBI Full","RBI Sectional","SBI Full","SBI Sectional","SSC","Banking","IB ACIO"],taskPri:["High 🔥","Medium","Low"],taskStatus:["Next Up","In Progress","Completed"],resSources:["Takshila","Unacademy","IBT","Study Funda","Soldier Unplugged","EduTap","Other"],resTypes:["Notes","PDF","Video","Test Series","Book","Article"],subjects:["maths","reasoning","english grammar","descriptive english","general science","geography","history","polity","economics","economical issues","finance","management","social issues","environment","CA","misc GK","defence"]};
+const DEFAULT_TAX={statuses:["Not started","Learning","Practicing","Reviewing","Mastered"],priorities:["Critical","High","Medium","Low"],weights:["High","Medium","Low"],exams:["CGL","CHSL","RBI GRADE B","NABARD GRADE A","IB ACIO"],errTypes:["concept missed","forgot formula","calculation slip","time trap"],errSources:["Mock Test","Sectional Mock","PYQ","Discord doubt"],mockTypes:["CGL Full","CGL Sectional","CHSL Full","CHSL Sectional","RBI Full","RBI Sectional","SBI Full","SBI Sectional","SSC","Banking","IB ACIO"],taskPri:["High 🔥","Medium","Low"],taskStatus:["Next Up","In Progress","Completed"],resSources:["Takshila","Unacademy","IBT","Study Funda","Soldier Unplugged","EduTap","Other"],resTypes:["Notes","PDF","Video","Test Series","Book","Article"],subjects:["maths","reasoning","english grammar","descriptive english","general science","geography","history","polity","economics","economical issues","finance","management","social issues","environment","CA","misc GK","defence"]};
 const DEFAULT_HABIT_DEFS=[{id:"hg1",name:"CRACK THE EXAM",type:"hours",thresholds:[4,8,12]},{id:"hg2",name:"WORKOUT",items:[{id:"hi4",label:"Run"},{id:"hi5",label:"Stretching"}]},{id:"hg3",name:"INTROSPECTION",items:[{id:"hi6",label:"Journal introspect read"}]}];
 const STAGES=["1st Time Study","Revise: Day 1","Revise: Day 3","Revise: Day 7","Revise: Day 14","Revise: Day 30","Mastered"];
 const INTERVALS=[1,3,7,14,30,60];
@@ -6738,6 +6741,97 @@ if(typeof S.settings.ambientVolume!=="number")S.settings.ambientVolume=0.15;
       if(t.parentId)return;
       const parentId=lookup[t.subject+"::"+parentTitle];
       if(parentId&&parentId!==t.id)t.parentId=parentId;
+    });
+  }
+    // ─── IB ACIO migration ───
+  // 1. Make sure IB ACIO is in the exams list
+  if(s.tax && Array.isArray(s.tax.exams) && s.tax.exams.indexOf("IB ACIO") < 0){
+    s.tax.exams.push("IB ACIO");
+  }
+
+  // 2. Tag every matching topic with IB ACIO
+  const IB_ACIO_SUBJECTS = new Set([
+    "maths","reasoning","english grammar","descriptive english",
+    "polity","history","economics","general science","geography",
+    "CA","misc GK","defence","social issues","environment"
+  ]);
+  if(Array.isArray(s.syllabus)){
+    s.syllabus.forEach(t=>{
+      if(!Array.isArray(t.exams)) t.exams = [];
+      if(IB_ACIO_SUBJECTS.has(t.subject) && t.exams.indexOf("IB ACIO") < 0){
+        t.exams.push("IB ACIO");
+      }
+    });
+
+    // 3. Ensure the 3 IB ACIO-only topics exist
+    const existing = new Set(s.syllabus.map(t => (t.topic + "::" + t.subject).toLowerCase()));
+    const ibAcioOnly = [
+      {id:"t_ibacio_calclock",  topic:"Calendar and Clock",          subject:"reasoning", exams:["IB ACIO"], priority:"Critical", status:"Not started", weightage:"High", remarks:"", notes:"", parentId:null},
+      {id:"t_ibacio_decision",  topic:"Decision Making",             subject:"reasoning", exams:["IB ACIO"], priority:"High",     status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_ibacio_boxfloor",  topic:"Box and Floor Arrangements",  subject:"reasoning", exams:["IB ACIO"], priority:"Critical", status:"Not started", weightage:"High", remarks:"", notes:"", parentId:null}
+    ];
+    ibAcioOnly.forEach(nt=>{
+      const key = (nt.topic + "::" + nt.subject).toLowerCase();
+      if(!existing.has(key)){
+        s.syllabus.push(Object.assign({}, nt));
+        existing.add(key);
+      }
+    });
+  }
+    // ─── NABARD Grade A migration ───
+  if(s.tax && Array.isArray(s.tax.exams) && s.tax.exams.indexOf("NABARD GRADE A") < 0){
+    s.tax.exams.push("NABARD GRADE A");
+  }
+
+  const NABARD_SUBJECTS = new Set([
+    "maths","reasoning","english grammar","descriptive english",
+    "economics","economical issues","social issues",
+    "CA","misc GK","environment","general science"
+  ]);
+  if(Array.isArray(s.syllabus)){
+    // 1. Tag existing topics
+    s.syllabus.forEach(t=>{
+      if(!Array.isArray(t.exams)) t.exams = [];
+      if(NABARD_SUBJECTS.has(t.subject) && t.exams.indexOf("NABARD GRADE A") < 0){
+        t.exams.push("NABARD GRADE A");
+      }
+    });
+
+    // 2. Add NABARD-only topics
+    const existing2 = new Set(s.syllabus.map(t => (t.topic + "::" + t.subject).toLowerCase()));
+    const nabardOnly = [
+      // ARD — Agriculture & Rural Development
+      {id:"t_nab_agro",     topic:"Agronomy and Crop Production",         subject:"ARD", exams:["NABARD GRADE A"], priority:"Critical", status:"Not started", weightage:"High", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_soil",     topic:"Soil and Water Conservation",          subject:"ARD", exams:["NABARD GRADE A"], priority:"Critical", status:"Not started", weightage:"High", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_irr",      topic:"Irrigation Management",                subject:"ARD", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"High", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_mach",     topic:"Farm Machinery and Power",             subject:"ARD", exams:["NABARD GRADE A"], priority:"Medium",   status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_nab_hort",     topic:"Horticulture",                         subject:"ARD", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_nab_animal",   topic:"Animal Husbandry",                     subject:"ARD", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_nab_fish",     topic:"Fisheries",                            subject:"ARD", exams:["NABARD GRADE A"], priority:"Medium",   status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_nab_forest",   topic:"Forestry",                             subject:"ARD", exams:["NABARD GRADE A"], priority:"Medium",   status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_nab_ext",      topic:"Agriculture Extension and KVKs",       subject:"ARD", exams:["NABARD GRADE A"], priority:"Low",      status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_nab_climate",  topic:"Climate Change and Agriculture",       subject:"ARD", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_nab_scenario", topic:"Indian Agriculture Scenario",          subject:"ARD", exams:["NABARD GRADE A"], priority:"Critical", status:"Not started", weightage:"High", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_rural",    topic:"Rural Development",                    subject:"ARD", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      {id:"t_nab_panch",    topic:"Panchayati Raj and MGNREGA",           subject:"ARD", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"",     remarks:"", notes:"", parentId:null},
+      // Decision Making
+      {id:"t_nab_dm1",      topic:"Basics and Types of Decision Making",  subject:"reasoning", exams:["NABARD GRADE A"], priority:"High", status:"Not started", weightage:"", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_dm2",      topic:"Decision Making Models and Approaches",subject:"reasoning", exams:["NABARD GRADE A"], priority:"Medium", status:"Not started", weightage:"", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_dm3",      topic:"Factors Affecting Decision Making",    subject:"reasoning", exams:["NABARD GRADE A"], priority:"Medium", status:"Not started", weightage:"", remarks:"", notes:"", parentId:null},
+      // Computer Knowledge
+      {id:"t_nab_comp1",    topic:"Hardware and Memory",                  subject:"misc GK", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_comp2",    topic:"Software and Operating Systems",       subject:"misc GK", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_comp3",    topic:"MS Office Suite",                      subject:"misc GK", exams:["NABARD GRADE A"], priority:"Medium",   status:"Not started", weightage:"", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_comp4",    topic:"Database Management System",           subject:"misc GK", exams:["NABARD GRADE A"], priority:"Medium",   status:"Not started", weightage:"", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_comp5",    topic:"Internet and Computer Security",       subject:"misc GK", exams:["NABARD GRADE A"], priority:"High",     status:"Not started", weightage:"", remarks:"", notes:"", parentId:null},
+      {id:"t_nab_comp6",    topic:"Computer Shortcuts and Abbreviations", subject:"misc GK", exams:["NABARD GRADE A"], priority:"Low",      status:"Not started", weightage:"", remarks:"", notes:"", parentId:null}
+    ];
+    nabardOnly.forEach(nt=>{
+      const key = (nt.topic + "::" + nt.subject).toLowerCase();
+      if(!existing2.has(key)){
+        s.syllabus.push(Object.assign({}, nt));
+        existing2.add(key);
+      }
     });
   }
 }
@@ -7320,17 +7414,23 @@ function positionFocusPanel(){
   }
   p.classList.remove("sheet-mode");
   const r=pill.getBoundingClientRect();
-  const panelW=p.offsetWidth||320;
-  // Anchor to pill's right edge, just below it.
-  // The panel is 320px wide; its right edge lines up with the pill's right edge
-  // minus 8px so the notch (which sits 22px from the panel's right) lands under
-  // the pill's center.
-  let rightOffset = window.innerWidth - r.right - 8;
-  if(rightOffset < 12) rightOffset = 12;
+  const w=p.offsetWidth||320;
+  const h=p.offsetHeight||480;
+  const margin=16;
+  /* Place the panel so its right edge aligns with the pill's right edge.
+     If that pushes past the viewport, pull it back inside. */
+  let left = r.right - w;
+  if(!isFinite(left) || left < margin) left = window.innerWidth - w - margin;
+  if(left + w > window.innerWidth - margin) left = window.innerWidth - w - margin;
+  /* Below the pill, with a small gap. If it would overflow the bottom,
+     nudge it up. Never let it touch the top edge. */
+  let top = r.bottom + 10;
+  if(top + h > window.innerHeight - margin) top = Math.max(margin, window.innerHeight - h - margin);
+  if(top < margin) top = margin;
   p.style.position="fixed";
-  p.style.left="auto";
-  p.style.right = rightOffset + "px";
-  p.style.top = (r.bottom + 12) + "px";
+  p.style.left = left + "px";
+  p.style.top = top + "px";
+  p.style.right = "auto";
   p.style.bottom = "auto";
 }
 function focusPanelClose(){FS.panel=false;document.body.classList.remove("focus-panel-open");const p=$("#focus-panel");if(p)p.remove();document.removeEventListener("mousedown",_focusOutside,true);}
@@ -8238,8 +8338,8 @@ function contactCardHTML(){
   const c=getContact();
   const TG='<svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>';
   const DC='<svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0"><path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>';
-  const RD='<svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>';
-  return '<div class="contact-card-dash"><div class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h3>Connect'+(c.name?' with '+esc(c.name):'')+'</h3></div>'+(c.note?'<p class="note">'+esc(c.note)+'</p>':'')+'<div class="contact-links">'+(c.telegram?'<a class="contact-link" href="https://t.me/'+esc(c.telegram)+'" target="_blank" rel="noopener">'+TG+' @'+esc(c.telegram)+'</a>':"")+'<a class="contact-link" href="https://discord.gg/eTSUBRNp3b" target="_blank" rel="noopener">'+DC+' Discord</a><a class="contact-link" href="https://www.reddit.com/user/Extension-Oil9557/" target="_blank" rel="noopener">'+RD+' Reddit</a></div></div>';
+  const RD='<svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 1 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>';
+  return '<div class="contact-card-dash"><div class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h3>Connect'+(c.name?' with '+esc(c.name):'')+'</h3></div>'+(c.note?'<p class="note">'+esc(c.note)+'</p>':'')+'<div class="contact-links">'+(c.telegram?'<a class="contact-link" href="https://t.me/'+esc(c.telegram)+'" target="_blank" rel="noopener">'+TG+' Telegram</a>':"")+'<a class="contact-link" href="https://discord.gg/eTSUBRNp3b" target="_blank" rel="noopener">'+DC+' Discord</a><a class="contact-link" href="https://www.reddit.com/r/ApexExamOS/" target="_blank" rel="noopener">'+RD+' Subreddit</a></div></div>';
 }
 function gradeRowHTML(id,action){action=action||"grade-review";return'<div class="grade-row"><button class="grade-btn again" data-action="'+action+'" data-id="'+id+'" data-grade="again">Again</button><button class="grade-btn hard" data-action="'+action+'" data-id="'+id+'" data-grade="hard">Hard</button><button class="grade-btn good" data-action="'+action+'" data-id="'+id+'" data-grade="good">Good</button><button class="grade-btn easy" data-action="'+action+'" data-id="'+id+'" data-grade="easy">Easy</button></div>';}
 function errorAgendaRow(e){const rel=e.topicId?relPill(e.topicId):"";return'<div class="row-item" style="flex-wrap:wrap;border-left:2px solid var(--pri-critical-bd)"><div class="grow" style="min-width:100%"><div class="t">⚠️ '+esc(e.title)+'</div><div class="m">'+(e.type?'<span class="pill" style="font-size:10.5px"><i class="dot" style="background:'+errColor(e.type)+'"></i>'+esc(e.type)+'</span>':"")+' '+rel+' '+dueTag(e)+'</div></div><div style="display:flex;gap:6px;align-items:center;margin-top:8px;width:100%;flex-wrap:wrap">'+gradeRowHTML(e.id,"grade-error")+'</div></div>';}
@@ -8867,7 +8967,7 @@ const SF_KEY="apex-syl-state-v1";
 const sf=(function(){try{const raw=localStorage.getItem(SF_KEY);if(raw){const p=JSON.parse(raw);return{q:"",exam:"All",status:"All",priority:"All",archived:false,closed:p.closed||{},closedTopics:p.closedTopics||{}};}}catch(e){}return{q:"",exam:"All",status:"All",priority:"All",archived:false,closed:{},closedTopics:{}};})();
 function saveSF(){try{localStorage.setItem(SF_KEY,JSON.stringify({closed:sf.closed,closedTopics:sf.closedTopics}));}catch(e){}}
 function sylFiltered(){return S.syllabus.filter(t=>(sf.archived?t.archived===true:t.archived!==true)&&(sf.exam==="All"||t.exams.indexOf(sf.exam)>-1)&&(sf.status==="All"||(hasKids(t.id)?topicDerivedStatus(t):t.status)===sf.status)&&(sf.priority==="All"||t.priority===sf.priority)&&(!sf.q||t.topic.toLowerCase().indexOf(sf.q)>-1||t.subject.toLowerCase().indexOf(sf.q)>-1));}
-function viewSyllabus(){return'<div class="toolbar"><div class="row"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="inp" id="syl-q" placeholder="Search topics or subjects…" value="'+esc(sf.q)+'" autocomplete="off"></div><button class="btn'+(_bulkMode?' primary':'')+'" data-action="bulk-toggle" style="flex-shrink:0">'+(_bulkMode?'Done':'Select')+'</button><button class="btn" data-action="add-subject">'+ICONS.plus+' Subject</button><button class="btn primary" data-action="open-add-topic">'+ICONS.plus+' Topic</button><button class="btn" data-action="open-bulk-import" title="Bulk import"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></button><button class="btn" data-action="syl-collapse-all" title="Collapse all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 11-5-5-5 5"/><path d="m17 18-5-5-5 5"/></svg></button><button class="btn" data-action="syl-expand-all" title="Expand all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></button></div><div class="chips-scroll">'+["All"].concat(taxList("exams")).map(e=>'<button class="chip'+(sf.exam===e?" on":"")+'" data-exam="'+esc(e)+'">'+esc(e==="RBI GRADE B"?"RBI":e)+'</button>').join("")+'<span style="width:8px"></span><select class="inp" id="syl-status" style="width:auto;min-width:135px"><option value="All">All statuses</option>'+selOpts(taxList("statuses"),sf.status)+'</select><span style="width:8px"></span><div class="chips" style="gap:6px;margin-left:2px">'+taxList("priorities").map(p=>'<button class="chip '+(sf.priority===p?"on ":"")+priClass(p)+'" data-pri="'+esc(p)+'">'+esc(p)+'</button>').join("")+'</div><button class="chip'+(sf.archived?" on":"")+'" data-archived-toggle style="flex-shrink:0">Archived</button></div></div><div id="syl-list" data-tour="syllabus"></div><footer class="app-foot"><span>Syllabus · drag ☰ to reorder · ▶ to expand parents · ↑↓ on subject headers to reorder subjects</span><span id="syl-count"></span></footer>';}
+function viewSyllabus(){return'<div class="toolbar"><div class="row"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="inp" id="syl-q" placeholder="Search topics or subjects…" value="'+esc(sf.q)+'" autocomplete="off"></div><button class="btn'+(_bulkMode?' primary':'')+'" data-action="bulk-toggle" style="flex-shrink:0">'+(_bulkMode?'Done':'Select')+'</button><button class="btn" data-action="add-subject">'+ICONS.plus+' Subject</button><button class="btn primary" data-action="open-add-topic">'+ICONS.plus+' Topic</button><button class="btn" data-action="open-bulk-import" title="Bulk import"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg></button><button class="btn" data-action="syl-collapse-all" title="Collapse all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 11-5-5-5 5"/><path d="m17 18-5-5-5 5"/></svg></button><button class="btn" data-action="syl-expand-all" title="Expand all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></button></div><div class="chips-scroll"><select class="inp" id="syl-exam" style="width:auto;min-width:190px"><option value="All"'+(sf.exam==="All"?" selected":"")+'>All exams</option>'+taxList("exams").map(e=>'<option value="'+esc(e)+'"'+(sf.exam===e?" selected":"")+'>'+esc(e==="RBI GRADE B"?"RBI Grade B":e==="NABARD GRADE A"?"NABARD Grade A":e)+'</option>').join("")+'</select><span style="width:8px"></span><select class="inp" id="syl-status" style="width:auto;min-width:135px"><option value="All">All statuses</option>'+selOpts(taxList("statuses"),sf.status)+'</select><span style="width:8px"></span><div class="chips" style="gap:6px;margin-left:2px">'+taxList("priorities").map(p=>'<button class="chip '+(sf.priority===p?"on ":"")+priClass(p)+'" data-pri="'+esc(p)+'">'+esc(p)+'</button>').join("")+'</div><button class="chip'+(sf.archived?" on":"")+'" data-archived-toggle style="flex-shrink:0">Archived</button></div></div><div id="syl-list" data-tour="syllabus"></div><footer class="app-foot"><span>Syllabus · drag ☰ to reorder · ▶ to expand parents · ↑↓ on subject headers to reorder subjects</span><span id="syl-count"></span></footer>';}
 function isRedundantContainer(topicName,subject){
   const a=String(topicName||"").toLowerCase().trim();
   const b=String(subject||"").toLowerCase().trim();
@@ -8985,7 +9085,7 @@ function renderSylList(){
   el.innerHTML=out||'<div class="empty"><div class="ic">'+emptyArt("search")+'</div><b>No topics match</b><p>Clear a filter or search term.</p></div>';
   const c=$("#syl-count");if(c)c.textContent=list.length+" of "+S.syllabus.length+" topics";
 }
-function postSyllabus(){renderSylList();const q=$("#syl-q");if(q){let _sylSearchTmr;q.addEventListener("input",()=>{clearTimeout(_sylSearchTmr);_sylSearchTmr=setTimeout(()=>{sf.q=q.value.toLowerCase();renderSylList();},140);});}$$(".chips-scroll [data-exam]").forEach(b=>b.addEventListener("click",()=>{sf.exam=b.dataset.exam;$$("[data-exam]").forEach(c=>c.classList.toggle("on",c===b));renderSylList();}));const st=$("#syl-status");if(st)st.addEventListener("change",e=>{sf.status=e.target.value;renderSylList();});$$("[data-pri]").forEach(b=>b.addEventListener("click",()=>{const p=b.dataset.pri;sf.priority=sf.priority===p?"All":p;rerender();}));var _archBtn=$("[data-archived-toggle]");if(_archBtn)_archBtn.addEventListener("click",()=>{sf.archived=!sf.archived;rerender();});}
+function postSyllabus(){renderSylList();const q=$("#syl-q");if(q){let _sylSearchTmr;q.addEventListener("input",()=>{clearTimeout(_sylSearchTmr);_sylSearchTmr=setTimeout(()=>{sf.q=q.value.toLowerCase();renderSylList();},140);});}const exSel=$("#syl-exam");if(exSel)exSel.addEventListener("change",e=>{sf.exam=e.target.value;renderSylList();});const st=$("#syl-status");if(st)st.addEventListener("change",e=>{sf.status=e.target.value;renderSylList();});$$("[data-pri]").forEach(b=>b.addEventListener("click",()=>{const p=b.dataset.pri;sf.priority=sf.priority===p?"All":p;rerender();}));var _archBtn=$("[data-archived-toggle]");if(_archBtn)_archBtn.addEventListener("click",()=>{sf.archived=!sf.archived;rerender();});}
 function subjChangeGuard(){
   const subjectSel=document.querySelector('.modal [name="subject"]');
   const picker=document.querySelector('.modal .tpick');
@@ -9960,6 +10060,7 @@ const ACTIONS={
 "bulk-clear":()=>{_bulkSelection.clear();renderSylList();renderBulkBar();},
 "bulk-apply":()=>{const sel=document.getElementById("bulk-status");const st=sel?sel.value:"";if(!st){toast("Pick a status");return;}if(!_bulkSelection.size){toast("Select topics first");return;}snapshot();let n=0;S.syllabus.forEach(t=>{if(_bulkSelection.has(t.id)){t.status=st;n++;}});_bulkMode=false;_bulkSelection.clear();saveLocal();rerender();renderBulkBar();toast("Updated "+n+" topic"+(n===1?"":"s"),"Status: "+st);},
   "edit-focus-targets":()=>{
+  focusPanelClose();
   const curD=S.settings.focusDailyGoal||0;
   const curW=S.settings.focusWeeklyGoal||0;
   const curDH=curD?(Math.round(curD/6)/10):"";
