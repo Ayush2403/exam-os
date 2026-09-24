@@ -2,7 +2,7 @@
 <html lang="en" data-theme="apex">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500&family=Syne:wght@600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#08080C">
@@ -11,6 +11,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Apex">
 <link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Apex">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <title>Apex — The Exam OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -6307,6 +6311,726 @@ body.route-welcome #apex-cosmos{display:none}
 [data-theme="blunt"] .welcome-modal h1 em{color:#A3E635 !important;font-style:normal}
 [data-theme="blunt"] .welcome-eyebrow{color:#A3E635 !important}
 [data-theme="blunt"] .welcome-point .n{background:#A3E635 !important;color:#000 !important}
+/* ============================================================
+   APEX MOBILE HARDENING v1
+   Cascades after all earlier rules — safe to add without
+   removing anything else.
+   ============================================================ */
+
+/* 1 · No horizontal scroll anywhere */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 2 · Safe area insets for notched phones */
+#bottomnav { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+#topbar    { padding-top: max(10px, env(safe-area-inset-top)); }
+
+/* 3 · Force 44px tap targets on touch devices */
+@media (pointer: coarse) {
+  button, .btn, .chip, .mini-icon, .icon-btn,
+  .bn-item, .nav-item, select.inp {
+    min-height: 44px;
+  }
+  .mini-icon, .icon-btn { min-width: 44px; }
+  .grade-btn {
+    min-height: 40px;
+    padding: 10px 16px;
+    font-size: 12.5px;
+  }
+}
+
+/* 4 · Toolbar stacks cleanly */
+@media (max-width: 640px) {
+  .toolbar { padding: 10px 0; gap: 8px; }
+  .toolbar .row { flex-wrap: wrap; gap: 6px; }
+  .toolbar .search { flex: 1 1 100%; order: -1; }
+  .toolbar .btn { flex: 0 1 auto; padding: 8px 12px; font-size: 12px; }
+  .toolbar .chips-scroll { flex-wrap: wrap; gap: 6px; padding: 4px 0 2px; }
+  .toolbar select.inp { flex: 1 1 140px; min-width: 0; }
+  #syl-exam, #syl-status { width: 100% !important; min-width: 0 !important; }
+}
+
+/* 5 · Syllabus row — de-cram */
+@media (max-width: 640px) {
+  .topic-row {
+    grid-template-columns: 20px 1fr auto !important;
+    gap: 6px 6px !important;
+    padding: 10px 8px !important;
+  }
+  .topic-row .drag-handle { display: none; }
+  .topic-row .topic-body { min-width: 0; }
+  .topic-row .topic-controls {
+    grid-column: 2 / -1;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+  .topic-row .topic-controls .mini-sel {
+    display: inline-flex !important;
+    font-size: 10.5px;
+    min-height: 30px;
+    padding: 4px 22px 4px 8px;
+  }
+  .topic-row .topic-controls .mini-sel[data-change="syl-weight"] {
+    display: none !important;
+  }
+  .topic-row .row-actions { opacity: 1 !important; }
+}
+
+/* 6 · Dashboard hero — stack buttons */
+@media (max-width: 640px) {
+  .hero-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .hero-head .btn { margin-left: 0 !important; width: 100%; }
+}
+
+/* 7 · Quick log — full width */
+@media (max-width: 640px) {
+  .quicklog { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+  .ql-input-wrap { flex: 1 1 100%; order: 1; }
+  .ql-input { width: 100%; font-size: 15px; }
+  .ql-hint { display: none; }
+  .quicklog > .btn { flex: 1 1 100%; order: 2; justify-content: center; }
+}
+
+/* 8 · Contact card with QR — stack */
+@media (max-width: 640px) {
+  .contact-card-dash {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+  .contact-card-dash .cc-qr {
+    align-self: center;
+    flex-direction: row;
+    padding: 8px 14px;
+  }
+  .contact-card-dash .cc-qr img { width: 64px; height: 64px; }
+  .contact-card-dash .cc-qr span { font-size: 10px; }
+  .contact-links { flex-direction: column; gap: 8px; }
+  .contact-link { width: 100%; justify-content: flex-start; }
+}
+
+/* 9 · Habits — one column, big check targets */
+@media (max-width: 640px) {
+  .habit-grid { grid-template-columns: 1fr; gap: 12px; }
+  .hday { padding: 14px 16px; }
+  .hcheck { padding: 12px 10px; min-height: 48px; font-size: 13.5px; }
+  .hcheck .box { width: 24px; height: 24px; }
+  .hours-inp { min-height: 44px; font-size: 15px; }
+}
+
+/* 10 · Week strip — scrollable */
+@media (max-width: 640px) {
+  .week-strip {
+    grid-template-columns: repeat(7, minmax(36px, 1fr));
+    height: 130px;
+    gap: 4px;
+  }
+  .ws-bar { max-width: 28px; }
+  .ws-name, .ws-num { font-size: 9px; }
+}
+
+/* 11 · Charts — full width */
+@media (max-width: 640px) {
+  .chart-wrap svg { min-width: 100%; }
+  .legend { flex-wrap: wrap; gap: 8px; }
+}
+
+/* 12 · Modals — bottom sheet pattern */
+@media (max-width: 640px) {
+  .overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px 0;
+    margin: 0;
+  }
+  .modal h3 { font-size: 17px; margin-bottom: 14px; }
+  .modal-acts {
+    margin: 20px -20px 0;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+    border-radius: 0;
+  }
+  .f2 { grid-template-columns: 1fr; gap: 12px; }
+  .frow { margin-bottom: 14px; }
+  .frow label { font-size: 11.5px; }
+}
+
+/* 13 · Focus panel fills width */
+@media (max-width: 640px) {
+  .focus-panel.sheet-mode {
+    left: 8px !important;
+    right: 8px;
+    width: auto;
+    max-width: 100%;
+  }
+}
+
+/* 14 · Scratch drawer — full screen */
+@media (max-width: 640px) {
+  #scratch-drawer { width: 100vw; }
+}
+
+/* 15 · Empty states */
+@media (max-width: 640px) {
+  .empty { padding: 24px 14px; }
+  .empty .ic svg { width: 42px !important; height: 42px !important; }
+  .empty b { font-size: 13.5px; }
+  .empty p { font-size: 12px; }
+}
+
+/* 16 · Stat grid — 2 columns always */
+@media (max-width: 640px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+  .stat { padding: 14px; }
+  .stat .v { font-size: 24px; }
+  .stat .k { font-size: 10px; }
+  .stat .f { font-size: 10.5px; }
+}
+
+/* 17 · Bento cards — trim padding */
+@media (max-width: 640px) {
+  .bento { gap: 12px; }
+  .bento > div { gap: 12px !important; }
+  .card { padding: 16px 18px; }
+  .card-h { margin-bottom: 12px; }
+}
+
+/* 18 · Footer — stack */
+@media (max-width: 640px) {
+  .footer-cta {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+  .footer-cta > div:last-child {
+    align-items: flex-start !important;
+    width: 100%;
+  }
+}
+
+/* 19 · Session/error cards — trim padding */
+@media (max-width: 640px) {
+  .sess-card { padding: 16px; gap: 12px; }
+  .sess-name { font-size: 13.5px; }
+  .sess-meta { gap: 10px; padding: 12px 4px; }
+  .sess-meta .fld label { font-size: 9px; }
+  .err-detail { padding: 12px 14px; }
+}
+
+/* 20 · Grading row — 2×2 grid on smallest phones */
+@media (max-width: 420px) {
+  .grade-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .grade-btn { width: 100%; justify-content: center; }
+}
+
+/* 21 · iOS: prevent zoom-on-focus everywhere */
+@media (max-width: 640px) {
+  input[type="text"], input[type="number"], input[type="email"],
+  input[type="password"], input[type="search"], input[type="url"],
+  input[type="time"], input[type="date"], textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* 22 · Horizontal scroll for wide content */
+.table-wrap, .chart-wrap, .hm-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 23 · Kill hover effects on touch devices */
+@media (hover: none) {
+  .card.hover:hover { transform: none; box-shadow: inherit; }
+  .btn:hover { transform: none; }
+  .topic-row:hover { background: transparent; }
+}
+
+/* 24 · Save battery — disable cosmos + animations */
+@media (max-width: 640px) {
+  #apex-cosmos { display: none !important; }
+  .view-anim { animation: none; }
+}
+
+/* 25 · Bottom nav — roomier, safe-area aware */
+@media (max-width: 860px) {
+  .bn-item { padding: 10px 4px; min-height: 56px; }
+  .bn-item svg { width: 22px; height: 22px; }
+  .bn-item span { font-size: 10px; }
+  #view { padding-bottom: calc(120px + env(safe-area-inset-bottom)) !important; }
+}
+/* Fix syllabus toolbar on mobile */
+/* Compact toolbar — 3 rows instead of 4 */
+@media (max-width: 640px) {
+  .toolbar {
+    position: static !important;
+    padding: 6px 0 2px;
+    gap: 4px;
+    margin-bottom: 0;
+  }
+  .toolbar .row {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0 6px;
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+    scrollbar-width: none;
+    gap: 6px;
+  }
+  .toolbar .row::-webkit-scrollbar { display: none; }
+  .toolbar .row > * { flex-shrink: 0; }
+  .toolbar .search {
+    flex: 1 1 auto !important;
+    min-width: 180px;
+    order: 0;
+  }
+  .toolbar .btn {
+    padding: 6px 12px !important;
+    font-size: 11.5px !important;
+    min-height: 34px !important;
+    white-space: nowrap;
+  }
+  .toolbar .btn svg { width: 12px !important; height: 12px !important; }
+  #syl-exam, #syl-status {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    font-size: 12.5px !important;
+    min-height: 34px !important;
+    padding: 6px 26px 6px 10px !important;
+  }
+  .toolbar .chips-scroll {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap;
+    overflow-x: auto;
+    padding: 4px 0 8px;
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+    gap: 6px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .toolbar .chips-scroll::-webkit-scrollbar { display: none; }
+  .toolbar .chips-scroll > * { flex-shrink: 0; }
+  .toolbar .chip {
+    padding: 5px 10px !important;
+    min-height: 30px !important;
+    font-size: 11px !important;
+  }
+  .toolbar .chips-scroll > span[style*="width:8px"] {
+    display: none !important;
+  }
+}
+/* Fix habits summary card on mobile */
+@media (max-width: 640px) {
+  .card {
+    contain: none !important;
+  }
+  .goal-bar {
+    margin: 16px 0 10px;
+    height: 8px;
+  }
+  .goal-marker {
+    top: -6px;
+    bottom: -6px;
+  }
+  .goal-marker span {
+    top: -22px;
+  }
+}
+@media (max-width: 640px) {
+  .hm i {
+    background: rgba(255,255,255,.08) !important;
+    width: 10px;
+    height: 10px;
+  }
+  .hm i.l1 { background: rgba(167,139,250,.35) !important; }
+  .hm i.l2 { background: rgba(167,139,250,.6) !important; }
+  .hm i.l3 { background: rgba(167,139,250,.85) !important; }
+  .hm i.l4 { background: #A78BFA !important; }
+  .hm { grid-template-rows: repeat(7, 10px); gap: 3px; }
+  .hm-wrap {
+    padding-bottom: 8px;
+  }
+}
+@media (max-width: 640px) {
+  /* Two-column layout: small chevron + everything else */
+  .topic-row {
+    display: grid !important;
+    grid-template-columns: 20px minmax(0, 1fr) !important;
+    grid-template-rows: auto auto;
+    gap: 6px 8px !important;
+    padding: 10px 12px !important;
+    align-items: start;
+  }
+
+  /* Hide drag handle on mobile */
+  .topic-row > .drag-handle { display: none !important; }
+
+  /* Chevron — small, top-left */
+  .topic-row > .mini-icon[data-action="toggle-topic"] {
+    grid-area: 1 / 1 / 2 / 2;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    margin-top: 2px;
+    padding: 0 !important;
+  }
+  .topic-row > .mini-icon[data-action="toggle-topic"] svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* Topic body — right column, row 1 */
+  .topic-row .topic-body {
+    grid-area: 1 / 2 / 2 / 3;
+    min-width: 0;
+    padding: 0 !important;
+  }
+
+  /* Name line — one line, ellipsis */
+  .topic-row .topic-body > div:first-child {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    min-width: 0;
+    margin-bottom: 4px;
+  }
+  .topic-row .name {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1.25;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Priority badge next to name — tiny */
+  .topic-row .topic-body > div:first-child > .pill {
+    font-size: 9px !important;
+    padding: 2px 6px !important;
+    flex-shrink: 0;
+    line-height: 1.3;
+  }
+
+  /* Tags — small */
+  .topic-row .tags {
+    gap: 3px !important;
+    margin-top: 0 !important;
+    flex-wrap: wrap;
+  }
+  .topic-row .tags .pill,
+  .topic-row .tags .exam-tag {
+    font-size: 9px !important;
+    padding: 1px 6px !important;
+    line-height: 1.4;
+  }
+
+  /* Progress bar — narrower */
+  .topic-row .topic-body > div:last-child {
+    margin-top: 5px !important;
+    max-width: 100% !important;
+  }
+  .topic-row .pbar { height: 3px; }
+
+  /* Controls — row 2, spans both columns */
+  .topic-row .topic-controls {
+    grid-area: 2 / 1 / 3 / 3;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 6px;
+    margin: 0 !important;
+    justify-content: flex-start;
+  }
+
+  /* Hide weightage dropdown on mobile */
+  .topic-row .topic-controls .mini-sel[data-change="syl-weight"] {
+    display: none !important;
+  }
+
+  /* Selects — natural width, small */
+  .topic-row .topic-controls .mini-sel {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    font-size: 11px !important;
+    padding: 5px 20px 5px 9px !important;
+    min-height: 30px !important;
+    background-position: right 6px center !important;
+    line-height: 1.2;
+  }
+  .topic-row .topic-controls .mini-sel[data-change="syl-status"] { max-width: 130px; }
+  .topic-row .topic-controls .mini-sel[data-change="syl-priority"] { max-width: 85px; }
+
+  /* Actions — far right of the controls row */
+  .topic-row .topic-controls .row-actions {
+    margin-left: auto !important;
+    opacity: 1 !important;
+    display: flex !important;
+    gap: 2px;
+  }
+  .topic-row .topic-controls .row-actions .mini-icon {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+  }
+  .topic-row .topic-controls .row-actions .mini-icon svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+@media (max-width: 640px) {
+  .subj-head {
+    padding: 10px 8px !important;
+    gap: 8px !important;
+  }
+  .subj-head b {
+    font-size: 13px !important;
+  }
+  .subj-head .cnt,
+  .subj-head .tiny {
+    font-size: 10.5px !important;
+  }
+  .subj-head .pbar {
+    display: none !important;
+  }
+  .subj-actions {
+    opacity: 1 !important;
+    gap: 0 !important;
+  }
+  .subj-actions .mini-icon {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  /* Chevron pushed to the far right */
+  .subj-head .chev {
+    margin-left: auto;
+    width: 16px;
+    height: 16px;
+  }
+}
+@media (max-width: 640px) {
+  .page-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    margin: 0 -12px 12px;
+    padding-left: 12px;
+    padding-right: 12px;
+    scrollbar-width: none;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-tabs::-webkit-scrollbar { display: none; }
+  .page-tab {
+    flex-shrink: 0;
+    padding: 10px 12px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+}
+@media (max-width: 640px) {
+  .hero-head {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  .hero-head > div:first-child {
+    flex: 1 1 100%;
+    margin-bottom: 4px;
+  }
+  .hero-head h2 {
+    font-size: 22px !important;
+    line-height: 1.15;
+  }
+  .hero-head .sub {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  /* Action buttons — 2 per row, tight */
+  .hero-head > .btn {
+    flex: 1 1 calc(50% - 4px) !important;
+    margin-left: 0 !important;
+    padding: 9px 12px !important;
+    font-size: 12px !important;
+    min-height: 38px !important;
+    justify-content: center;
+  }
+  .hero-head > .btn svg { width: 13px !important; height: 13px !important; }
+  /* If there are 3 buttons, third takes full width */
+  .hero-head > .btn:nth-of-type(3) {
+    flex-basis: 100% !important;
+  }
+}
+@media (max-width: 640px) {
+  .sess-card {
+    padding: 14px !important;
+    gap: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Session name — smaller, tighter */
+  .sess-name {
+    font-size: 14px !important;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  /* Top-right actions — smaller icons */
+  .sess-top .row-actions .mini-icon {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+  }
+  .sess-top .row-actions .mini-icon svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  /* Stage + dots + due tag row — denser */
+  .sess-card > div:nth-child(2) {
+    gap: 6px !important;
+    margin-bottom: 2px;
+  }
+  .sess-card .pill {
+    font-size: 10px !important;
+    padding: 3px 8px !important;
+    line-height: 1.3;
+  }
+  .stage-dots { gap: 3px !important; }
+  .stage-dots i { width: 5px !important; height: 5px !important; }
+
+  /* Metrics grid — 3 columns, tight */
+  .sess-meta {
+    padding: 10px 4px !important;
+    gap: 6px !important;
+  }
+  .sess-meta .fld {
+    padding: 0 8px !important;
+    min-width: 0;
+  }
+  .sess-meta .fld label {
+    font-size: 9px !important;
+    letter-spacing: .14em;
+  }
+  .sess-meta .fld b,
+  .sess-meta .fld .inp,
+  .sess-meta .fld input {
+    font-size: 11.5px !important;
+    padding: 4px 6px !important;
+    min-height: 28px !important;
+  }
+  /* Hide log date field on mobile — visible anyway in list */
+  .sess-meta .fld:nth-child(1) {
+    display: none;
+  }
+  /* Keep: last reviewed, next, interval, ease */
+
+  /* Grade buttons 2×2 */
+  .grade-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 5px !important;
+    padding-top: 10px !important;
+  }
+  .grade-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 10px !important;
+    font-size: 11.5px !important;
+    min-height: 36px !important;
+  }
+  /* Move timers under the two-by-two */
+  .grade-row .mini-icon {
+    grid-column: 1 / -1;
+    justify-self: start;
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+@media (max-width: 640px) {
+  .empty {
+    padding: 32px 16px;
+    text-align: center;
+  }
+  .empty .ic svg { width: 40px !important; height: 40px !important; }
+  .empty b { font-size: 13.5px; display: block; margin-bottom: 6px; }
+  .empty p { font-size: 12px; line-height: 1.5; }
+}
+@media (max-width: 640px) {
+  .focus-panel.sheet-mode {
+    max-height: calc(100vh - 100px - env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 0 !important;
+  }
+
+  /* Sticky header with the close button */
+  .focus-panel.sheet-mode .fp-head {
+    position: sticky !important;
+    top: 0;
+    z-index: 10;
+    background: inherit;
+    padding: 14px 0 10px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Make the close button bigger and easier to hit */
+  .focus-panel.sheet-mode .fp-x {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+  }
+  .focus-panel.sheet-mode .fp-x svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* Pin the action row (Pause / Log & Finish) to bottom */
+  .focus-panel.sheet-mode .fp-controls {
+    position: sticky;
+    bottom: 0;
+    background: inherit;
+    padding: 12px 0 8px;
+    margin-top: 8px;
+  }
+
+  /* Trim unused space */
+  .focus-panel.sheet-mode .fp-modes { margin-bottom: 10px; }
+  .focus-panel.sheet-mode .fp-ringwrap { width: 110px; height: 110px; margin: 2px auto 0; }
+  .focus-panel.sheet-mode .fp-time { font-size: 22px; }
+  .focus-panel.sheet-mode .fp-pomos { margin: -4px 0 8px; }
+  .focus-panel.sheet-mode .fp-presets { margin-bottom: 8px; }
+  .focus-panel.sheet-mode .fm-section { margin: 8px 0; }
+  .focus-panel.sheet-mode .fp-label { margin-bottom: 8px; }
+}
 </style>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
 </head>
@@ -11919,5 +12643,6 @@ layer.style.filter = "brightness(1.15)";
   };
 })();
 </script>
+<script src="./apex-mobile.js" defer></script>
 </body>
 </html>
