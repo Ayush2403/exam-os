@@ -2575,7 +2575,12 @@ footer.app-foot{margin-top:36px;padding-top:18px;border-top:1px solid var(--bord
 .cmd-foot kbd{padding:1px 5px;font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--border-2);border-radius:4px;margin-right:4px;font-family:Inter,sans-serif}
 @media (max-width:640px){.cmd-overlay{padding:6vh 12px 12px}.cmd-input{padding:15px 18px;font-size:15px}}
 @media (prefers-reduced-motion:reduce){
-  html:not([data-theme="apex"]) *,html:not([data-theme="apex"]) *::before,html:not([data-theme="apex"]) *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
 }
 body.route-welcome #sidebar,body.route-welcome #topbar,body.route-welcome #bottomnav,body.route-welcome #scratch-fab,body.route-welcome #scratch-drawer,body.route-welcome #focus-panel{display:none!important}
 body.route-welcome #main{margin-left:0}
@@ -9391,7 +9396,19 @@ function focusUI(){updateTimerUI();if(FS.panel)focusPanelRender();if(FS.zen)focu
 function focusTickUI(){updateTimerUI();const pct=focusProgress();if(FS.panel){const p=$("#focus-panel");if(p){const fg=p.querySelector(".fp-ring .fg");if(fg)fg.setAttribute("stroke-dashoffset",(2*Math.PI*42*(1-pct)).toFixed(1));const t=p.querySelector(".fp-time");if(t)t.textContent=focusClock();}}if(FS.zen){const el=$("#focus-screen");if(el){const fg=el.querySelector(".fs-ring .fg");if(fg)fg.setAttribute("stroke-dashoffset",(2*Math.PI*120*(1-pct)).toFixed(1));const t=el.querySelector(".fs-time");if(t)t.textContent=focusClock();}}}
 function focusApplyPreset(id){if(FS.mode!=="pomodoro")FS.mode="pomodoro";const p=focusPreset(id);FS.preset=id;FS.focusSec=p.focus*60;FS.breakSec=p.brk*60;if(!FS.running){FS.remaining=focusTotal();FS.elapsed=0;}focusUI();}
 function focusMode(mode){if(FS.running)return toast("Stop the timer first");if(mode===FS.mode)return;FS.mode=mode;if(mode==="stopwatch"){FS.phase="focus";}else{FS.phase="focus";FS.remaining=focusTotal();}FS.elapsed=0;focusUI();}
-function focusOpen(opts){opts=opts||{};if(!FS.running&&FS.elapsed===0){const p=focusPreset(FS.preset);FS.focusSec=p.focus*60;FS.breakSec=p.brk*60;FS.phase="focus";FS.remaining=FS.focusSec;}FS.label=opts.label||FS.label||"Focus session";FS.taskId=opts.taskId||null;FS.topicId=opts.topicId||null;if(!FS.panel&&!FS.zen)focusPanelOpen();if(opts.autostart)focusStart();else focusUI();}
+function focusOpen(opts){opts=opts||{};
+  if(!FS.running&&FS.elapsed===0){
+    const p=focusPreset(FS.preset);
+    FS.focusSec=p.focus*60;
+    FS.breakSec=p.brk*60;
+    FS.phase="focus";
+    FS.remaining=FS.focusSec;
+    _focusDistractions=0;
+    _focusAwayMs=0;
+    _focusHiddenAt=0;
+    _warnChimed=false;
+  }
+FS.label=opts.label||FS.label||"Focus session";FS.taskId=opts.taskId||null;FS.topicId=opts.topicId||null;if(!FS.panel&&!FS.zen)focusPanelOpen();if(opts.autostart)focusStart();else focusUI();}
 function focusStart(){
   if(FS.running)return;
   if(FS.mode==="pomodoro"&&FS.remaining<=0)FS.remaining=focusTotal();
@@ -9420,6 +9437,8 @@ function focusReset(){
   FS.elapsed=0;
   FS.startedAt=null;
   _focusDistractions=0;
+  _focusAwayMs=0;
+  _focusHiddenAt=0;
   _warnChimed=false;
   ambientStop();
   focusUI();
@@ -9925,9 +9944,9 @@ function wirePicker(el){
           const childKey="child_"+t.id;
           const isChildOpen=q?true:!!expanded[childKey];
           const indent=28+depth*16;
-          html+='<div class="pick-opt'+(isSel?" sel":"")+(hasChildren?" has-children":"")+'" data-pick="'+t.id+'" style="padding-left:'+indent+'px">';
+          html+='<div class="pick-opt'+(isSel?" sel":"")+(hasChildren?" has-children":"")+'" data-pick="'+t.id+'" role="button" tabindex="0" aria-pressed="'+(isSel?"true":"false")+'" style="padding-left:'+indent+'px">';
           if(hasChildren){
-            html+='<span class="pick-caret" data-pick-toggle="'+t.id+'" style="transform:rotate('+(isChildOpen?'90':'0')+'deg)"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
+            html+='<span class="pick-caret" data-pick-toggle="'+t.id+'" role="button" tabindex="0" aria-expanded="'+(isChildOpen?"true":"false")+'" aria-label="Toggle children" style="transform:rotate('+(isChildOpen?'90':'0')+'deg)">;<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
           }else{
             html+='<span class="pick-caret-spacer"></span>';
           }
@@ -9940,12 +9959,19 @@ function wirePicker(el){
         return html;
       };
       return '<div class="pick-group'+(isOpen?" open":"")+'">'
-        +'<div class="pick-group-h" data-pick-group-h="'+esc(sub)+'"><i class="sdot" style="background:'+subjColor(sub)+'"></i><b>'+esc(sub)+'</b><span class="cnt'+(selCount?" has":"")+'">'+selCount+'/'+items.length+'</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>'
+  +'<div class="pick-group-h" data-pick-group-h="'+esc(sub)+'" role="button" tabindex="0" aria-expanded="'+(isOpen?"true":"false")+'">;<i class="sdot" style="background:'+subjColor(sub)+'"></i><b>'+esc(sub)+'</b><span class="cnt'+(selCount?" has":"")+'">'+selCount+'/'+items.length+'</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>'
         +(isOpen?'<div class="pick-group-body">'+renderTree(null,0)+'</div>':'')
         +'</div>';
     }).join("");
   };
   search.addEventListener("input",renderList);
+  list.addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ")return;
+  const el=e.target.closest('[role="button"][data-pick], [role="button"][data-pick-group-h], [role="button"][data-pick-toggle]');
+  if(!el)return;
+  e.preventDefault();
+  el.click();
+});
   list.addEventListener("click",e=>{const caret=e.target.closest("[data-pick-toggle]");if(caret){e.preventDefault();e.stopPropagation();const id=caret.dataset.pickToggle;expanded["child_"+id]=!expanded["child_"+id];renderList();return;}const groupH=e.target.closest("[data-pick-group-h]");if(groupH){const sub=groupH.dataset.pickGroupH;expanded[sub]=!expanded[sub];renderList();return;}const opt=e.target.closest("[data-pick]");if(!opt)return;const id=opt.dataset.pick,sel=getSel();if(multi){setSel(sel.indexOf(id)>-1?sel.filter(x=>x!==id):sel.concat([id]));}else{setSel([id]);const t=topicById(id);search.value=t?t.topic:"";renderList();}});
   el.addEventListener("click",e=>{const x=e.target.closest("[data-unpick]");if(x){setSel(getSel().filter(i=>i!==x.dataset.unpick));return;}if(e.target.closest("[data-pick-expand]")){S.syllabus.forEach(t=>expanded[t.subject]=true);renderList();return;}if(e.target.closest("[data-pick-collapse]")){Object.keys(expanded).forEach(k=>delete expanded[k]);renderList();return;}});
   renderChips();updateCount();renderList();

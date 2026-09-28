@@ -1,0 +1,17 @@
+# macOS junk
+.DS_Store
+
+# Backups
+*.bak
+*.bak2
+*.bak3
+*.bak4
+
+# Local copies and folders
+index copy.html
+JSON backup/
+old icons/
+
+# IDE
+.vscode/
+.idea/
