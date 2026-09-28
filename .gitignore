@@ -16,3 +16,10 @@ old icons/
 .vscode/
 .idea/
 install.sh
+
+# Apex cleanup
+.wrangler/
+*.bak
+*.bak-*
+v12.html
+deepseek_mobile_optimization_prompt.txt
