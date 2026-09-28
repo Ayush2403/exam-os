@@ -8941,10 +8941,10 @@ function readinessProjection(){
   const targets=(S.settings&&Array.isArray(S.settings.exams))?S.settings.exams.filter(x=>x.date):[];
   if(!targets.length)return null;
   const withDays=targets.map(x=>Object.assign({},x,{days:diffD(x.date,todayISO())}));
-  const prim=withDays.filter(x=>x.priority==="Primary").sort((a,b)=>a.days-b.days)[0];
-  const nearest=withDays.slice().sort((a,b)=>a.days-b.days)[0];
-  const hero=prim||nearest;
-  if(!hero||hero.days<0)return null;
+  const future=withDays.filter(x=>x.days>=0);
+const primFuture=future.filter(x=>x.priority==="Primary").sort((a,b)=>a.days-b.days)[0];
+const hero=primFuture||future.sort((a,b)=>a.days-b.days)[0];
+if(!hero)return null;
    const _scopeTag=(readinessScope().current)||"";
   const _scopedTopics=S.syllabus.filter(t=>!t.archived&&!hasKids(t.id)&&_tagMatchesTopic(t,_scopeTag));
   const totalTopics=_scopedTopics.length;
@@ -10944,7 +10944,7 @@ const mpct=leafCount?Math.round(mastered/leafCount*100):0;
 +'<div class="home-section-label">Stats</div>'
 +'<div class="stat-grid section-gap stagger">'
     +'<div class="stat"><div class="k">Due today</div><div class="v" style="color:'+(due.length?"#F59E0B":"#10B981")+'">'+due.length+'</div><div class="f">reviews waiting</div></div>'
-    +'<div class="stat"><div class="k">Mastered</div><div class="v">'+mpct+'%</div><div class="f">'+mastered+' of '+S.syllabus.length+'</div></div>'
+    +'<div class="stat"><div class="k">Mastered</div><div class="v">'+mpct+'%</div><div class="f">'+mastered+' of '+leafCount+'</div></div>'
     +'<div class="stat"><div class="k">Streak</div><div class="v" style="color:#F59E0B">'+studyStreak()+'d</div><div class="f">consecutive days</div></div>'
     +'<div class="stat"><div class="k">Mocks</div><div class="v">'+S.mocks.length+'</div><div class="f">avg '+(avgP||"—")+'</div>'+(function(){const sw=sectionWeakness();if(!sw||!sw.weakest)return"";const info=sw.setKeys[sw.weakest];if(!info)return"";const c=sw.weakestAvg<50?"var(--pri-critical-fg)":sw.weakestAvg<65?"var(--pri-medium-fg)":"var(--text-3)";return '<div class="tiny" style="margin-top:6px;color:'+c+';font-weight:600">⚠ '+esc(info.label)+' '+sw.weakestAvg+'%</div>';})()+'</div>'
     +'<div class="stat"><div class="k">Accuracy</div><div class="v">'+(avgA?avgA+"%":"—")+'</div><div class="f">across mocks</div></div>'
