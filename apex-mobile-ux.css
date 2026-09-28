@@ -811,3 +811,21 @@
     -webkit-backdrop-filter: none !important;
   }
 }
+/* ---- Undo button: show on mobile only when there's something to undo ---- */
+@media (max-width: 860px){
+  #topbar .icon-btn[data-undo]{
+    display:grid !important;
+    width:34px !important;
+    height:34px !important;
+    min-width:34px !important;
+    min-height:34px !important;
+  }
+  #topbar .icon-btn[data-undo]:not(.on){
+    display:none !important;
+  }
+  #topbar .icon-btn[data-undo].on{
+    color:var(--accent-2);
+    border-color:var(--accent-2);
+    background:color-mix(in srgb,var(--accent-2) 8%,transparent);
+  }
+}
