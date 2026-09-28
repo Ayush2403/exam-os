@@ -1,0 +1,73 @@
+# DeepSeek Prompt: Mobile Optimization for Apex (Exam OS) App
+
+You are a senior frontend engineer tasked with optimizing the Apex mobile experience. The app is a progressive web app (PWA) for exam preparation with the following structure:
+
+## Current State
+- `index.html` - Main HTML with inline CSS and JavaScript
+- `apex-mobile-ux.css` - Additional mobile CSS file (loaded conditionally) 
+- `apex-mobile.js` - Additional mobile JavaScript functionality
+- `manifest.json` - PWA manifest with icons and shortcuts
+
+## Key Issues to Address
+
+### 1. Viewport Meta Tag (Line 5 in index.html)
+**Current:**
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+```
+**Problem:** `user-scalable=no` and `maximum-scale=1` prevent users from zooming, violating WCAG accessibility standards.
+**Fix:** Remove these restrictions to allow zoom for accessibility.
+
+### 2. Media Queries Breakpoint
+Currently uses `@media (max-width: 860px)` throughout. Consider adding `@media (max-width: 480px)` for very small phones.
+
+### 3. Sidebar Navigation
+The `#sidebar` element is always visible on desktop. On mobile:
+- Should collapse by default
+- Needs a hamburger menu toggle
+- Should overlay content or push main area
+- The `#sb-toggle` button exists but needs mobile-specific behavior
+
+### 4. Touch Targets
+Many buttons use 24x24px SVGs. Ensure minimum 44x44px touch targets per WCAG.
+
+### 5. Bottom Navigation
+`<nav id="bottomnav">` should be optimized for thumb-friendly access.
+
+### 6. Command Palette
+The `#cmd-palette` modal needs proper mobile viewport handling and better keyboard dismissal.
+
+### 7. Keyboard Shortcuts
+Many shortcuts (⌘Z, ⌘S) won't work on mobile. Add on-screen alternatives or gesture-based shortcuts.
+
+### 8. Form Elements
+Check all `select.inp`, `.btn`, and input elements have adequate touch targets and mobile-friendly styling.
+
+### 9. Safe Area Insets
+The app uses `env(safe-area-inset-bottom)` in CSS - ensure this is applied consistently everywhere needed for notches and iPhone home indicators.
+
+### 10. Performance
+The starfield cosmos animation may be expensive on mobile. Consider deferring or simplifying on low-end devices.
+
+## Files to Edit
+- `index.html` - Main HTML structure, inline CSS, JavaScript
+- `apex-mobile-ux.css` - Mobile-specific styles  
+- `apex-mobile.js` - Mobile-specific JavaScript
+
+## Specific Changes Requested
+1. Fix viewport meta tag accessibility
+2. Improve sidebar mobile behavior (collapse, overlay, smooth transitions)
+3. Ensure all interactive elements have minimum 44x44px touch targets
+4. Optimize the 860px breakpoint for tablets and phones
+5. Add 480px breakpoint for small phones if needed
+6. Fix keyboard shortcut references that won't work on mobile
+7. Optimize performance for mobile devices
+8. Ensure safe area insets are properly handled
+9. Consider offline-first PWA optimizations
+10. Add/complete mobile-specific meta tags
+
+## Output Format
+Provide the complete updated code for each edited section, clearly marked with:
+- File name and line numbers affected
+- Before/after code blocks
+- Brief explanation of what changed and why
