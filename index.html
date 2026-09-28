@@ -10721,7 +10721,7 @@ function readinessHTML(){
   if(!proj&&!ready)return"";
   const projPart=proj?('<div class="ready-legend" style="margin-bottom:8px"><span><b>'+proj.mastered+'</b> / '+proj.totalTopics+' mastered</span><span>D-'+proj.daysLeft+' · '+esc(proj.examLabel)+'</span></div>'
     +'<div class="ready-bar"><div class="ready-fill" style="width:'+proj.masteredPct+'%"></div><div class="ready-proj" style="left:'+Math.max(proj.projectedPct,proj.masteredPct)+'%"></div></div>'
-    +'<div class="ready-legend"><span>Projected <b>'+proj.projectedPct+'%</b> at D-Day</span><span>'+(proj.requiredPerWeek>0?('Need <b>'+proj.requiredPerWeek.toFixed(1)+'</b>/wk'):'')+'</span></div>'):"";
+    +'<div class="ready-legend"><span>Projected <b>'+proj.projectedPct+'%</b> at D-Day</span><span>'+(proj.requiredPerWeek<=0?'':proj.requiredPerWeek>30?'<b>Not achievable</b> in time remaining':'Need <b>'+proj.requiredPerWeek.toFixed(1)+'</b>/wk')+'</span></div>'):"";
   const composite=ready?ready.composite:0;
   const cls=!ready?"":(composite<40?"behind":composite<70?"close":"ontrack");
   const rows=ready?[
