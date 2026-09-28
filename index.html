@@ -12040,7 +12040,17 @@ function _rerenderThemeGrid(){
   while(tmp.firstChild)wrap.appendChild(tmp.firstChild);
   oldGrid.remove();
 }
-function openSettings(){
+function activateSettTab(root, tabId){
+  if(!root) return;
+  const tabs = root.querySelectorAll("[data-sett-tab-btn]");
+  const panes = root.querySelectorAll("[data-sett-pane]");
+  tabs.forEach(b=>b.classList.toggle("on", b.dataset.settTabBtn===tabId));
+  panes.forEach(p=>p.classList.toggle("on", p.dataset.settPane===tabId));
+  const m = document.querySelector(".modal");
+  if(m) m.scrollTop = 0;
+}
+
+function openSettings(initialTab){ initialTab = initialTab || "personal";
   const c=getContact();const hasRoom=!!S.sync.room;const hasCfg=!!(FBCFG.apiKey&&FBCFG.projectId);const enabled=S.sync.enabled&&hasRoom&&hasCfg;const locked=enabled&&!syncKey;
   const syncHint=enabled?(locked?'🔒 Configured but <b>locked</b>. Click the Sync pill in the top bar to enter your passphrase.':'🔓 <b>Unlocked</b> and syncing. Your data is encrypted before upload.'):'Not configured yet. Paste your Firebase config and set a room code + passphrase below.';
   const body='<div class="sett-tabs">'
@@ -12085,13 +12095,9 @@ function openSettings(){
   },"Save");
   const _r=$("#modal-root");
   $$("[data-sett-tab-btn]",_r).forEach(function(btn){
-    btn.onclick=function(){
-      var id=btn.dataset.settTabBtn;
-      $$("[data-sett-tab-btn]",_r).forEach(function(b){b.classList.toggle("on",b===btn);});
-      $$("[data-sett-pane]",_r).forEach(function(p){p.classList.toggle("on",p.dataset.settPane===id);});
-      var m=document.querySelector(".modal");if(m)m.scrollTop=0;
-    };
+    btn.onclick=function(){ activateSettTab(_r, btn.dataset.settTabBtn); };
   });
+  activateSettTab(_r, initialTab);
 }
 function toggleSidebar(force){const next=(typeof force==="boolean")?force:!document.body.classList.contains("sb-collapsed");document.body.classList.toggle("sb-collapsed",next);S.settings.sbCollapsed=next;store.set(KEY,JSON.stringify(S));const t=$("#sb-toggle");if(t)t.classList.toggle("on",next);const c=$("#collapse-btn");if(c)c.classList.toggle("on",next);}
 let _drag={active:false,id:null,overId:null,subject:null,row:null,ghost:null};
@@ -12573,9 +12579,9 @@ try{
   document.querySelectorAll("[data-undo]").forEach(b=>b.addEventListener("click",()=>undo()));
   const tp=$("#timer-pill");if(tp)tp.addEventListener("click",()=>{if(!FS.panel)focusPanelOpen();else focusPanelClose();});
   const sp=$("#sync-pill");if(sp)sp.addEventListener("click",()=>{
-  if(!S.sync.enabled||!S.sync.room){openSettings();return;}
+  if(!S.sync.enabled||!S.sync.room){openSettings("sync");return;}
   if(!syncKey){openUnlockModal();return;}
-  openSettings();
+  openSettings("sync");
 });
   const welcomeRoot=$("#welcome-root");if(welcomeRoot)welcomeRoot.addEventListener("change",e=>{if(e.target&&e.target.id==="welcome-dont-show"&&e.target.checked){dismissWelcome();}});
   window.addEventListener("hashchange",renderRoute);
