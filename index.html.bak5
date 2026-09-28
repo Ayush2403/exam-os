@@ -8945,11 +8945,9 @@ function readinessProjection(){
   const nearest=withDays.slice().sort((a,b)=>a.days-b.days)[0];
   const hero=prim||nearest;
   if(!hero||hero.days<0)return null;
-   const _scopeTag=(readinessScope().current)||"";
-  const _scopedTopics=S.syllabus.filter(t=>!t.archived&&!hasKids(t.id)&&_tagMatchesTopic(t,_scopeTag));
-  const totalTopics=_scopedTopics.length;
+   const totalTopics=S.syllabus.filter(t=>!t.archived&&!hasKids(t.id)).length;
   if(!totalTopics)return null;
-  const mastered=_scopedTopics.filter(t=>isTopicMastered(t)).length;
+  const mastered=S.syllabus.filter(t=>!t.archived&&!hasKids(t.id)&&isTopicMastered(t)).length;
  const cutoff30=addDays(todayISO(),-30);
 const masteredRecent=new Set(
   S.sessions
@@ -10706,7 +10704,7 @@ function marksLeakageHTML(){
   if(!ml||!ml.sections.length)return"";
   const max=ml.sections[0].leakage||1;
   return '<div class="card hover" style="margin-bottom:20px">'
-    +'<div class="card-h"><h2>Section Gap</h2><span class="sub">evidence-based performance gap &middot; not estimated marks lost</span></div>'
+    +'<div class="card-h"><h2>Section Gap</h2><span class="sub">largest unmet need per section</span></div>'
     +ml.sections.map(s=>{
       const pct=Math.round(s.leakage/max*100);
       const color=s.avg<50?"#EF4444":s.avg<70?"#F59E0B":"#10B981";
