@@ -2,7 +2,7 @@
 <html lang="en" data-theme="apex">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <meta name="theme-color" content="#05070D">
@@ -11,6 +11,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Apex">
 <meta name="apple-touch-fullscreen" content="yes">
+<!-- iOS Smart App Banner — shown when Safari visits the hosted URL -->
+<meta name="apple-itunes-app" content="app-id=0, app-argument=./index.html">
+<!-- Android/Chrome App Banner -->
+<meta name="google-play-app" content="app-id=app.apex.examos">
+<meta name="msapplication-starturl" content="./index.html">
 <meta name="format-detection" content="telephone=no">
 <meta name="msapplication-TileColor" content="#08080C">
 <link rel="manifest" href="manifest.json">
@@ -1750,7 +1755,16 @@ textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
 .tag-new{color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap;font-family:"Inter",sans-serif}
 .tag-future{color:var(--text-3);background:var(--surface-2);border:1px solid var(--border);font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap;font-family:"Inter",sans-serif}
 .grade-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
-.grade-btn{font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:8px;border:1px solid transparent;font-family:"Inter",sans-serif;transition:all .15s var(--ease);min-height:32px;cursor:pointer;white-space:nowrap}
+.grade-btn{
+  font-size:11.5px;font-weight:700;
+  padding:8px 14px;                    /* ↑ from 6px 12px */
+  border-radius:8px;border:1px solid transparent;
+  font-family:"Inter",sans-serif;
+  transition:all .15s var(--ease);
+  min-height:44px;                     /* ↑ from 32px — WCAG 2.5.5 */
+  min-width:44px;
+  cursor:pointer;white-space:nowrap;
+}
 .grade-btn:hover{transform:translateY(-1px)}
 .grade-btn:active{transform:scale(.95)}
 .grade-btn.again{background:var(--pri-critical-bg);color:var(--pri-critical-fg);border-color:var(--pri-critical-bd)}
@@ -8319,7 +8333,15 @@ function openCommandPalette(){
   _cmdOpen=true;
   let el=document.getElementById("cmd-palette");
   if(!el){el=document.createElement("div");el.id="cmd-palette";el.className="cmd-overlay";document.body.appendChild(el);}
-  el.innerHTML='<div class="cmd-box"><input class="cmd-input" id="cmd-input" placeholder="Search topics, sessions, errors, mocks, tasks…" autocomplete="off" spellcheck="false"><div class="cmd-results" id="cmd-results"></div><div class="cmd-foot"><span><kbd>↑↓</kbd>navigate</span><span><kbd>↵</kbd>open</span><span><kbd>esc</kbd>close</span></div></div>';
+  el.innerHTML='<div class="cmd-box"><button class="cmd-close" id="cmd-close" aria-label="Close search">'
+    +'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
+    +'</button>'
+    +'<input class="cmd-input" id="cmd-input" placeholder="Search topics, sessions, errors, mocks, tasks…" autocomplete="off" spellcheck="false">'
+    +'<div class="cmd-results" id="cmd-results"></div>'
+    +'<div class="cmd-foot"><span><kbd>↑↓</kbd>navigate</span><span><kbd>↵</kbd>open</span><span class="cmd-foot-esc"><kbd>esc</kbd>close</span></div>'
+    +'</div>';
+      var closeBtn = document.getElementById("cmd-close");
+  if(closeBtn) closeBtn.addEventListener("click", closeCommandPalette);
   el.classList.add("open");
   const input=document.getElementById("cmd-input");
   if(input){input.focus();input.addEventListener("input",cmdOnInput);input.addEventListener("keydown",cmdOnKey);}
@@ -8734,15 +8756,28 @@ function applyTheme(id){
   ensureFontsFor(t.id);
   const mt=document.querySelector('meta[name="theme-color"]');
   if(mt)mt.setAttribute("content",t.colors[0]);
-  if(t.id==="apex"){
-    /* Defer building the star field until the browser is idle */
-    const show = () => {
-      const cosmos = initApexCosmos();
-      if(cosmos) cosmos.classList.add("on");
-    };
-    if(window.requestIdleCallback) requestIdleCallback(show, {timeout:1200});
-    else setTimeout(show, 200);
-  } else {
+    if(t.id==="apex"){
+    /* Skip the starfield entirely on mobile / low-power / reduced-motion.
+       The nebula gradients in CSS still render; only the animated
+       star layer is suppressed. */
+    const lowPower =
+      window.matchMedia('(max-width: 860px)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+      (navigator.deviceMemory && navigator.deviceMemory <= 2);
+    if(lowPower){
+      const cosmos = document.getElementById("apex-cosmos");
+      if(cosmos) cosmos.classList.remove("on");
+    } else {
+      const show = () => {
+        const cosmos = initApexCosmos();
+        if(cosmos) cosmos.classList.add("on");
+      };
+      if(window.requestIdleCallback) requestIdleCallback(show, {timeout:1200});
+      else setTimeout(show, 200);
+    }
+  }
+  else {
     const cosmos=initApexCosmos();
     if(cosmos) cosmos.classList.remove("on");
   }

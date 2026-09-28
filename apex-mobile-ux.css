@@ -12,7 +12,34 @@
   #topbar .timer-pill{min-height:28px !important;padding:4px 10px !important;font-size:10.5px !important;gap:4px !important}
   #topbar .timer-pill svg{width:13px !important;height:13px !important}
 }
-
+/* ---- Safe area — top (notch) + sides (iPad pencil) ---- */
+@media (max-width: 860px){
+  #topbar{
+    padding-top: env(safe-area-inset-top) !important;
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+    height: calc(56px + env(safe-area-inset-top)) !important;
+  }
+  #sidebar{
+    padding-top: calc(24px + env(safe-area-inset-top));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+  #scratch-drawer{
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+  }
+  #scratch-fab{
+    right: max(14px, env(safe-area-inset-right)) !important;
+  }
+  #toast-root{
+    left: max(14px, env(safe-area-inset-left)) !important;
+    right: max(14px, env(safe-area-inset-right)) !important;
+  }
+  #bottomnav{
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
+  }
+}
 /* ---- Chunk 2: cards, spacing, buttons ---- */
 @media (max-width: 860px){
   #view{padding:10px 12px calc(82px + env(safe-area-inset-bottom)) !important}
@@ -558,5 +585,229 @@
   /* Bottom nav — already has it, ensure minimum */
   #bottomnav{
     padding-bottom:calc(8px + env(safe-area-inset-bottom)) !important;
+  }
+}
+/* ---- Chunk 9: WCAG 2.5.5 touch-target floor ---- */
+@media (max-width: 860px){
+  /* Every interactive icon hits at least 44×44 */
+  .mini-icon,
+  .subj-head .subj-actions .mini-icon,
+  .topic-row .topic-controls .row-actions .mini-icon{
+    min-width:44px !important;
+    min-height:44px !important;
+    width:44px !important;
+    height:44px !important;
+  }
+  .icon-btn{
+    min-width:44px !important;
+    min-height:44px !important;
+  }
+  /* Grade buttons already covered in index.html, but reinforce here */
+  .grade-btn{
+    min-height:44px !important;
+    min-width:44px !important;
+  }
+  /* Chip / pill tappables */
+  .chip, .pill, .rel-pill{
+    min-height:44px !important;
+    padding-top:10px !important;
+    padding-bottom:10px !important;
+  }
+}
+/* ---- Small phones (iPhone SE, older Androids) ---- */
+@media (max-width: 480px){
+  /* Global typography — slightly tighter, still readable */
+  body{font-size:13.5px !important}
+  h1{font-size:19px !important}
+  h2{font-size:14px !important}
+
+  /* View padding — reclaim horizontal space */
+  #view{padding:10px 11px calc(90px + env(safe-area-inset-bottom)) !important}
+
+  /* Cards — tighter internal padding */
+  .card, .sess-card, .stat, .hday, .bcol, .task-card,
+  .next-hero, .ready-card, .next-action, .dday-banner{
+    padding:12px 13px !important;
+    border-radius:11px !important;
+  }
+
+  /* Buttons — keep 44px touch floor, reduce padding */
+  .btn{
+    min-height:44px !important;
+    padding:10px 12px !important;
+    font-size:12px !important;
+  }
+  .btn.sm{
+    min-height:40px !important;
+    padding:8px 11px !important;
+    font-size:11.5px !important;
+  }
+
+  /* Grade row stays 2×2 on the narrowest devices */
+  .grade-row{
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+    gap:6px !important;
+  }
+  .grade-btn{
+    font-size:12px !important;
+    padding:10px 6px !important;
+  }
+
+  /* Session meta grid — single column on tiny screens */
+  .sess-meta{
+    grid-template-columns: 1fr !important;
+    gap:8px !important;
+    padding:10px !important;
+  }
+  .sess-meta .fld{
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+    gap:10px !important;
+    padding:6px 0 !important;
+    border-bottom:1px solid var(--border) !important;
+  }
+  .sess-meta .fld:last-child{border-bottom:none !important}
+  .sess-meta .fld label{
+    flex:0 0 auto;
+    font-size:10px !important;
+  }
+  .sess-meta .fld b,
+  .sess-meta .fld .inp,
+  .sess-meta .fld input{
+    flex:1 1 auto;
+    text-align:right !important;
+    font-size:13px !important;
+  }
+
+  /* Bottom nav — 4 tabs fit fine, keep font readable */
+  .bn-item{font-size:10px !important;min-height:56px !important}
+  .bn-item svg{width:22px !important;height:22px !important}
+
+  /* Top bar — tighten further */
+  #topbar{height:52px !important;padding:0 12px !important}
+  #page-title{font-size:14px !important}
+  #topbar .timer-pill{font-size:11px !important;padding:5px 10px !important;min-height:32px !important}
+  #topbar .icon-btn{width:36px !important;height:36px !important;min-width:36px !important}
+
+  /* Chips scroll — larger tap rows */
+  .chips-scroll, .chips{padding:4px 12px 10px !important}
+  .chip, .pill{font-size:11.5px !important;padding:8px 12px !important}
+
+  /* FAB and toast — sit above the nav comfortably */
+  #scratch-fab{
+    width:48px !important;height:48px !important;
+    bottom:calc(82px + env(safe-area-inset-bottom)) !important;
+    right:12px !important;
+  }
+  #toast-root{
+    bottom:calc(86px + env(safe-area-inset-bottom)) !important;
+    left:12px !important;right:12px !important;
+  }
+
+  /* Modals — bottom-sheet feel, tighter headers */
+  .modal{padding:16px 14px 0 !important;border-radius:18px 18px 0 0 !important}
+  .modal h3{font-size:16px !important;margin-bottom:12px !important}
+  .modal-acts{
+    margin:14px -14px 0 !important;
+    padding:12px 14px calc(14px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Hero header buttons — single column on the narrowest */
+  .hero-head{
+    grid-template-columns: 1fr !important;
+  }
+  .hero-head > .btn,
+  .hero-head > a.btn{
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* Respect the user's reduced-motion preference globally */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+/* ---- Command palette — mobile close + safe padding ---- */
+@media (max-width: 860px){
+  .cmd-overlay{
+    padding: calc(8vh + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)) !important;
+    align-items: flex-start !important;
+  }
+  .cmd-box{
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 14px !important;
+    position: relative;
+  }
+  .cmd-close{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 1px solid var(--border-2);
+    border-radius: 9px;
+    color: var(--text-3);
+    z-index: 2;
+    cursor: pointer;
+    transition: all .18s ease;
+  }
+  .cmd-close:hover{
+    color: var(--text);
+    border-color: var(--accent-2);
+    background: color-mix(in srgb, var(--accent-2) 8%, transparent);
+  }
+  .cmd-input{
+    padding: 18px 56px 18px 18px !important;  /* leave room for close */
+    font-size: 15px !important;
+  }
+  .cmd-foot{
+    flex-wrap: wrap;
+    gap: 12px !important;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+  .cmd-foot-esc{display: none !important}  /* hide "esc to close" on touch */
+  .cmd-item{
+    padding: 14px 14px !important;          /* bigger tap rows */
+    min-height: 56px;
+  }
+  .cmd-row, .cmd-item{min-height: 56px}
+}
+@media (min-width: 861px){
+  .cmd-close{display: none}
+}
+/* ---- Perf: mute expensive backdrop-filters on mobile ----
+   Blurs are the #1 mobile GPU cost. Reduce radius or kill
+   them on cards the user interacts with most. */
+@media (max-width: 860px){
+  [data-theme="apex"] .card,
+  [data-theme="apex"] .stat,
+  [data-theme="apex"] .sess-card,
+  [data-theme="apex"] .task-card,
+  [data-theme="apex"] .next-hero,
+  [data-theme="apex"] .ready-card,
+  [data-theme="apex"] .dday-banner{
+    backdrop-filter: blur(10px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+  }
+  [data-theme="apex"] #topbar{
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+  /* Kill the modal blur entirely — the overlay alone is enough */
+  [data-theme="apex"] .overlay,
+  [data-theme="apex"] .cmd-overlay{
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 }

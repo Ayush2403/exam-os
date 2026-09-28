@@ -326,6 +326,56 @@
       if(overlay) e.preventDefault();
     }
   }, { passive: false });
+/* ─────────────────────────────────────────────
+   8 · TOUCH-AWARE SHORTCUT HINTS
+   Replace ⌘-shortcut titles with plain-language
+   hints on coarse-pointer devices.
+   ───────────────────────────────────────────── */
+  if (isTouch) {
+    var hintMap = [
+      { sel: '[data-undo]',        hint: 'Undo last change' },
+      { sel: '#settings-btn',      hint: 'Settings' },
+      { sel: '#help-btn',          hint: 'How to use Apex' },
+      { sel: '#notes-btn',         hint: 'Export notes' },
+      { sel: '#timer-pill',        hint: 'Focus timer' },
+      { sel: '#sb-toggle',         hint: 'Toggle navigation' }
+    ];
+    function swapHints(){
+      hintMap.forEach(function(h){
+        document.querySelectorAll(h.sel).forEach(function(el){
+          if (el && el.getAttribute('title') !== h.hint) {
+            el.setAttribute('title', h.hint);
+            el.setAttribute('aria-label', h.hint);
+          }
+        });
+      });
+    }
+    swapHints();
+    /* Re-apply after any route change */
+    if ('MutationObserver' in window) {
+      var mo = new MutationObserver(swapHints);
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
+  }
 
+/* ─────────────────────────────────────────────
+   9 · KILL IOS INPUT ZOOM ON FOCUS
+   iOS Safari zooms if any focused input is < 16px.
+   We force 16px on all text-like inputs at runtime
+   as a belt-and-suspenders against inline font-sizes.
+   ───────────────────────────────────────────── */
+  if (isIOS && !isStandalone) {
+    var zoomStyle = document.createElement('style');
+    zoomStyle.textContent = `
+      @media (max-width: 860px){
+        input.inp:not([type="checkbox"]):not([type="radio"]),
+        select.inp,
+        textarea.inp{
+          font-size:16px !important;
+        }
+      }
+    `;
+    document.head.appendChild(zoomStyle);
+  }
   console.log('[apex-mobile] installed · iOS:', isIOS, '· Android:', isAndroid, '· Standalone:', isStandalone);
 })();
