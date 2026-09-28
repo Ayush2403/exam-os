@@ -1,0 +1,213 @@
+/* APEX MOBILE UX — progressive chunks
+   Each chunk is isolated. Delete this file to revert everything. */
+
+/* ---- Chunk 1: top bar ---- */
+@media (max-width: 860px){
+  #topbar{height:44px !important;min-height:44px !important;padding:0 10px !important;gap:6px !important}
+  #topbar .date-chip,#topbar .streak-chip,#topbar .sync-pill,#topbar .icon-btn[data-undo],#topbar #help-btn,#topbar .sb-toggle{display:none !important}
+  #page-title{font-size:13.5px !important;font-weight:700 !important;letter-spacing:-.01em !important;flex:1 !important}
+  #topbar .top-right{gap:4px !important}
+  #topbar .icon-btn{width:34px !important;height:34px !important;min-width:34px !important;min-height:34px !important}
+  #topbar .icon-btn svg{width:16px !important;height:16px !important}
+  #topbar .timer-pill{min-height:28px !important;padding:4px 10px !important;font-size:10.5px !important;gap:4px !important}
+  #topbar .timer-pill svg{width:13px !important;height:13px !important}
+}
+
+/* ---- Chunk 2: cards, spacing, buttons ---- */
+@media (max-width: 860px){
+  #view{padding:10px 12px calc(82px + env(safe-area-inset-bottom)) !important}
+
+  .card,.sess-card,.stat,.hday,.bcol,.task-card,
+  .next-hero,.ready-card,.next-action,.dday-banner,
+  .home-stat,.contact-card-dash{
+    padding:12px 14px !important;
+    border-radius:11px !important;
+    margin-bottom:10px !important;
+  }
+
+  .card-h{margin-bottom:10px !important;gap:8px !important}
+  .card-h h2{font-size:14px !important;line-height:1.25 !important}
+  .card-h .sub{font-size:10.5px !important}
+
+  .home-section-label{
+    margin:14px 0 8px !important;
+    padding-bottom:5px !important;
+    font-size:9px !important;
+    letter-spacing:.22em !important;
+  }
+
+  .btn{min-height:40px !important;padding:9px 13px !important;font-size:12.5px !important;border-radius:9px !important}
+  .btn.primary,.btn.green,.btn.danger{min-height:44px !important}
+  .btn.sm{min-height:34px !important;padding:6px 10px !important;font-size:11.5px !important}
+  .btn svg{width:13px !important;height:13px !important}
+
+  .chip,.pill,.exam-tag,.tag-overdue,.tag-today,
+  .tag-new,.tag-future,.tb-chip,.rel-pill{
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .chips{flex-wrap:wrap !important;gap:6px !important}
+  .chips-scroll{margin:0 -12px !important;padding:4px 12px 8px !important;gap:6px !important}
+  .chips-scroll .chip{
+    flex:0 0 auto !important;
+    max-width:none !important;
+    min-height:32px !important;
+    padding:6px 11px !important;
+    font-size:11px !important;
+  }
+
+  .hero-head{display:flex !important;flex-wrap:wrap !important;gap:8px !important;margin-bottom:12px !important}
+  .hero-head > div:first-child{flex:1 1 100% !important}
+  .hero-head h2{font-size:19px !important;line-height:1.15 !important}
+  .hero-head .sub{font-size:11.5px !important;margin-top:2px !important}
+  .hero-head > .btn{
+    flex:1 1 calc(50% - 4px) !important;
+    min-width:0 !important;
+    min-height:44px !important;
+    font-size:12px !important;
+    padding:10px 8px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+  .hero-head > .btn:only-of-type{flex-basis:100% !important}
+}
+
+/* ---- Chunk 3: syllabus toolbar + rows ---- */
+@media (max-width: 860px){
+  /* Compress the 4-row toolbar into 2 rows */
+  .toolbar{padding:0 0 8px !important;margin-bottom:4px !important;position:static !important}
+  .toolbar .row{gap:6px !important;flex-wrap:wrap !important}
+  .toolbar .search{flex:1 1 100% !important;order:-1 !important}
+  .toolbar .search .inp{
+    min-height:42px !important;
+    font-size:14px !important;
+    padding-left:34px !important;
+  }
+  .toolbar .row > .btn{
+    flex:0 1 auto !important;
+    min-height:38px !important;
+    padding:8px 10px !important;
+    font-size:11.5px !important;
+  }
+  /* Hide "expand all / collapse all" arrows on mobile — they're in the swipe-down gesture anyway */
+  .toolbar .row > .btn[data-action="syl-collapse-all"],
+  .toolbar .row > .btn[data-action="syl-expand-all"]{display:none !important}
+  /* Make the exam + status dropdowns share one row */
+  .toolbar .row > select.inp{
+    flex:1 1 calc(50% - 3px) !important;
+    min-width:0 !important;
+    min-height:38px !important;
+    font-size:12px !important;
+  }
+  /* Priority chips scroll horizontally instead of wrapping */
+  .toolbar .chips-scroll{
+    margin:0 -12px !important;
+    padding:2px 12px 6px !important;
+    width:calc(100% + 24px) !important;
+    max-width:none !important;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+  }
+  .toolbar .chips-scroll > *{flex:0 0 auto !important}
+
+  /* Subject header — tighter, less noisy */
+  .subj-head{padding:10px 8px !important;gap:6px !important;flex-wrap:nowrap !important}
+  .subj-head .sdot{width:6px !important;height:6px !important}
+  .subj-head b{
+    font-size:13px !important;
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+  .subj-head .cnt{font-size:10.5px !important;flex-shrink:0 !important}
+  .subj-head .pbar{display:none !important}
+  .subj-head > .tiny{display:none !important}
+  .subj-head .chev{width:14px !important;height:14px !important}
+  .subj-head .subj-actions{gap:0 !important}
+  .subj-head .subj-actions .mini-icon{width:28px !important;height:28px !important}
+
+  /* Topic rows — tighter, exam tags truncate */
+  .topic-row{padding:9px 8px !important;gap:4px 8px !important}
+  .topic-row > .mini-icon[data-action="toggle-topic"]{
+    flex:0 0 22px !important;
+    width:22px !important;
+    height:22px !important;
+    margin-top:2px !important;
+  }
+  .topic-row > .drag-handle{display:none !important}
+  .topic-row .topic-body{
+    flex:1 1 calc(100% - 30px) !important;
+    max-width:calc(100% - 30px) !important;
+    min-width:0 !important;
+  }
+  .topic-row .name{
+    font-size:12.5px !important;
+    line-height:1.35 !important;
+    white-space:normal !important;
+    word-break:break-word !important;
+  }
+  /* Tags row — max 3 visible, ellipsis overflow */
+  .topic-row .tags{
+    gap:3px !important;
+    margin-top:4px !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    flex-wrap:nowrap !important;
+  }
+  .topic-row .tags > *:nth-child(n+4){display:none !important}
+  .topic-row .tags > *{
+    font-size:9px !important;
+    padding:1px 5px !important;
+    max-width:70px !important;
+    flex:0 0 auto !important;
+  }
+  /* Controls row below name */
+  .topic-row .topic-controls{
+    flex:1 1 100% !important;
+    margin:6px 0 0 30px !important;
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    gap:5px !important;
+    justify-content:flex-start !important;
+    overflow-x:auto !important;
+    scrollbar-width:none !important;
+  }
+  .topic-row .topic-controls::-webkit-scrollbar{display:none !important}
+  .topic-row .topic-controls .mini-sel{
+    font-size:10.5px !important;
+    padding:4px 20px 4px 8px !important;
+    min-height:30px !important;
+    flex:0 0 auto !important;
+    max-width:none !important;
+  }
+  .topic-row .topic-controls .mini-sel[data-change="syl-weight"]{display:none !important}
+  .topic-row .topic-controls .row-actions{
+    flex:0 0 auto !important;
+    margin-left:auto !important;
+    padding-left:6px !important;
+    opacity:1 !important;
+    gap:2px !important;
+  }
+  .topic-row .topic-controls .row-actions .mini-icon{
+    width:30px !important;
+    height:30px !important;
+  }
+}
+
+/* ---- Chunk 3b: toolbar selects minimum width ---- */
+@media (max-width: 860px){
+  .toolbar .row > select.inp{
+    flex:1 1 calc(50% - 3px) !important;
+    min-width:130px !important;
+    width:auto !important;
+  }
+  .toolbar .row > select.inp option{
+    font-size:13px;
+  }
+}
