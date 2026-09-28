@@ -10099,6 +10099,74 @@ async function startSync(){
   }catch(e){setSyncStatus("error");toast("⚠️ Sync error",e.message);}
 }
 function stopSync(){if(syncUnsub){syncUnsub();syncUnsub=null;}clearSyncKey();setSyncStatus("off");}
+let _syncFailedAttempts=0;
+
+function openUnlockModal(){
+  const errBlock = _syncFailedAttempts>0
+    ? '<div class="err-detail" style="border-left-color:var(--pri-critical-fg);margin-bottom:12px"><div><div class="tiny" style="font-weight:700;color:var(--pri-critical-fg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Passphrase didn\'t work'+(_syncFailedAttempts>1?' ('+_syncFailedAttempts+' attempts)':'')+'</div><div style="font-size:12.5px;line-height:1.55;color:var(--text-2)">Your data on this device is safe. Only cloud sync is locked.</div></div></div>'
+    : '';
+  const body = errBlock
+    + '<div class="frow"><label>Passphrase</label><input class="inp" type="password" name="unlockPass" autofocus autocomplete="current-password"></div>'
+    + '<div class="hint" style="margin-top:12px;line-height:1.55">Passphrases are case-sensitive. If you don\'t remember it, cloud sync cannot be recovered — use <b>Disconnect</b> to keep working with local data only.</div>';
+  openModal("Unlock cloud sync", body, async (v)=>{
+    const pass=(v.unlockPass||"").trim();
+    if(!pass){toast("Enter a passphrase");return false;}
+    try{
+      await unlockSync(pass);
+      _syncFailedAttempts=0;
+      return true;
+    }catch(e){
+      _syncFailedAttempts++;
+      if(_syncFailedAttempts>=2){
+        closeModal();
+        setTimeout(openSyncRecoveryModal,120);
+        return false;
+      }
+      toast("⚠️ Wrong passphrase","Try again, or disconnect sync");
+      return false;
+    }
+  },"Unlock");
+  const cl=document.querySelector("[data-mclose]");
+  if(cl){
+    cl.textContent="Disconnect";
+    cl.onclick=()=>disconnectSyncFromModal();
+  }
+}
+
+function openSyncRecoveryModal(){
+  const body = '<div style="font-size:13.5px;line-height:1.7;color:var(--text-2);margin-bottom:14px">Two wrong attempts in a row. This usually means the passphrase was forgotten, or a typo in a case-sensitive character.</div>'
+    + '<div class="detail-block" style="border-left:3px solid var(--pri-low-fg);margin-bottom:14px"><div style="font-weight:700;margin-bottom:4px;color:var(--pri-low-fg)">Your local data is safe</div><div class="tiny" style="line-height:1.6">Everything on this device — syllabus, sessions, errors, mocks, habits — is untouched. Only cloud sync is locked.</div></div>'
+    + '<div style="font-size:13px;line-height:1.75;color:var(--text-2);margin-bottom:6px"><b style="color:var(--text)">Your options:</b></div>'
+    + '<ul style="font-size:13px;line-height:1.8;color:var(--text-2);padding-left:22px;margin-bottom:6px">'
+      + '<li><b>Try again</b> — passphrases are case-sensitive; check for caps or a typo.</li>'
+      + '<li><b>Disconnect sync</b> — keep working locally. The cloud copy stays as-is. Reconnect later if you remember it.</li>'
+    + '</ul>';
+  openModal("Cloud sync is locked", body, ()=>{}, null);
+  const sv=document.querySelector("[data-msave]");
+  if(sv)sv.style.display="none";
+  const cl=document.querySelector("[data-mclose]");
+  if(cl){
+    cl.textContent="Disconnect sync";
+    cl.onclick=()=>disconnectSyncFromModal();
+  }
+  const acts=document.querySelector(".modal-acts");
+  if(acts){
+    const retry=document.createElement("button");
+    retry.className="btn primary";
+    retry.textContent="Try again";
+    retry.onclick=()=>{closeModal();_syncFailedAttempts=0;setTimeout(openUnlockModal,120);};
+    acts.insertBefore(retry, cl);
+  }
+}
+
+function disconnectSyncFromModal(){
+  S.sync.enabled=false;
+  store.set(KEY,JSON.stringify(S));
+  stopSync();
+  _syncFailedAttempts=0;
+  closeModal();
+  toast("Sync disconnected","Local data intact");
+}
 async function unlockSync(pass){if(!S.sync.room)return false;await setPassphrase(pass);sessionStorage.setItem("apex-sync-pass",pass);toast("🔓 Sync unlocked");startSync();return true;}
 function lockSync(){clearSyncKey();sessionStorage.removeItem("apex-sync-pass");if(syncUnsub){syncUnsub();syncUnsub=null;}setSyncStatus("locked");toast("🔒 Sync locked");}
 async function firstSyncCheck(){
@@ -10166,6 +10234,7 @@ function checkAndNotify(){
   }catch(e){}
 }
 setInterval(checkAndNotify,60000);setTimeout(checkAndNotify,4000);
+setInterval(warnStorageIfNeeded,120000);setTimeout(warnStorageIfNeeded,3000);
 function mondayOf(off){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+(off||0)*7);return d;}
 let weekOff=0,monthOff=0,yearOff=0,hTab="week";
 function dayStats(dISO){
@@ -12308,6 +12377,17 @@ const ACTIONS={
 },
   "notif-enable":async()=>{const ok=await requestNotifPerm();if(ok){S.settings.notifEnabled=true;store.set(KEY,JSON.stringify(S));toast("✓ On");closeModal();openSettings();}},
   "notif-test":async()=>{const ok=await requestNotifPerm();if(!ok)return;try{new Notification("Apex — test",{body:"Notifications work."});toast("✓ Sent");}catch(e){toast("⚠️ Failed");}},
+  "prune-storage":()=>{
+  const r=pruneOldData();
+  const b=document.getElementById("apex-storage-warn");
+  if(b)b.remove();
+  toast("Pruned "+r.pruned+" old entries","Storage freed");
+  rerender();
+},
+"dismiss-storage-warn":()=>{
+  const b=document.getElementById("apex-storage-warn");
+  if(b)b.remove();
+},
   "export-data":()=>{try{const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="apex-backup-"+todayISO()+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast("Exported ⬇");}catch(e){toast("⚠️ Export failed");}},
   "import-data":()=>{const inp=document.createElement("input");inp.type="file";inp.accept="application/json,.json";inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);const err=validateImport(d);if(err){toast("⚠️ Invalid backup",err);return;}const summary="Syllabus: "+d.syllabus.length+" topics\nSessions: "+((d.sessions||[]).length)+"\nErrors: "+((d.errors||[]).length)+"\nMocks: "+((d.mocks||[]).length)+"\nTasks: "+((d.tasks||[]).length)+"\nHabits: "+Object.keys(d.habits||{}).length+" days";window._importData=d;const body='<p class="muted small" style="line-height:1.6;margin-bottom:14px">Backup looks valid. Choose how to apply.</p><div class="detail-block" style="font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap;line-height:1.7">'+esc(summary)+'</div><div class="chips" style="margin-top:16px"><button class="btn" data-action="import-merge">Merge — add new, keep existing</button></div><div class="chips" style="margin-top:8px"><button class="btn danger" data-action="import-replace">Replace — wipe and restore</button></div>';openModal("Import backup",body,()=>{},null);const mb=$("[data-msave]");if(mb)mb.style.display="none";}catch(e){toast("⚠️ Invalid file",e.message);}};r.readAsText(f);};inp.click();},
   "import-merge":()=>{const d=window._importData;if(!d)return;snapshot();S=mergeStates(S,migrateState(d));delete window._importData;saveLocal();applyTheme(S.settings.theme||"obsidian");rerender();closeModal();toast("Merged ✓","New items added, existing kept");},
@@ -12492,7 +12572,11 @@ try{
   const hb=$("#help-btn");if(hb)hb.addEventListener("click",()=>{S.settings.welcomeDone=false;saveLocal();welcomeOverlay();});
   document.querySelectorAll("[data-undo]").forEach(b=>b.addEventListener("click",()=>undo()));
   const tp=$("#timer-pill");if(tp)tp.addEventListener("click",()=>{if(!FS.panel)focusPanelOpen();else focusPanelClose();});
-  const sp=$("#sync-pill");if(sp)sp.addEventListener("click",async()=>{if(!S.sync.enabled||!S.sync.room){openSettings();return;}if(!syncKey){const pass=prompt("Enter your sync passphrase to unlock:");if(!pass)return;try{await unlockSync(pass);}catch(e){toast("⚠️ Failed",e.message);}return;}openSettings();});
+  const sp=$("#sync-pill");if(sp)sp.addEventListener("click",()=>{
+  if(!S.sync.enabled||!S.sync.room){openSettings();return;}
+  if(!syncKey){openUnlockModal();return;}
+  openSettings();
+});
   const welcomeRoot=$("#welcome-root");if(welcomeRoot)welcomeRoot.addEventListener("change",e=>{if(e.target&&e.target.id==="welcome-dont-show"&&e.target.checked){dismissWelcome();}});
   window.addEventListener("hashchange",renderRoute);
   window.addEventListener("resize",()=>{if(FS.panel)positionFocusPanel();closeInfoPop();});  
@@ -12637,6 +12721,60 @@ function activitySummary(sinceMs){
   const byKind={};
   events.forEach(function(e){byKind[e.kind]=(byKind[e.kind]||0)+1;});
   return byKind;
+}
+function estimateStorageSize(){
+  try{
+    let bytes=0;
+    for(const k in localStorage){
+      if(Object.prototype.hasOwnProperty.call(localStorage,k)){
+        bytes += k.length + (localStorage.getItem(k)||"").length;
+      }
+    }
+    return bytes*2;
+  }catch(e){ return 0; }
+}
+
+function checkStorageHealth(){
+  const bytes=estimateStorageSize();
+  const mb=bytes/1048576;
+  const pct=Math.min(100,Math.round(mb/5*100));
+  return {pct,mb,needsPrune:pct>=80};
+}
+
+function pruneOldData(){
+  const result={pruned:0};
+  if(Array.isArray(S.focusLog)&&S.focusLog.length>500){
+    result.pruned+=S.focusLog.length-500;
+    S.focusLog=S.focusLog.slice(-500);
+  }
+  if(Array.isArray(S.activity)&&S.activity.length>1000){
+    result.pruned+=S.activity.length-1000;
+    S.activity=S.activity.slice(-1000);
+  }
+  if(Array.isArray(S.questions)&&S.questions.length>2000){
+    result.pruned+=S.questions.length-2000;
+    S.questions=S.questions.slice(-2000);
+  }
+  saveLocal();
+  return result;
+}
+
+function warnStorageIfNeeded(){
+  const health=checkStorageHealth();
+  if(!health.needsPrune)return;
+  if(route()!=="dashboard")return;
+  if(document.getElementById("apex-storage-warn"))return;
+  const view=document.getElementById("view");
+  if(!view)return;
+  const anchor=view.querySelector(".hero-head")||view.firstElementChild;
+  if(!anchor)return;
+  const b=document.createElement("div");
+  b.id="apex-storage-warn";
+  b.className="card";
+  b.style.cssText="border-left:3px solid var(--pri-medium-fg);padding:14px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap";
+  b.innerHTML='<div style="flex:1;min-width:220px"><div style="font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:-.01em;margin-bottom:3px">Storage at '+health.pct+'%</div><div class="tiny" style="line-height:1.55">Apex is using '+health.mb.toFixed(2)+' MB of your browser\'s ~5 MB storage. Prune old activity to keep things smooth.</div></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary sm" data-action="prune-storage">Prune old data</button><button class="btn ghost sm" data-action="dismiss-storage-warn">Dismiss</button></div>';
+  anchor.parentNode.insertBefore(b,anchor.nextSibling);
 }
 function saveLocal(){
   S._lastLocalEdit=new Date().toISOString();
