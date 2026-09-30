@@ -8641,8 +8641,8 @@ function migrateState(s){
 
 function seedState(){return{schemaVersion:SCHEMA_VERSION,syllabus:SYL_RAW.map((r,i)=>({id:"t"+i,topic:r[0],subject:r[1],exams:r[2]?r[2].split("|"):[],priority:r[3]||"",status:r[4]||"Not started",weightage:r[5]||"",remarks:"",parentId:null})),sessions:[],errors:[],mocks:[],tasks:[],links:[],resources:[],focusLog:[],pyqLog:[],habits:{},scratch:[],scratchNote:"",habitDefs:JSON.parse(JSON.stringify(DEFAULT_HABIT_DEFS)),tax:JSON.parse(JSON.stringify(DEFAULT_TAX)),subjectOrder:[],settings:{userName:"",notifEnabled:false,notifTime:"08:00",lastNotif:"",theme:"apex",welcomeDone:false,tourDone:false,contactName:"",contactEmail:"",contactTelegram:"",contactNote:"",sbCollapsed:false,examDate:"",examLabel:"",focusMusicSource:"",urgentExam:"CGL",urgentPriority:"Critical",urgentWeightage:"",exams:[],mockSectionSets:JSON.parse(JSON.stringify(DEFAULT_MOCK_SECTION_SETS))},sync:{enabled:false,room:""}};}
 const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}};
-let FBCFG;try{FBCFG=JSON.parse(store.get(FBCFG_KEY)||"{}")||{};}catch(e){FBCFG={};}
-function saveFBCFG(){store.set(FBCFG_KEY,JSON.stringify(FBCFG));}
+let FBCFG={};
+function saveFBCFG(){}
 let syncKey=null;let syncSalt=null;
 function bufToB64(buf){const bytes=new Uint8Array(buf);let s="";for(let i=0;i<bytes.length;i++)s+=String.fromCharCode(bytes[i]);return btoa(s);}
 function b64ToBuf(b64){const s=atob(b64);const bytes=new Uint8Array(s.length);for(let i=0;i<s.length;i++)bytes[i]=s.charCodeAt(i);return bytes;}
@@ -12114,7 +12114,7 @@ function activateSettTab(root, tabId){
 }
 
 function openSettings(initialTab){ initialTab = initialTab || "personal";
-  const c=getContact();const hasRoom=!!S.sync.room;const hasCfg=!!(FBCFG.apiKey&&FBCFG.projectId);const enabled=S.sync.enabled&&hasRoom&&hasCfg;const locked=enabled&&!syncKey;
+  const c=getContact();const hasRoom=!!S.sync.room;const enabled=S.sync.enabled&&hasRoom;const locked=enabled&&!syncKey;
   const syncHint=enabled?(locked?'🔒 Configured but <b>locked</b>. Click the Sync pill in the top bar to enter your passphrase.':'🔓 <b>Unlocked</b> and syncing. Your data is encrypted before upload.'):'Not configured yet. Paste your Firebase config and set a room code + passphrase below.';
   const body='<div class="sett-tabs">'
     +'<button class="sett-tab on" data-sett-tab-btn="personal">Personal</button>'
@@ -12150,7 +12150,7 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     if(rawFb){try{let clean=rawFb.replace(/^\s*\/\/.*$/gm,"").replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");FBCFG=JSON.parse(clean);saveFBCFG();}catch(e){toast("⚠️ Invalid Firebase config");return false;}}else if(!FBCFG.apiKey){FBCFG={};saveFBCFG();}
     const newRoom=(v.roomCode||"").trim();
     if(newRoom!==(S.sync.room||"")){S.sync.room=newRoom;}
-    S.sync.enabled=!!(FBCFG.apiKey&&S.sync.room);store.set(KEY,JSON.stringify(S));
+    S.sync.enabled=!!S.sync.room;store.set(KEY,JSON.stringify(S));
     const pass=(v.syncPass||"").trim();
     if(pass){if(pass.length<6){toast("⚠️ Passphrase must be at least 6 characters");return false;}try{await setPassphrase(pass);sessionStorage.setItem("apex-sync-pass",pass);if(!localStorage.getItem("apex-sync-warned")){alert("⚠️ IMPORTANT\n\nYour sync passphrase is NOT stored anywhere.\n\nIf you forget it, the cloud copy is permanently unreadable.");localStorage.setItem("apex-sync-warned","1");}toast("🔓 Sync unlocked");}catch(e){toast("⚠️ Could not set passphrase",e.message);return false;}}
     if(S.sync.enabled){if(syncKey)startSync();else setSyncStatus("locked");}else{stopSync();}
