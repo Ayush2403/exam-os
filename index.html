@@ -8782,7 +8782,7 @@ function applyTheme(id){
     if(cosmos) cosmos.classList.remove("on");
   }
 }
-function getContact(){return{name:S.settings.contactName||DEV_CONTACT.name||"",email:S.settings.contactEmail||DEV_CONTACT.email||"",telegram:(S.settings.contactTelegram||DEV_CONTACT.telegram||"").replace(/^@/,""),note:S.settings.contactNote||DEV_CONTACT.note||""};}
+function getContact(){return DEV_CONTACT;}
 const UNDO_MAX=15;let undoStack=[],_suppressUndo=false;
 function snapshot(){if(_suppressUndo)return;try{undoStack.push(JSON.stringify(S));if(undoStack.length>UNDO_MAX)undoStack.shift();updateUndoBtn();}catch(e){}}
 function undo(){if(!undoStack.length){toast("Nothing to undo");return;}try{S=JSON.parse(undoStack.pop());_suppressUndo=true;store.set(KEY,JSON.stringify(S));_suppressUndo=false;applyTheme(S.settings.theme||"apex");rerender();toast("↶ Undone");updateUndoBtn();}catch(e){toast("⚠️ Undo failed");}}
@@ -12125,7 +12125,7 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     +'<div class="sett-pane on" data-sett-pane="personal">'
       +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>You</h4><div class="frow"><label>Your name</label><input class="inp" name="userName" value="'+esc(S.settings.userName||"")+'" placeholder="e.g. Ayush"></div></div>'
       +'<div class="sett-section"><h4>Exam targets</h4><div class="hint" style="margin-bottom:10px;line-height:1.55">Add every exam you\'re preparing for. The D-Day banner shows your Primary target; the smart engine uses the nearest relevant exam for each topic.</div>'+examTargetsSummaryHTML()+'<button class="btn" data-action="open-exams-manager" style="margin-top:8px">'+ICONS.pencil+' Manage exams</button><button class="btn" data-action="open-sections-manager" style="margin-top:8px;margin-left:6px">'+ICONS.pencil+' Section sets</button></div>'
-      +'<div class="sett-section"><h4>Contact — shown to anyone using your copy</h4><div class="frow"><label>Name</label><input class="inp" name="contactName" value="'+esc(c.name)+'"></div><div class="frow"><label>Email</label><input class="inp" type="email" name="contactEmail" value="'+esc(c.email)+'"></div><div class="frow"><label>Telegram handle</label><input class="inp" name="contactTelegram" value="'+esc(c.telegram?"@"+c.telegram:"")+'"></div><div class="frow"><label>Short note</label><textarea class="inp" name="contactNote" rows="2">'+esc(c.note)+'</textarea></div></div>'
+      +''
     +'</div>'
     +'<div class="sett-pane" data-sett-pane="appearance">'
       +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>Theme</h4>'+_renderThemeGridHTML()+'</div>'
@@ -12145,7 +12145,7 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     +'</div>';
   openModal("Settings",body,async v=>{
     S.settings.userName=v.userName||"";S.settings.notifTime=v.notifTime||"08:00";
-    S.settings.contactName=v.contactName||"";S.settings.contactEmail=v.contactEmail||"";S.settings.contactTelegram=v.contactTelegram||"";S.settings.contactNote=v.contactNote||"";
+    
     const rawFb=(v.fbcfg||"").trim();
     if(rawFb){try{let clean=rawFb.replace(/^\s*\/\/.*$/gm,"").replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");FBCFG=JSON.parse(clean);saveFBCFG();}catch(e){toast("⚠️ Invalid Firebase config");return false;}}else if(!FBCFG.apiKey){FBCFG={};saveFBCFG();}
     const newRoom=(v.roomCode||"").trim();
