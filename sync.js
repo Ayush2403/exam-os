@@ -1,22 +1,25 @@
 /* ============================================================
-   APEX SYNC — Cloudflare D1 backend
-   Loaded AFTER the main script. Overrides the Firebase-based
-   sync functions with fetch versions. No Firebase needed.
+   APEX SYNC — Cloudflare D1 backend (v2)
+   - 500ms debounce (was 2.5s)
+   - visibilitychange flushes pending sync
+   - Honest sync pill: tracks last successful sync time
    ============================================================ */
 (function(){
   'use strict';
-  if (window._apexSyncD1) return;
-  window._apexSyncD1 = true;
+  if (window._apexSyncD1v2) return;
+  window._apexSyncD1v2 = true;
 
   // ---- API helpers ----
   async function apiGet(roomId) {
-    const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : ""; const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), { cache: "no-store" });
+    const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : "";
+    const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), { cache: "no-store" });
     if (r.status === 404) return null;
     if (!r.ok) throw new Error("HTTP " + r.status);
     return await r.json();
   }
   async function apiPut(roomId, salt, blob) {
-    const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : ""; const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), {
+    const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : "";
+    const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ salt: salt, blob: blob })
@@ -29,18 +32,96 @@
     return await r.json();
   }
   async function apiDelete(roomId) {
+    const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : "";
     try {
-      const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : ""; const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), { method: "DELETE" });
+      const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), { method: "DELETE" });
       return r.ok;
     } catch(e) { return false; }
   }
 
-  // ---- Override globals ----
   window.apiGet = apiGet;
   window.apiPut = apiPut;
   window.apiDelete = apiDelete;
   window.initFirebase = async function() { return true; };
 
+  // ---- Sync status tracking ----
+  function recordSyncSuccess() {
+    S._lastSyncAt = Date.now();
+    try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+    setSyncStatus("synced");
+  }
+  function recordSyncError() {
+    S._lastSyncError = Date.now();
+    try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+    setSyncStatus("error");
+  }
+
+  // ---- Honest sync pill ----
+  function humanAgo(ms) {
+    const s = Math.floor(ms / 1000);
+    if (s < 60) return "just now";
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + "m ago";
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + "h ago";
+    const d = Math.floor(h / 24);
+    return d + "d ago";
+  }
+  window.updateSyncPill = function() {
+    const el = document.getElementById("sync-pill");
+    if (!el) return;
+    const hasRoom = !!S.sync.room;
+    const enabled = S.sync.enabled && hasRoom;
+    const locked = enabled && !syncKey;
+
+    if (!enabled) {
+      el.className = "sync-pill off";
+      el.innerHTML = '<span class="dot"></span><span>Local</span>';
+      el.title = "Sync disabled";
+      return;
+    }
+    if (locked) {
+      el.className = "sync-pill locked";
+      el.innerHTML = '<span class="dot"></span><span>Locked</span>';
+      el.title = "Click to enter your passphrase";
+      return;
+    }
+    if (syncStatus === "connecting" || syncStatus === "syncing") {
+      el.className = "sync-pill syncing";
+      el.innerHTML = '<span class="dot"></span><span>Syncing…</span>';
+      el.title = "Sync in progress";
+      return;
+    }
+    if (syncStatus === "error") {
+      el.className = "sync-pill error";
+      el.innerHTML = '<span class="dot"></span><span>Error</span>';
+      el.title = "Last sync failed";
+      return;
+    }
+    const last = S._lastSyncAt || 0;
+    const elapsed = last ? Date.now() - last : Infinity;
+    if (!last) {
+      el.className = "sync-pill connecting";
+      el.innerHTML = '<span class="dot"></span><span>Not synced</span>';
+      el.title = "Waiting for first sync";
+      return;
+    }
+    if (elapsed < 5 * 60 * 1000) {
+      el.className = "sync-pill synced";
+      el.innerHTML = '<span class="dot"></span><span>Synced</span>';
+      el.title = "Last sync: " + humanAgo(elapsed);
+    } else if (elapsed < 24 * 60 * 60 * 1000) {
+      el.className = "sync-pill synced";
+      el.innerHTML = '<span class="dot"></span><span>Synced · ' + humanAgo(elapsed) + '</span>';
+      el.title = "Last sync: " + humanAgo(elapsed);
+    } else {
+      el.className = "sync-pill error";
+      el.innerHTML = '<span class="dot"></span><span>Stale</span>';
+      el.title = "Last sync was " + humanAgo(elapsed) + " — check connection";
+    }
+  };
+
+  // ---- Push / Pull ----
   window.pushNow = async function(silent) {
     if (!S.sync.enabled || !S.sync.room || !syncKey) return;
     try {
@@ -62,6 +143,8 @@
       const payload = JSON.parse(JSON.stringify(S));
       delete payload.sync;
       delete payload._lastSync;
+      delete payload._lastSyncAt;
+      delete payload._lastSyncError;
       delete payload._lastLocalEdit;
       delete payload._deviceId;
       const encrypted = await encryptState(payload);
@@ -69,12 +152,11 @@
       const saltB64 = bufToB64(syncSalt);
       const resp = await apiPut(S.sync.room, saltB64, blob);
       S._lastSync = new Date(resp.updatedAt * 1000).toISOString();
-      store.set(KEY, JSON.stringify(S));
-      setSyncStatus("synced");
+      recordSyncSuccess();
       if (!silent && !needMerge) toast("Pushed (encrypted)");
       if (!silent && needMerge) rerender();
     } catch(e) {
-      setSyncStatus("error");
+      recordSyncError();
       if (!silent) toast("Push failed", e.message);
     }
   };
@@ -84,14 +166,14 @@
     try {
       setSyncStatus("connecting");
       const row = await apiGet(S.sync.room);
-      if (!row) { if (!silent) toast("No cloud copy yet"); setSyncStatus("synced"); return; }
+      if (!row) { if (!silent) toast("No cloud copy yet"); recordSyncSuccess(); return; }
       let remote;
       try {
         const parsed = JSON.parse(row.blob);
         remote = await decryptState(parsed);
       } catch(e) {
         if (!silent) toast("Wrong passphrase", "Could not decrypt cloud copy");
-        setSyncStatus("error"); return;
+        recordSyncError(); return;
       }
       if (!silent && !confirm("Replace this device's data with the cloud copy?")) {
         setSyncStatus("synced"); return;
@@ -103,21 +185,23 @@
       S._lastSync = new Date(row.updatedAt * 1000).toISOString();
       _applyingRemote = false;
       applyTheme(S.settings.theme || "apex");
-      store.set(KEY, JSON.stringify(S));
+      try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
       rerender();
-      setSyncStatus("synced");
+      recordSyncSuccess();
       if (!silent) toast("Pulled (decrypted)");
     } catch(e) {
-      setSyncStatus("error");
+      recordSyncError();
       if (!silent) toast("Pull failed", e.message);
     }
   };
 
+  // ---- Polling ----
   var _pollTimer = null;
   window.startSync = async function() {
     if (!S.sync.enabled || !S.sync.room) { setSyncStatus("off"); return; }
     if (!syncKey) { setSyncStatus("locked"); return; }
-    setSyncStatus("synced");
+    // Do an immediate pull so we get accurate state on load
+    try { await pullNow(true); } catch(e) {}
     if (_pollTimer) clearInterval(_pollTimer);
     _pollTimer = setInterval(async function() {
       if (document.hidden) return;
@@ -141,10 +225,12 @@
         S._lastSync = new Date(remoteUpdated * 1000).toISOString();
         _applyingRemote = false;
         applyTheme(S.settings.theme || "apex");
-        store.set(KEY, JSON.stringify(S));
+        try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
         rerender();
-        setSyncStatus("synced");
-      } catch(e) {}
+        recordSyncSuccess();
+      } catch(e) {
+        // Silent poll failure — don't flip to error state on transient
+      }
     }, 20000);
   };
 
@@ -175,7 +261,25 @@
     } catch(e) { return false; }
   };
 
-  // Override fs-* and gen-room actions on the ACTIONS object
+  // ---- Faster debounce + flush on hide ----
+  var _debounceTimer = null;
+  window.queueSync = function() {
+    if (!S.sync.enabled || !syncKey || _applyingRemote) return;
+    if (_debounceTimer) clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(function() {
+      _debounceTimer = null;
+      pushNow(true);
+    }, 500);
+  };
+  document.addEventListener("visibilitychange", function() {
+    if (document.hidden && _debounceTimer) {
+      clearTimeout(_debounceTimer);
+      _debounceTimer = null;
+      pushNow(true);
+    }
+  });
+
+  // ---- ACTIONS overrides ----
   try {
     if (typeof ACTIONS === "object" && ACTIONS) {
       ACTIONS["fs-merge"] = async function() {
@@ -189,7 +293,7 @@
             S.schemaVersion = SCHEMA_VERSION;
             S.sync = { enabled: true, room: S.sync.room };
             _applyingRemote = false;
-            store.set(KEY, JSON.stringify(S));
+            try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
             applyTheme(S.settings.theme || "apex");
             rerender();
           }
@@ -221,7 +325,7 @@
     }
   } catch(e) { console.log("[apex-sync-d1] ACTIONS override skipped:", e.message); }
 
-  // Hide the Firebase config field whenever the Settings modal is open
+  // ---- Hide firebase field if it ever shows ----
   const obs = new MutationObserver(function() {
     const modal = document.querySelector(".modal");
     if (!modal) return;
@@ -229,11 +333,8 @@
       const label = frow.querySelector("label");
       if (label && /firebase/i.test(label.textContent)) frow.style.display = "none";
     });
-    modal.querySelectorAll("h4").forEach(function(h) {
-      if (/cloud sync/i.test(h.textContent)) h.textContent = "Cloud Sync";
-    });
   });
   obs.observe(document.body, { childList: true, subtree: false });
 
-  console.log("[apex-sync-d1] installed — D1 backend replaces Firebase");
+  console.log("[apex-sync-d1] v2 installed — 500ms debounce, honest pill");
 })();
