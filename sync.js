@@ -338,3 +338,106 @@
 
   console.log("[apex-sync-d1] v2 installed — 500ms debounce, honest pill");
 })();
+
+/* ============================================================
+   APEX SYNC UI — clean up the Settings modal at runtime
+   Replaces the old Firebase-based sync section with a clean one.
+   ============================================================ */
+(function(){
+  'use strict';
+  if (window._apexSyncUI) return;
+  window._apexSyncUI = true;
+
+  function escHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function rebuildSyncSection() {
+    var modal = document.querySelector(".modal");
+    if (!modal) return;
+
+    var sections = modal.querySelectorAll(".sett-section");
+    var syncSection = null;
+    for (var i = 0; i < sections.length; i++) {
+      var h4 = sections[i].querySelector("h4");
+      if (h4 && /cloud sync/i.test(h4.textContent)) {
+        syncSection = sections[i];
+        break;
+      }
+    }
+    if (!syncSection) return;
+    if (syncSection.dataset.syncCleaned === "1") return;
+    syncSection.dataset.syncCleaned = "1";
+
+    // Hide the original section entirely
+    syncSection.style.display = "none";
+
+    // Build a clean replacement
+    var newSec = document.createElement("div");
+    newSec.className = "sett-section";
+    newSec.innerHTML =
+      '<h4>Cloud Sync</h4>' +
+      '<p class="hint" style="line-height:1.6;margin-bottom:14px">' +
+        '<b>End-to-end encrypted.</b> Your data is encrypted in your browser before it uploads. ' +
+        'The server only sees ciphertext. Your passphrase never leaves this device.' +
+      '</p>' +
+      '<div class="frow"><label>Room code</label>' +
+        '<div style="display:flex;gap:8px">' +
+          '<input class="inp" name="roomCode" value="' + escHtml(S.sync.room || "") + '" placeholder="Click New to generate">' +
+          '<button class="btn" type="button" data-action="gen-room">New</button>' +
+          '<button class="btn" type="button" data-action="copy-room-code">Copy</button>' +
+        '</div>' +
+        '<div class="hint">22 characters. Save this on every device you want to sync.</div>' +
+      '</div>' +
+      '<div class="frow"><label>Passphrase</label>' +
+        '<input class="inp" type="password" name="syncPass" placeholder="' +
+          (S.sync.enabled ? "Leave blank to keep current" : "At least 6 characters") +
+        '" autocomplete="new-password">' +
+        '<div class="hint">Encrypts everything. Forget it and the cloud copy is unrecoverable.</div>' +
+      '</div>' +
+      '<div class="chips">' +
+        '<button class="btn" type="button" data-action="sync-push">Push now</button>' +
+        '<button class="btn" type="button" data-action="sync-pull">Pull</button>' +
+        (syncKey ? '<button class="btn ghost" type="button" data-action="sync-lock">Lock</button>' : '') +
+        (S.sync.enabled ? '<button class="btn danger" type="button" data-action="sync-disable">Disconnect</button>' : '') +
+      '</div>';
+
+    syncSection.parentNode.insertBefore(newSec, syncSection.nextSibling);
+  }
+
+  // Register the copy action (in case it wasn't already registered)
+  function registerActions() {
+    if (typeof ACTIONS !== "object" || !ACTIONS) {
+      setTimeout(registerActions, 200);
+      return;
+    }
+    if (!ACTIONS["copy-room-code"]) {
+      ACTIONS["copy-room-code"] = function() {
+        var inp = document.querySelector('.modal [name="roomCode"]');
+        if (!inp || !inp.value) { toast("No room code"); return; }
+        inp.select();
+        try { document.execCommand("copy"); toast("Copied to clipboard"); }
+        catch(e) { toast("Copy failed", "Select and copy manually"); }
+      };
+    }
+  }
+  registerActions();
+
+  // Watch the modal root (proper target this time)
+  var modalRoot = document.getElementById("modal-root");
+  if (modalRoot) {
+    new MutationObserver(rebuildSyncSection)
+      .observe(modalRoot, { childList: true, subtree: true });
+  } else {
+    // Fallback: observe body with full subtree
+    new MutationObserver(function(){
+      if (document.querySelector(".modal")) rebuildSyncSection();
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
+  console.log("[apex-sync-ui] installed — clean Settings modal");
+})();
