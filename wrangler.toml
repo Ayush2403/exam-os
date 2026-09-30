@@ -1,0 +1,8 @@
+name = "exam-os"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "apex-sync"
+database_id = "9ea1e772-9eaf-44c2-8d5b-54d6deb8f19e"
