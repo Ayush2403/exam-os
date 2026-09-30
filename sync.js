@@ -10,13 +10,13 @@
 
   // ---- API helpers ----
   async function apiGet(roomId) {
-    const r = await fetch("/api/sync/" + encodeURIComponent(roomId), { cache: "no-store" });
+    const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : ""; const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), { cache: "no-store" });
     if (r.status === 404) return null;
     if (!r.ok) throw new Error("HTTP " + r.status);
     return await r.json();
   }
   async function apiPut(roomId, salt, blob) {
-    const r = await fetch("/api/sync/" + encodeURIComponent(roomId), {
+    const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : ""; const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ salt: salt, blob: blob })
@@ -30,7 +30,7 @@
   }
   async function apiDelete(roomId) {
     try {
-      const r = await fetch("/api/sync/" + encodeURIComponent(roomId), { method: "DELETE" });
+      const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : ""; const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), { method: "DELETE" });
       return r.ok;
     } catch(e) { return false; }
   }
