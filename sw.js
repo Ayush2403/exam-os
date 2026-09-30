@@ -1,28 +1,45 @@
 /* ============================================================
-   APEX SERVICE WORKER v2
-   Cache-first · stale-while-revalidate · offline-first
+   APEX SERVICE WORKER v3
+   - Full precache: all app files, offline works on second load
+   - Never caches /api/ requests (sync must always be live)
+   - Cache-first for CDN assets, stale-while-revalidate for app
    ============================================================ */
-const CACHE = 'apex-v2';
+
+const CACHE = 'apex-v3';
+
 const ASSETS = [
   './',
   './index.html',
   './landing.html',
   './manifest.json',
   './apex-mobile.js',
+  './apex-mobile-ux.css',
+  './sync.js',
+  './favicon.png',
+  './icon.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-192-maskable.png',
   './icons/icon-512-maskable.png'
 ];
 
+/* ---- install: precache everything ---- */
 self.addEventListener('install', function(e){
   e.waitUntil(
     caches.open(CACHE).then(function(c){
-      return c.addAll(ASSETS).catch(function(){ /* tolerate missing */ });
+      return Promise.all(
+        ASSETS.map(function(url){
+          return c.add(url).catch(function(){
+            /* Tolerate missing files (e.g. if an icon path is wrong) */
+            console.log('[sw] skip cache for', url);
+          });
+        })
+      );
     }).then(function(){ return self.skipWaiting(); })
   );
 });
 
+/* ---- activate: drop old caches ---- */
 self.addEventListener('activate', function(e){
   e.waitUntil(
     caches.keys().then(function(keys){
@@ -34,13 +51,19 @@ self.addEventListener('activate', function(e){
   );
 });
 
+/* ---- fetch ---- */
 self.addEventListener('fetch', function(e){
-  if(e.request.method !== 'GET') return;
+  if (e.request.method !== 'GET') return;
 
   var url = new URL(e.request.url);
 
-  // Google Fonts and other CDNs — cache-first
-  if(/fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com/.test(url.hostname)){
+  /* 1. API calls — network only, never cached */
+  if (url.pathname.indexOf('/api/') === 0) {
+    return; // let browser handle it directly
+  }
+
+  /* 2. Google Fonts + CDNs — cache-first */
+  if (/fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com/.test(url.hostname)) {
     e.respondWith(
       caches.match(e.request).then(function(hit){
         return hit || fetch(e.request).then(function(res){
@@ -53,19 +76,19 @@ self.addEventListener('fetch', function(e){
     return;
   }
 
-  // Same-origin assets — stale-while-revalidate
-  if(url.origin === location.origin){
+  /* 3. Same-origin — stale-while-revalidate */
+  if (url.origin === location.origin) {
     e.respondWith(
       caches.match(e.request).then(function(cached){
         var fetchPromise = fetch(e.request).then(function(res){
-          if(res && res.status === 200){
+          if (res && res.status === 200 && res.type === 'basic') {
             var clone = res.clone();
             caches.open(CACHE).then(function(c){ c.put(e.request, clone); });
           }
           return res;
         }).catch(function(){
-          // Offline fallback to index.html for navigations
-          if(e.request.mode === 'navigate'){
+          /* Offline navigation → serve index.html */
+          if (e.request.mode === 'navigate') {
             return caches.match('./index.html');
           }
           return cached;
@@ -73,5 +96,8 @@ self.addEventListener('fetch', function(e){
         return cached || fetchPromise;
       })
     );
+    return;
   }
+
+  /* 4. Anything else (analytics, external links) — passthrough */
 });
