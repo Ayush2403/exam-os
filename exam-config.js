@@ -1059,3 +1059,23 @@
   st.textContent = ".apex-active-exam-bar:not(.apex-stable-bar){display:none!important}";
   document.head.appendChild(st);
 })();
+
+/* ============================================================
+   Gate the exam bar to Syllabus only
+   It's meaningless on Home / Tasks / Mocks / etc.
+   ============================================================ */
+(function(){
+  if (window._apexBarGate) return;
+  window._apexBarGate = true;
+  function gate(){
+    var bar = document.querySelector('.apex-active-exam-bar');
+    if (!bar) return;
+    var h = location.hash || '';
+    var onSyl = h === '#/syllabus' || h === '#syllabus' || h === '';
+    bar.style.display = onSyl ? '' : 'none';
+  }
+  window.addEventListener('hashchange', gate);
+  setTimeout(gate, 300);
+  setTimeout(gate, 1200);
+  setInterval(gate, 700);
+})();
