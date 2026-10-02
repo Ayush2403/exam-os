@@ -186,3 +186,33 @@
 
   console.log('[apex-polish] v2 installed');
 })();
+
+/* ---- Make the active-exam bar sticky under the topbar ---- */
+(function(){
+  if (window._apexStickyBar) return;
+  window._apexStickyBar = true;
+
+  var st = document.createElement('style');
+  st.textContent = [
+    /* Sticky just below the topbar. Topbar is ~64px on desktop, ~56px on mobile. */
+    '.apex-active-exam-bar, .apex-stable-bar {',
+    '  position: sticky;',
+    '  top: 64px;',
+    '  z-index: 25;',
+    '  background: rgba(5,7,13,.92) !important;',
+    '  backdrop-filter: blur(12px);',
+    '  -webkit-backdrop-filter: blur(12px);',
+    '  padding: 10px 34px 10px !important;',
+    '  margin: 0 auto !important;',
+    '  border-bottom: 1px solid rgba(226,232,255,.06);',
+    '}',
+    '@media (max-width: 860px){',
+    '  .apex-active-exam-bar, .apex-stable-bar {',
+    '    top: 56px;',
+    '    padding: 8px 14px 8px !important;',
+    '  }',
+    '}'
+  ].join('\n');
+  document.head.appendChild(st);
+  console.log('[apex-polish] exam bar is sticky');
+})();
