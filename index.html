@@ -11,22 +11,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Apex">
 <meta name="apple-touch-fullscreen" content="yes">
-<!-- iOS Smart App Banner — shown when Safari visits the hosted URL -->
-<meta name="apple-itunes-app" content="app-id=0, app-argument=./index.html">
-<!-- Android/Chrome App Banner -->
-<meta name="google-play-app" content="app-id=app.apex.examos">
 <meta name="msapplication-starturl" content="./index.html">
 <meta name="format-detection" content="telephone=no">
 <meta name="msapplication-TileColor" content="#08080C">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-192.png">
-<link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="144x144" href="./icons/icon-144.png">
 <title>Apex — The Exam OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
 <style>
 :root{--font-display:"Plus Jakarta Sans",sans-serif;--r:14px;--r-sm:8px;--r-lg:20px;--r-pill:999px;--sidebar-w:260px;--ease:cubic-bezier(.2,.7,.3,1);--ease-out:cubic-bezier(.16,1,.3,1)}
@@ -12737,6 +12729,7 @@ try{
   });
   document.addEventListener("mouseleave",()=>{dot.classList.remove("visible");ring.classList.remove("visible");shown=false;});
   function tick(){
+    if(document.documentElement.getAttribute('data-theme')!=='aurora'){setTimeout(tick,1000);return;}
     rx+=(mx-rx)*.18;
     ry+=(my-ry)*.18;
     ring.style.left=rx+"px";ring.style.top=ry+"px";
@@ -14202,6 +14195,7 @@ try{
 <script src="./exam-ui.js?v=5"></script>
 <script src="./exam-config.js?v=5"></script>
 <script src="./apex-final.js?v=2"></script>
+<script src="./apex-a11y.js?v=1"></script>
 <script src="./exam-priority-live.js?v=1"></script>
 </body>
 </html>
