@@ -307,3 +307,82 @@ console.log('[apex-final-batch] beforeunload flush + cross-tab detection install
 })();
 
 console.log('[apex-final-batch] error cards render math');
+
+/* Replace the "priority per exam" label with a useful status line */
+(function(){
+  if (window._apexBarStatus) return;
+  window._apexBarStatus = true;
+
+  function update(){
+    var bar = document.querySelector('.apex-active-exam-bar, .apex-stable-bar');
+    if (!bar) return;
+    var spans = bar.querySelectorAll('span');
+    if (!spans.length) return;
+    var right = spans[spans.length - 1];
+    if (!right) return;
+    /* Skip if already updated this render */
+    if (right.dataset.statusUpd === '1') return;
+    right.dataset.statusUpd = '1';
+
+    var exam = (typeof window.getActiveExam === 'function') ? window.getActiveExam() : '';
+    if (!exam) { right.textContent = ''; return; }
+
+    /* Days to nearest matching exam target */
+    var days = null;
+    if (S.settings && Array.isArray(S.settings.exams)) {
+      var matching = S.settings.exams.filter(function(x){
+        return x.date && x.examTag &&
+               String(x.examTag).toLowerCase() === String(exam).toLowerCase();
+      });
+      if (matching.length) {
+        var now = (typeof todayISO === 'function') ? todayISO() : new Date().toISOString().slice(0,10);
+        var nearest = matching.reduce(function(a,b){
+          return Math.abs(diffD(a.date, now)) < Math.abs(diffD(b.date, now)) ? a : b;
+        });
+        days = diffD(nearest.date, now);
+      }
+    }
+
+    /* Count topics tagged for this exam */
+    var inScope = 0;
+    if (Array.isArray(S.syllabus)) {
+      S.syllabus.forEach(function(t){
+        if (Array.isArray(t.exams) && t.exams.indexOf(exam) > -1) inScope++;
+      });
+    }
+
+    var parts = [];
+    if (days !== null) {
+      if (days < 0) parts.push('D+' + Math.abs(days) + ' past');
+      else if (days === 0) parts.push('D-Day today');
+      else parts.push('D-' + days);
+    }
+    if (inScope) parts.push(inScope + ' topics');
+
+    right.textContent = parts.join(' · ');
+    right.style.color = days !== null && days <= 7 ? 'var(--pri-critical-fg)'
+                      : days !== null && days <= 30 ? 'var(--pri-medium-fg)'
+                      : 'var(--text-3)';
+    right.style.opacity = '0.75';
+  }
+
+  var view = document.getElementById('view');
+  if (view) {
+    var raf = null;
+    new MutationObserver(function(){
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(function(){
+        var bar = document.querySelector('.apex-active-exam-bar, .apex-stable-bar');
+        if (bar) bar.querySelectorAll('span').forEach(function(s){ delete s.dataset.statusUpd; });
+        update();
+      });
+    }).observe(view, { childList: true, subtree: true });
+  }
+  setInterval(function(){
+    var bar = document.querySelector('.apex-active-exam-bar, .apex-stable-bar');
+    if (bar) bar.querySelectorAll('span').forEach(function(s){ delete s.dataset.statusUpd; });
+    update();
+  }, 2500);
+  setTimeout(update, 500);
+  console.log('[apex-bar-status] replaced "priority per exam" with live status');
+})();
