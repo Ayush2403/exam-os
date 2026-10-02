@@ -35,3 +35,21 @@
     console.log('[apex-math-tags] all correct already');
   }
 })();
+
+/* Re-render syllabus if the fix changed anything, so the DOM
+   reflects the corrected tags without needing a manual reload. */
+(function(){
+  if (window._apexMathTagsRendered) return;
+  window._apexMathTagsRendered = true;
+  if (typeof S === 'undefined' || !Array.isArray(S.syllabus)) return;
+  /* Only re-render if the syllabus page is visible */
+  if ((location.hash || '').replace(/^#\/?/, '') !== 'syllabus') return;
+  setTimeout(function(){
+    if (typeof window.renderSylList === 'function') {
+      try { window.renderSylList(); } catch(e){}
+    }
+    if (typeof window.apexPillSweep === 'function') {
+      try { window.apexPillSweep(); } catch(e){}
+    }
+  }, 400);
+})();
