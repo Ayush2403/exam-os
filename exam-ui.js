@@ -184,3 +184,41 @@
   hidePriorityEverywhere();
   console.log("[apex-exam-ui] priority hidden from modal + picker");
 })();
+
+/* ============================================================
+   APEX EXAM UI — dedup: hide stored priority pill next to name
+   Only the computed pill (right side) should show.
+   ============================================================ */
+(function(){
+  'use strict';
+  if (window._apexExamUIDedup) return;
+  window._apexExamUIDedup = true;
+
+  function hideStoredPriorityPills() {
+    document.querySelectorAll('.topic-row .topic-body > div:first-child').forEach(function(nameRow) {
+      nameRow.querySelectorAll('.pill').forEach(function(pill) {
+        if (pill.classList.contains('apex-computed-pri')) return;  // our pill, keep
+        // Hide any pill that carries a priority class from the old schema
+        if (pill.className.indexOf('pri-critical') > -1 ||
+            pill.className.indexOf('pri-high') > -1 ||
+            pill.className.indexOf('pri-medium') > -1 ||
+            pill.className.indexOf('pri-low') > -1) {
+          pill.style.display = "none";
+        }
+      });
+    });
+  }
+
+  var view = document.getElementById("view");
+  if (view) {
+    new MutationObserver(function() {
+      if (window._apexRafDedup) cancelAnimationFrame(window._apexRafDedup);
+      window._apexRafDedup = requestAnimationFrame(hideStoredPriorityPills);
+    }).observe(view, { childList: true, subtree: true });
+  }
+  hideStoredPriorityPills();
+  setTimeout(hideStoredPriorityPills, 300);
+  setTimeout(hideStoredPriorityPills, 1000);
+
+  console.log("[apex-exam-ui] stored priority pill hidden — only computed shows");
+})();
