@@ -222,3 +222,92 @@
 
   console.log("[apex-exam-ui] stored priority pill hidden — only computed shows");
 })();
+
+/* ============================================================
+   APEX EXAM UI — per-topic exam resolution
+   If topic isn't tagged for the active exam, use the nearest
+   exam the topic IS tagged for. Fall back to active exam.
+   ============================================================ */
+(function(){
+  'use strict';
+  if (window._apexExamUIScope) return;
+  window._apexExamUIScope = true;
+
+  function nearestTaggedExam(topic) {
+    if (!topic || !Array.isArray(topic.exams) || !topic.exams.length) {
+      return (typeof resolveActiveExam === "function") ? resolveActiveExam() : "";
+    }
+    var targets = (S.settings && Array.isArray(S.settings.exams)) ? S.settings.exams : [];
+    var now = todayISO();
+
+    // Collect tagged exam targets that match this topic's exams
+    var tagged = targets.filter(function(x) {
+      if (!x.date) return false;
+      return topic.exams.some(function(tag) {
+        return x.examTag && String(x.examTag).toLowerCase() === String(tag).toLowerCase();
+      });
+    });
+
+    if (tagged.length) {
+      tagged.sort(function(a, b) {
+        var da = Math.abs(diffD(a.date, now));
+        var db = Math.abs(diffD(b.date, now));
+        return da - db;
+      });
+      return tagged[0].examTag;
+    }
+
+    // No exam target for this topic's tags — use first tag
+    return topic.exams[0];
+  }
+
+  function repaint() {
+    if (typeof computeTopicPriority !== "function") return;
+    var list = document.getElementById("syl-list");
+    if (!list) return;
+
+    list.querySelectorAll(".topic-row").forEach(function(row) {
+      var id = row.dataset.id;
+      if (!id) return;
+      var t = (typeof topicById === "function") ? topicById(id) : null;
+      if (!t) return;
+
+      var examForTopic = nearestTaggedExam(t);
+      var score = computeTopicPriority(t, examForTopic);
+      var weight = getTopicWeightage(t, examForTopic);
+
+      var pill = row.querySelector(".apex-computed-pri");
+      if (!pill) return;
+
+      // Only update if score changed significantly
+      var oldScore = parseInt((pill.textContent.match(/\d+/) || ["0"])[0], 10);
+      if (Math.abs(oldScore - score) < 3) return;
+
+      // Recolor
+      var bg, bd, fg, label;
+      if (score >= 70) { bg="rgba(248,113,113,.18)"; bd="rgba(248,113,113,.5)"; fg="#fca5a5"; label="CRIT"; }
+      else if (score >= 50) { bg="rgba(250,204,21,.18)"; bd="rgba(250,204,21,.5)"; fg="#fde68a"; label="HIGH"; }
+      else if (score >= 30) { bg="rgba(96,165,250,.18)"; bd="rgba(96,165,250,.5)"; fg="#93c5fd"; label="MED"; }
+      else { bg="rgba(74,222,128,.15)"; bd="rgba(74,222,128,.45)"; fg="#86efac"; label="LOW"; }
+
+      pill.style.background = bg;
+      pill.style.borderColor = bd;
+      pill.style.color = fg;
+      pill.textContent = label + " " + score + " · w" + weight;
+      pill.title = "Priority " + score + "/100 for " + examForTopic + "\nWeightage " + weight + "/5\nStatus: " + (t.status || "?");
+    });
+  }
+
+  var view = document.getElementById("view");
+  if (view) {
+    new MutationObserver(function() {
+      if (window._apexRafScope) cancelAnimationFrame(window._apexRafScope);
+      window._apexRafScope = requestAnimationFrame(repaint);
+    }).observe(view, { childList: true, subtree: true });
+  }
+  setTimeout(repaint, 400);
+  setTimeout(repaint, 1200);
+
+  window.apexExamUIScopeRefresh = repaint;
+  console.log("[apex-exam-ui] per-topic exam resolution — nearest tagged exam used");
+})();
