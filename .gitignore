@@ -23,3 +23,13 @@ install.sh
 *.bak-*
 v12.html
 deepseek_mobile_optimization_prompt.txt
+
+# Backup files created during patching
+*.bak
+*.bak-*
+
+# macOS
+.DS_Store
+
+# Wrangler cache
+.wrangler/
