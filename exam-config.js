@@ -571,3 +571,118 @@
     if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
   }, 1500);
 })();
+
+/* ============================================================
+   APEX EXAM CONFIG — force re-populate (v2)
+   Overwrites all examConfig from the weightage database.
+   Also hides the exam chips row in syllabus for decluttering.
+   ============================================================ */
+(function(){
+  'use strict';
+  var FORCE_VERSION = 2;
+  if (S.settings && S.settings._examConfigForceVersion >= FORCE_VERSION) return;
+
+  var SUBJECT_EXAM_MAP = {
+    "maths": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "reasoning": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "english grammar": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "descriptive english": ["RBI GRADE B","RBI GRADE A","NABARD GRADE A"],
+    "general science": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "geography": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","IBPS PO","RRB PO"],
+    "history": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","IBPS PO","RRB PO"],
+    "polity": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","IBPS PO","RRB PO"],
+    "economics": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","IBPS PO","RRB PO"],
+    "economical issues": ["RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A"],
+    "finance": ["RBI GRADE B","RBI GRADE A","RBI ASSISTANT"],
+    "management": ["RBI GRADE B","RBI GRADE A"],
+    "social issues": ["RBI GRADE B","RBI GRADE A","NABARD GRADE A"],
+    "environment": ["CGL","CHSL","IB ACIO","RBI GRADE B","NABARD GRADE A","SBI PO","IBPS PO"],
+    "ca": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "misc gk": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "defence": ["CGL","CHSL","IB ACIO"],
+    "ard": ["NABARD GRADE A"]
+  };
+
+  function wToPriority(w) {
+    if (w >= 5) return "Critical";
+    if (w >= 4) return "High";
+    if (w >= 3) return "Medium";
+    if (w >= 1) return "Low";
+    return "";
+  }
+  function wToLabel(w) {
+    if (w >= 4) return "High";
+    if (w >= 3) return "Medium";
+    if (w >= 1) return "Low";
+    return "";
+  }
+
+  function forcePopulate() {
+    var getW = window.getTopicWeightage;
+    if (typeof getW !== "function") {
+      setTimeout(forcePopulate, 400);
+      return;
+    }
+
+    var n = 0, overwritten = 0;
+    S.syllabus.forEach(function(t) {
+      n++;
+      var subj = (t.subject || "").toLowerCase();
+      var mapped = SUBJECT_EXAM_MAP[subj];
+      if (!mapped || !mapped.length) return;
+
+      // Build examConfig from DB, keeping only exams with weightage >= 2
+      // (weightage 1 = "rare", not worth tagging)
+      var newExams = [];
+      var newCfg = {};
+      mapped.forEach(function(ex) {
+        var w = getW(t, ex);
+        if (w >= 2) {
+          newExams.push(ex);
+          newCfg[ex] = {
+            priority: wToPriority(w),
+            weightage: wToLabel(w)
+          };
+        }
+      });
+
+      if (newExams.length) {
+        if (t.examConfig && Object.keys(t.examConfig).length) overwritten++;
+        t.exams = newExams;
+        t.examConfig = newCfg;
+      }
+    });
+
+    S.settings._examConfigForceVersion = FORCE_VERSION;
+    S.settings._examConfigVersion = FORCE_VERSION;
+    try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+
+    console.log("[apex-populate-v2] " + n + " topics, " + overwritten + " overwritten");
+  }
+
+  // Hide the exam chips row on the syllabus list to declutter.
+  // Only on the syllabus list, not in the picker or modal.
+  function injectStyle() {
+    if (document.getElementById("apex-declutter-style")) return;
+    var st = document.createElement("style");
+    st.id = "apex-declutter-style";
+    st.textContent = [
+      // Hide exam tags row on syllabus topic rows
+      "#syl-list .topic-row .tags .exam-tag{display:none !important}",
+      // Add a subtle spacing tweak so name row still breathes
+      "#syl-list .topic-row .tags:empty{display:none !important}"
+    ].join("\n");
+    document.head.appendChild(st);
+  }
+
+  forcePopulate();
+  injectStyle();
+
+  // Refresh pills after populate
+  setTimeout(function() {
+    if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
+  }, 500);
+  setTimeout(function() {
+    if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
+  }, 1500);
+})();
