@@ -225,3 +225,44 @@
 })();
 
 console.log('[apex-final-batch] leech reset + auto-prune added');
+
+/* ---- 6. beforeunload: flush pending sync push ---- */
+(function(){
+  if (window._apexFlushOnUnload) return;
+  window._apexFlushOnUnload = true;
+  window.addEventListener('beforeunload', function(){
+    try {
+      /* Make sure the latest state is on disk synchronously */
+      if (typeof S !== 'undefined' && typeof KEY !== 'undefined') {
+        localStorage.setItem(KEY, JSON.stringify(S));
+      }
+      /* Fire the push. Sync flush on hide already handles most cases;
+         this covers the "close tab within the debounce window" edge. */
+      if (typeof S !== 'undefined' && S && S.sync && S.sync.enabled && syncKey) {
+        pushNow(true);
+      }
+    } catch(e) {}
+  });
+})();
+
+/* ---- 7. Cross-tab change detection ---- */
+(function(){
+  if (window._apexCrossTab) return;
+  window._apexCrossTab = true;
+  window.addEventListener('storage', function(e){
+    if (e.key !== KEY) return;
+    if (document.getElementById('apex-xtab-bar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'apex-xtab-bar';
+    bar.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9998;display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(15,15,19,.96);border:1px solid rgba(167,139,250,.4);border-radius:10px;color:#F5F7FB;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;backdrop-filter:blur(16px);box-shadow:0 12px 40px rgba(0,0,0,.5)';
+    bar.innerHTML = '<span style="color:#C4B5FD">●</span><span>Changed in another tab</span>' +
+      '<button id="apex-xtab-reload" style="background:linear-gradient(180deg,#B8A6FF,#8B5CF6);color:#05070D;border:none;padding:6px 12px;border-radius:6px;font:inherit;font-weight:700;cursor:pointer;letter-spacing:.1em;text-transform:uppercase">Reload</button>' +
+      '<button id="apex-xtab-dismiss" style="background:transparent;border:none;color:#71717A;font:inherit;cursor:pointer;font-size:14px;padding:0 4px">×</button>';
+    document.body.appendChild(bar);
+    document.getElementById('apex-xtab-reload').onclick = function(){ location.reload(); };
+    document.getElementById('apex-xtab-dismiss').onclick = function(){ bar.remove(); };
+    setTimeout(function(){ if (bar.parentNode) bar.remove(); }, 60000);
+  });
+})();
+
+console.log('[apex-final-batch] beforeunload flush + cross-tab detection installed');
