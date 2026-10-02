@@ -314,13 +314,13 @@
         catch(e) { toast("Pull failed", e.message); }
       };
       ACTIONS["gen-room"] = function() {
-        const b = new Uint8Array(22);
+        const b = new Uint8Array(40);
         crypto.getRandomValues(b);
         const alpha = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         let s = "";
-        for (let i = 0; i < 22; i++) s += alpha[b[i] % alpha.length];
+        for (let i = 0; i < 40; i++) s += alpha[b[i] % alpha.length];
         const inp = document.querySelector('.modal [name="roomCode"]');
-        if (inp) { inp.value = s; toast("New room code"); }
+        if (inp) { inp.value = s; toast("New room code", "40 chars — much stronger than the old 22"); }
       };
     }
   } catch(e) { console.log("[apex-sync-d1] ACTIONS override skipped:", e.message); }

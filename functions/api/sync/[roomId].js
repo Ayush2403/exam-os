@@ -1,5 +1,5 @@
 const MAX_BLOB_BYTES = 2 * 1024 * 1024;
-const ROOM_ID_RE = /^[A-HJ-NP-Z2-9]{22}$/;
+const ROOM_ID_RE = /^[A-HJ-NP-Z2-9]{22,40}$/;
 
 const JSON_HEADERS = {
   'Content-Type': 'application/json',
