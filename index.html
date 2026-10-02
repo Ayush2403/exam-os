@@ -8070,13 +8070,25 @@ body.route-welcome #apex-cosmos{display:none}
   function sync(){
     var tb = document.getElementById('topbar');
     var eb = document.querySelector('.apex-active-exam-bar, .apex-stable-bar');
-    if (tb) document.documentElement.style.setProperty('--apex-topbar-h', tb.offsetHeight + 'px');
-    if (eb) document.documentElement.style.setProperty('--apex-exambar-h', eb.offsetHeight + 'px');
+    if (tb) {
+      // Use the actual visual bottom edge (includes border + padding)
+      var r = tb.getBoundingClientRect();
+      var h = Math.ceil(r.bottom) + 1; // +1 to overlap the topbar's border
+      document.documentElement.style.setProperty('--apex-topbar-h', h + 'px');
+    }
+    if (eb) {
+      var rb = eb.getBoundingClientRect();
+      var eh = Math.ceil(rb.height);
+      document.documentElement.style.setProperty('--apex-exambar-h', eh + 'px');
+    }
   }
   sync();
   window.addEventListener('resize', sync);
+  window.addEventListener('scroll', sync, { passive: true });
   document.addEventListener('DOMContentLoaded', sync);
-  setInterval(sync, 1200);
+  setTimeout(sync, 100);
+  setTimeout(sync, 500);
+  setInterval(sync, 800);
   if (window.ResizeObserver) {
     var tb = document.getElementById('topbar');
     if (tb) new ResizeObserver(sync).observe(tb);
