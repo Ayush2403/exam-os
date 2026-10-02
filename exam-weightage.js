@@ -1,30 +1,20 @@
 /* ============================================================
-   APEX EXAM INTELLIGENCE — weightage database + priority engine
-   Loaded after sync.js. Overrides priority resolution.
-   
-   Sources: Oliveboard, PW, PracticeMock, Testbook, EduTap, Adda247
-   Data: topic-wise weightage by exam, based on PYQ trends 2022-2025
+   APEX EXAM INTELLIGENCE — weightage database v2
+   Sources: Oliveboard, PracticeMock, EduTap, PW, Testbook,
+            Adda247, Sankalp, C4S Courses, Guidely
+   Period: 2018–2026 (8+ years PYQ trends)
+   Scale:  5=Critical, 4=High, 3=Medium, 2=Low, 1=Rare
    ============================================================ */
 (function(){
   'use strict';
   if (window._apexExamIntel) return;
   window._apexExamIntel = true;
 
-  // ---- WEIGHTAGE SCALE ----
-  // 5 = Critical (highest PYQ frequency)
-  // 4 = High
-  // 3 = Medium
-  // 2 = Low
-  // 1 = Rare / Not tested
-  // 0 = Not in syllabus for this exam
-
-  // ---- WEIGHTAGE DATABASE ----
-  // Keys are lowercase topic substrings. Match by substring against topic name.
-  // More specific keys win. Built from PYQ analysis 2022-2025.
   var WEIGHTAGE_DB = {
-    // ==================== SSC CGL (Tier 1) ====================
+
+    // ========== SSC CGL ==========
     "CGL": {
-      // ---- Quantitative Aptitude ----
+      // Quant — geometry/mensuration/DI/trig are top
       "geometry": 5, "mensuration": 5, "data interpretation": 5,
       "trigonometry": 5, "algebra": 4, "profit and loss": 4,
       "profit & loss": 4, "percentage": 4, "ratio": 4,
@@ -37,9 +27,8 @@
       "probability": 2, "permutation": 2, "logarithm": 2,
       "power indices": 2, "lcm": 2, "hcf": 2, "digit sum": 2,
       "calculation": 2, "statistics": 3, "sequence and series": 3,
-      "ages": 3,
-
-      // ---- Reasoning ----
+      "ages": 3, "discount": 3, "pipe": 2, "cistern": 2,
+      // Reasoning
       "analogy": 5, "classification": 5, "coding-decoding": 5,
       "coding decoding": 5, "series": 5, "blood relation": 4,
       "syllogism": 4, "direction": 4, "seating arrangement": 4,
@@ -51,21 +40,21 @@
       "odd one out": 3, "non-verbal": 3, "logical sequence": 2,
       "word formation": 2, "alphabet": 3, "data sufficiency": 3,
       "inequality": 4, "machine input": 2, "cause and effect": 2,
-      "assertion": 2, "theme detection": 2,
-
-      // ---- English ----
-      "cloze test": 5, "reading comprehension": 5, "error spotting": 5,
-      "spotting errors": 5, "sentence improvement": 4, "synonyms": 4,
-      "antonyms": 4, "idioms": 4, "one word substitution": 4,
+      "assertion": 2, "theme detection": 2, "hidden figure": 2,
+      "counting figure": 2, "complete figure": 2,
+      // English
+      "cloze test": 5, "cloze": 5, "reading comprehension": 5,
+      "error detection": 5, "error spotting": 5, "spotting errors": 5,
+      "sentence improvement": 4, "synonyms": 4, "antonyms": 4,
+      "idioms": 4, "one word substitution": 4,
       "fill in the blanks": 3, "para jumbles": 3, "spelling": 3,
       "narration": 3, "active passive": 3, "voice": 3,
       "direct-indirect": 3, "sentence completion": 3,
-      "cloze": 5, "reading comprehension": 5,
       "selecting the correct sentences": 3, "paronyms": 2,
       "homonyms": 2, "foreign words": 2, "contractions": 2,
-      "punctuation": 2, "question tags": 2,
-
-      // ---- General Awareness ----
+      "punctuation": 2, "question tags": 2, "word correction": 2,
+      "sentence rearrangement": 3,
+      // GA
       "current affairs": 5, "history": 4, "polity": 4,
       "geography": 3, "economy": 4, "general science": 5,
       "biology": 4, "chemistry": 4, "physics": 4,
@@ -75,9 +64,8 @@
       "environment": 2, "defence": 2
     },
 
-    // ==================== SSC CHSL ====================
+    // ========== SSC CHSL ==========
     "CHSL": {
-      // ---- Quantitative Aptitude ----
       "percentage": 5, "profit and loss": 5, "ratio": 5,
       "arithmetic": 5, "algebra": 4, "geometry": 4,
       "mensuration": 4, "data interpretation": 4,
@@ -88,9 +76,7 @@
       "boat": 2, "stream": 2, "train": 2, "height and distance": 2,
       "coordinate geometry": 1, "probability": 1,
       "permutation": 1, "logarithm": 1, "lcm": 2, "hcf": 2,
-      "ages": 2, "statistics": 2,
-
-      // ---- Reasoning ----
+      "ages": 2, "statistics": 2, "pipe": 1, "cistern": 1,
       "analogy": 5, "series": 5, "coding-decoding": 4,
       "coding decoding": 4, "classification": 4,
       "non-verbal": 4, "blood relation": 3, "syllogism": 3,
@@ -102,8 +88,6 @@
       "statement": 2, "venn diagram": 2, "odd one out": 2,
       "alphabet": 2, "data sufficiency": 2, "inequality": 3,
       "word formation": 1, "logical sequence": 1,
-
-      // ---- English ----
       "cloze test": 5, "cloze": 5, "error spotting": 4,
       "spotting errors": 4, "sentence improvement": 4,
       "synonyms": 3, "antonyms": 3, "idioms": 3,
@@ -111,8 +95,6 @@
       "para jumbles": 2, "spelling": 2, "narration": 2,
       "active passive": 2, "voice": 2, "direct-indirect": 2,
       "reading comprehension": 3, "sentence completion": 2,
-
-      // ---- General Awareness ----
       "history": 4, "polity": 4, "current affairs": 4,
       "geography": 3, "general science": 4, "economy": 3,
       "biology": 3, "chemistry": 3, "physics": 3,
@@ -122,45 +104,39 @@
       "environment": 2, "defence": 2, "national parks": 1
     },
 
-    // ==================== IB ACIO ====================
+    // ========== IB ACIO ==========
     "IB ACIO": {
-      // ---- Reasoning (highest scoring) ----
       "puzzle": 5, "seating arrangement": 5, "series": 4,
       "analogy": 4, "coding-decoding": 4, "coding decoding": 4,
       "blood relation": 3, "syllogism": 3, "direction": 3,
       "classification": 3, "non-verbal": 3, "mirror": 2,
       "water image": 2, "ranking": 2, "data sufficiency": 3,
       "inequality": 3, "missing number": 2, "mathematical operation": 2,
-
-      // ---- Quantitative Aptitude ----
-      "arithmetic": 5, "percentage": 4, "profit and loss": 4,
-      "ratio": 4, "average": 4, "time and work": 4,
-      "time speed": 4, "train": 4, "boat": 3, "stream": 3,
-      "simple interest": 3, "compound interest": 3,
-      "number system": 3, "simplification": 3, "algebra": 3,
-      "geometry": 3, "mensuration": 3, "data interpretation": 3,
+      "critical reasoning": 3, "arithmetic": 5, "percentage": 4,
+      "profit and loss": 4, "ratio": 4, "average": 4,
+      "time and work": 4, "time speed": 4, "train": 4,
+      "boat": 3, "stream": 3, "simple interest": 3,
+      "compound interest": 3, "number system": 3,
+      "simplification": 3, "algebra": 3, "geometry": 3,
+      "mensuration": 3, "data interpretation": 3,
       "mixture": 2, "alligation": 2, "partnership": 2,
       "ages": 2, "probability": 2, "permutation": 2,
-
-      // ---- English ----
       "reading comprehension": 5, "grammar": 4, "vocabulary": 4,
       "error spotting": 4, "cloze test": 3, "idioms": 3,
       "synonyms": 3, "antonyms": 3, "fill in the blanks": 3,
       "sentence improvement": 3, "one word substitution": 2,
       "spelling": 2, "para jumbles": 2, "narration": 2,
-
-      // ---- General Studies ----
       "polity": 5, "history": 4, "geography": 4, "economy": 3,
       "static gk": 3, "art and culture": 3, "general science": 3,
       "current affairs": 3, "constitution": 4, "schemes": 3,
       "defence": 3, "national parks": 2, "environment": 2
     },
 
-    // ==================== RBI GRADE B ====================
+    // ========== RBI GRADE B ==========
     "RBI GRADE B": {
-      // ---- Phase 1 ----
+      // Phase 1
       "current affairs": 5, "general awareness": 5,
-      "data interpretation": 5, "puzzles": 5, "seating arrangement": 5,
+      "data interpretation": 5, "puzzle": 5, "seating arrangement": 5,
       "reading comprehension": 4, "grammar": 4, "vocabulary": 4,
       "arithmetic": 4, "algebra": 3, "geometry": 3,
       "simple interest": 3, "compound interest": 3,
@@ -169,16 +145,15 @@
       "inequality": 3, "blood relation": 3, "syllogism": 2,
       "coding-decoding": 2, "direction": 2, "ranking": 2,
       "cloze test": 3, "error spotting": 3, "sentence improvement": 3,
-      "banking awareness": 4, "rbi news": 4,
-
-      // ---- Phase 2 — Management (FM paper) ----
+      "banking awareness": 4, "rbi news": 4, "critical reasoning": 3,
+      "input output": 3, "data sufficiency": 3,
+      // Phase 2 — Management
       "motivation": 5, "leadership": 5, "communication": 4,
       "general management": 4, "organisational behaviour": 4,
       "personality and perception": 4, "emotional intelligence": 4,
       "conflict": 4, "organisational change": 4,
       "corporate governance": 4, "ethics": 4,
-
-      // ---- Phase 2 — Finance (FM paper) ----
+      // Phase 2 — Finance
       "financial risk management": 5, "rbi and its functions": 4,
       "banking system": 4, "financial institution": 4,
       "financial inclusion": 4, "non-banking": 4,
@@ -189,11 +164,11 @@
       "introduction to basics of accounting": 3,
       "financial statement": 4, "income statement": 4,
       "balance sheet": 4, "cash flow": 4, "ratio analysis": 4,
-      "inflation": 4,
-
-      // ---- Phase 2 — ESI paper ----
+      "inflation": 4, "time value of money": 4,
+      // Phase 2 — ESI
       "measurement of growth": 4, "economic history of india": 4,
-      "fiscal policy": 4, "monetary policy": 4, "opening up of the indian economy": 4,
+      "fiscal policy": 4, "monetary policy": 4,
+      "opening up of the indian economy": 4,
       "balance of payments": 4, "international economic institutions": 4,
       "regional economic cooperation": 3, "industrial and labour policy": 3,
       "indian agriculture": 3, "export import policy": 3,
@@ -203,15 +178,13 @@
       "urbanisation": 3, "gender issues": 3, "social justice": 3,
       "union budget": 4, "economic survey": 4,
       "public finance": 4, "fringe topics": 2,
-
-      // ---- Phase 2 — Descriptive English ----
+      // Phase 2 — Descriptive English
       "essay writing": 4, "precis writing": 4,
       "reading comprehension": 4, "descriptive writing": 4
     },
 
-    // ==================== NABARD GRADE A ====================
+    // ========== NABARD GRADE A ==========
     "NABARD GRADE A": {
-      // ---- Agriculture & Rural Development ----
       "agronomy": 5, "crop production": 5, "soil": 5,
       "water conservation": 4, "irrigation": 4,
       "animal husbandry": 4, "fisheries": 3, "forestry": 3,
@@ -221,15 +194,16 @@
       "mgnrega": 4, "farm machinery": 3,
       "agriculture marketing": 4, "food security": 4,
       "agri reports": 4, "agri census": 3, "livestock census": 3,
-      "agriculture economy": 5,
-
-      // ---- ESI ----
-      "gender": 4, "demography": 4, "poverty": 4,
-      "unemployment": 4, "social justice": 3,
-      "education": 3, "health": 3, "sustainable development": 4,
-      "environment": 3, "financial inclusion": 4,
-
-      // ---- Reasoning / Quant / English ----
+      "agriculture economy": 5, "dairy": 4, "poultry": 4,
+      "seed science": 3, "meteorology": 3,
+      "financial inclusion": 5, "banking rural credit": 5,
+      "education": 4, "health": 4, "gender": 4, "demography": 4,
+      "poverty": 4, "employment": 4, "livelihood": 4,
+      "social protection": 4, "governance": 3, "rights": 3,
+      "msme": 3, "industry": 3, "infrastructure": 3,
+      "entrepreneurship": 3, "macro economy": 3,
+      "budget": 3, "public finance": 3, "trade": 2,
+      "globalisation": 2, "international institutions": 2,
       "puzzle": 4, "seating arrangement": 4, "series": 4,
       "coding-decoding": 3, "blood relation": 3,
       "data interpretation": 4, "arithmetic": 4,
@@ -240,7 +214,23 @@
       "financial awareness": 3, "static gk": 3
     },
 
-    // ==================== IBPS PO / SBI PO (similar pattern) ====================
+    // ========== SBI PO ==========
+    "SBI PO": {
+      "puzzle": 5, "seating arrangement": 5, "data interpretation": 5,
+      "arithmetic": 4, "percentage": 3, "ratio": 3,
+      "profit and loss": 3, "time and work": 3, "time speed": 3,
+      "simple interest": 3, "compound interest": 3,
+      "number series": 4, "quadratic": 4, "simplification": 3,
+      "reading comprehension": 5, "cloze test": 4,
+      "error spotting": 3, "fill in the blanks": 3,
+      "para jumbles": 3, "vocabulary": 3, "grammar": 3,
+      "syllogism": 3, "inequality": 3, "coding-decoding": 3,
+      "blood relation": 3, "direction": 3, "ranking": 2,
+      "banking awareness": 5, "current affairs": 5,
+      "general awareness": 4, "static gk": 3
+    },
+
+    // ========== IBPS PO ==========
     "IBPS PO": {
       "puzzle": 5, "seating arrangement": 5, "data interpretation": 5,
       "arithmetic": 4, "percentage": 3, "ratio": 3,
@@ -255,28 +245,110 @@
       "banking awareness": 5, "current affairs": 5,
       "general awareness": 4, "static gk": 3
     },
-    "SBI PO": {
-      "puzzle": 5, "seating arrangement": 5, "data interpretation": 5,
-      "arithmetic": 4, "percentage": 3, "ratio": 3,
-      "profit and loss": 3, "time and work": 3, "time speed": 3,
-      "simple interest": 3, "compound interest": 3,
-      "number series": 4, "quadratic": 4, "simplification": 3,
-      "reading comprehension": 5, "cloze test": 4,
-      "error spotting": 3, "fill in the blanks": 3,
-      "para jumbles": 3, "vocabulary": 3, "grammar": 3,
+
+    // ========== IBPS CLERK ==========
+    "IBPS CLERK": {
+      "puzzle": 5, "seating arrangement": 5,
       "syllogism": 3, "inequality": 3, "coding-decoding": 3,
-      "blood relation": 3, "direction": 3, "ranking": 2,
-      "banking awareness": 5, "current affairs": 5,
-      "general awareness": 4, "static gk": 3
+      "direction": 2, "blood relation": 3, "alphanumeric": 4,
+      "number series": 3, "order ranking": 2,
+      "simplification": 5, "data interpretation": 4,
+      "arithmetic": 4, "percentage": 3, "ratio": 3,
+      "profit and loss": 3, "time and work": 2, "time speed": 2,
+      "simple interest": 2, "compound interest": 2,
+      "quadratic": 2, "reading comprehension": 5,
+      "cloze test": 4, "error detection": 3,
+      "fill in the blanks": 3, "para jumbles": 3,
+      "vocabulary": 3, "grammar": 3, "spelling": 2,
+      "current affairs": 3, "banking awareness": 3, "static gk": 2
+    },
+
+    // ========== SBI CLERK (Junior Associate) ==========
+    "SBI CLERK": {
+      "puzzle": 5, "seating arrangement": 5,
+      "syllogism": 3, "inequality": 3, "coding-decoding": 4,
+      "alphanumeric": 4, "direction": 2, "blood relation": 2,
+      "order ranking": 2, "number series": 3,
+      "simplification": 5, "data interpretation": 4,
+      "arithmetic": 4, "percentage": 3, "ratio": 3,
+      "profit and loss": 3, "time and work": 2, "time speed": 2,
+      "simple interest": 2, "compound interest": 2,
+      "quadratic": 2, "reading comprehension": 4,
+      "cloze test": 4, "error detection": 3,
+      "fill in the blanks": 3, "para jumbles": 3,
+      "vocabulary": 3, "grammar": 3,
+      "current affairs": 3, "banking awareness": 3, "static gk": 2
+    },
+
+    // ========== IBPS RRB PO (Officer Scale I) ==========
+    "RRB PO": {
+      "puzzle": 5, "seating arrangement": 5,
+      "inequality": 3, "direction": 3, "coding-decoding": 3,
+      "syllogism": 3, "blood relation": 3, "alphanumeric": 3,
+      "arithmetic": 5, "data interpretation": 4,
+      "number series": 3, "simplification": 4,
+      "quadratic": 3, "percentage": 3, "ratio": 3,
+      "profit and loss": 3, "time and work": 3, "time speed": 3,
+      "simple interest": 2, "compound interest": 2,
+      "reading comprehension": 3, "cloze test": 3,
+      "error detection": 2, "fill in the blanks": 2,
+      "current affairs": 4, "banking awareness": 3, "static gk": 3
+    },
+
+    // ========== IBPS RRB OFFICE ASSISTANT (Clerk) ==========
+    "RRB CLERK": {
+      "puzzle": 5, "seating arrangement": 5,
+      "syllogism": 3, "inequality": 4, "coding-decoding": 3,
+      "direction": 2, "blood relation": 2, "alphanumeric": 5,
+      "number series": 3, "order ranking": 2,
+      "simplification": 5, "data interpretation": 3,
+      "arithmetic": 4, "percentage": 3, "ratio": 3,
+      "profit and loss": 2, "time and work": 2, "time speed": 2,
+      "simple interest": 2, "compound interest": 2,
+      "quadratic": 2, "current affairs": 3,
+      "banking awareness": 3, "static gk": 2,
+      "computer knowledge": 3
+    },
+
+    // ========== RBI ASSISTANT ==========
+    "RBI ASSISTANT": {
+      "puzzle": 5, "seating arrangement": 5,
+      "syllogism": 3, "inequality": 3, "coding-decoding": 3,
+      "alphanumeric": 4, "direction": 2, "blood relation": 3,
+      "number series": 3, "simplification": 5,
+      "data interpretation": 4, "arithmetic": 4,
+      "percentage": 3, "ratio": 3, "profit and loss": 3,
+      "time and work": 2, "time speed": 2,
+      "simple interest": 2, "compound interest": 2,
+      "quadratic": 2, "reading comprehension": 5,
+      "error detection": 3, "fill in the blanks": 3,
+      "para jumbles": 3, "cloze test": 3,
+      "current affairs": 4, "rbi updates": 4,
+      "banking awareness": 4, "computer knowledge": 3
+    },
+
+    // ========== RBI GRADE A (similar to Grade B but lighter) ==========
+    "RBI GRADE A": {
+      "data interpretation": 4, "puzzle": 4,
+      "seating arrangement": 4, "reading comprehension": 4,
+      "current affairs": 4, "general awareness": 4,
+      "arithmetic": 3, "algebra": 3, "geometry": 2,
+      "simple interest": 2, "compound interest": 2,
+      "ratio": 3, "percentage": 3, "profit and loss": 2,
+      "time and work": 2, "time speed": 2, "number system": 2,
+      "inequality": 2, "blood relation": 2, "syllogism": 2,
+      "coding-decoding": 2, "direction": 2,
+      "cloze test": 3, "error spotting": 3,
+      "banking awareness": 3, "rbi news": 3,
+      "economic issues": 4, "social issues": 3,
+      "finance management": 4, "descriptive english": 3
     }
   };
 
-  // ---- EXAM PROXIMITY SCALE ----
-  // How urgent is an exam based on days away?
-  // 1.0 = maximum urgency, 0.1 = far away
+  // ---- EXAM PROXIMITY ----
   function examProximity(daysAway) {
-    if (daysAway < 0) return 0.3;       // past exam, keep some residual
-    if (daysAway <= 7) return 1.0;      // final week
+    if (daysAway < 0) return 0.3;
+    if (daysAway <= 7) return 1.0;
     if (daysAway <= 14) return 0.95;
     if (daysAway <= 30) return 0.85;
     if (daysAway <= 60) return 0.70;
@@ -287,57 +359,31 @@
   }
 
   // ---- WEIGHTAGE RESOLUTION ----
-  // Given a topic and an exam, return the weightage (1-5).
-  // Matches by substring against topic name. Longest match wins.
   function getTopicWeightage(topic, exam) {
-    if (!topic || !exam) return 2;  // default to low-medium
-
-    // Try user override first
+    if (!topic || !exam) return 2;
     if (topic.weightageByExam && topic.weightageByExam[exam]) {
       return topic.weightageByExam[exam];
     }
-
     var db = WEIGHTAGE_DB[exam];
     if (!db) return 2;
-
     var name = (topic.topic || "").toLowerCase();
     var subj = (topic.subject || "").toLowerCase();
-    var bestMatch = null;
-    var bestLen = 0;
-
+    var bestMatch = null, bestLen = 0;
     for (var key in db) {
       if (name.indexOf(key) > -1 || subj.indexOf(key) > -1) {
-        if (key.length > bestLen) {
-          bestLen = key.length;
-          bestMatch = key;
-        }
+        if (key.length > bestLen) { bestLen = key.length; bestMatch = key; }
       }
     }
-
     return bestMatch ? db[bestMatch] : 2;
   }
 
   // ---- COMPUTED PRIORITY ----
-  // Replaces the old stored priority field.
-  // Returns 0-100 score representing how much this topic should demand attention.
-  //
-  // priority = weightage[exam] × examProximity × statusGap
-  //
-  // Where:
-  //   weightage: 1-5 from the database above
-  //   examProximity: 0.1-1.0 based on days to the exam
-  //   statusGap: how far from mastery
   function computeTopicPriority(topic, activeExamTag) {
     if (!topic) return 0;
-
     var exam = activeExamTag || (typeof getActiveExamTag === "function" ? getActiveExamTag() : "");
-
-    // Weightage (1-5 → 0.2-1.0)
     var weight = getTopicWeightage(topic, exam);
     var weightFactor = weight / 5;
-
-    // Exam proximity
-    var proximity = 0.5; // default when no exam tag is set
+    var proximity = 0.5;
     if (exam) {
       var targets = (S.settings && Array.isArray(S.settings.exams)) ? S.settings.exams : [];
       var matching = targets.filter(function(x) {
@@ -350,58 +396,34 @@
           var db = Math.abs(diffD(b.date, todayISO()));
           return da < db ? a : b;
         });
-        var days = diffD(nearest.date, todayISO());
-        proximity = examProximity(days);
+        proximity = examProximity(diffD(nearest.date, todayISO()));
       }
     }
-
-    // Status gap (how far from mastered)
-    var statusMap = {
-      "Not started": 1.0,
-      "Learning": 0.9,
-      "Practicing": 0.7,
-      "Reviewing": 0.5,
-      "Mastered": 0.15
-    };
+    var statusMap = { "Not started": 1.0, "Learning": 0.9, "Practicing": 0.7,
+                       "Reviewing": 0.5, "Mastered": 0.15 };
     var gap = statusMap[topic.status] || 0.8;
-
-    // Combine
-    var score = weightFactor * proximity * gap * 100;
-
-    return Math.round(score);
+    return Math.round(weightFactor * proximity * gap * 100);
   }
 
-  // ---- EXPOSE ----
   window.getTopicWeightage = getTopicWeightage;
   window.computeTopicPriority = computeTopicPriority;
   window.examProximity = examProximity;
   window.APEX_WEIGHTAGE_DB = WEIGHTAGE_DB;
 
   // ---- OVERRIDE weaknessScore ----
-  // The original uses t.priority (stored). We override to use computed priority.
   var _origWeaknessScore = window.weaknessScore;
   if (typeof _origWeaknessScore === "function") {
     window.weaknessScore = function(t, examTag) {
-      // Get the friction part from the original function
-      // but replace the importance multiplier with our computed priority
       var origScore = _origWeaknessScore(t, examTag);
       if (origScore === 0) return 0;
-
-      // Replace importance with our computed priority factor
-      // The original multiplies friction × importance × status × bias.
-      // We want friction × computedPriority × bias instead.
-
-      // Recompute friction directly so we can apply our own multiplier
       var now = todayISO();
       var cutoff30 = addDays(now, -30);
       var errs = S.errors.filter(function(e) { return e.topicId === t.id; });
       var recentErrs = errs.filter(function(e) { return e.date && e.date >= cutoff30; }).length;
       var olderErrs = errs.length - recentErrs;
-
       var mocks = S.mocks.filter(function(m) { return (m.weak || []).indexOf(t.id) > -1; });
       var recentMocks = mocks.filter(function(m) { return m.date && m.date >= cutoff30; }).length;
       var olderMocks = mocks.length - recentMocks;
-
       var sess = S.sessions.filter(function(s) { return s.topicId === t.id; });
       var again = 0, hard = 0, good = 0, easy = 0;
       sess.forEach(function(s) {
@@ -412,25 +434,19 @@
           else if (h.grade === "easy") easy++;
         });
       });
-
       var friction = recentErrs * 12 + olderErrs * 4
                    + recentMocks * 18 + olderMocks * 7
                    + again * 20 + hard * 8 - good * 3 - easy * 6;
-
       if (friction <= 0) return 0;
-
-      // Our computed priority replaces the old importance × status multiplier
       var computedPriority = computeTopicPriority(t, examTag);
-      var priorityFactor = computedPriority / 100;  // 0-1
-
-      // Section bias still applies
+      var priorityFactor = computedPriority / 100;
       var bias = (typeof sectionBiasForSubject === "function")
         ? sectionBiasForSubject(t.subject, examTag) : 1.0;
-
       return Math.max(0, Math.round(friction * priorityFactor * bias * 2));
     };
   }
 
-  console.log("[apex-exam-intel] weightage database loaded — " + Object.keys(WEIGHTAGE_DB).length + " exams, " +
-    Object.keys(WEIGHTAGE_DB["CGL"] || {}).length + " CGL topics");
+  console.log("[apex-exam-intel] v2 — " + Object.keys(WEIGHTAGE_DB).length +
+    " exams, " + Object.keys(WEIGHTAGE_DB["CGL"] || {}).length + " CGL topics, " +
+    Object.keys(WEIGHTAGE_DB["RBI GRADE B"] || {}).length + " RBI topics");
 })();
