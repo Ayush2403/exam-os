@@ -266,3 +266,44 @@ console.log('[apex-final-batch] leech reset + auto-prune added');
 })();
 
 console.log('[apex-final-batch] beforeunload flush + cross-tab detection installed');
+
+/* ---- 8. KaTeX rendering in error cards ---- */
+(function(){
+  if (window._apexErrorKatex) return;
+  window._apexErrorKatex = true;
+
+  function enhance(){
+    var list = document.getElementById('err-list');
+    if (!list) return;
+    list.querySelectorAll('.card').forEach(function(card){
+      if (card.dataset.katexed === '1') return;
+      card.dataset.katexed = '1';
+      var titleEl = card.querySelector('.row-item .t');
+      if (titleEl) {
+        var t = titleEl.textContent;
+        if (t.indexOf('$$') > -1 || t.indexOf('\\(') > -1) {
+          titleEl.innerHTML = renderMath(t);
+        }
+      }
+      card.querySelectorAll('.err-detail > div > div:last-child').forEach(function(el){
+        var t = el.textContent;
+        if (t.indexOf('$$') > -1 || t.indexOf('\\(') > -1) {
+          el.innerHTML = renderMath(t);
+        }
+      });
+    });
+  }
+
+  var view = document.getElementById('view');
+  if (view) {
+    var raf = null;
+    new MutationObserver(function(){
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(enhance);
+    }).observe(view, { childList: true, subtree: true });
+  }
+  setTimeout(enhance, 400);
+  setTimeout(enhance, 1200);
+})();
+
+console.log('[apex-final-batch] error cards render math');
