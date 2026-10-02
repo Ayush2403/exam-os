@@ -132,3 +132,96 @@
   ].join('\n');
   document.head.appendChild(st);
 })();
+
+/* ---- 4. Leech reset action ---- */
+(function(){
+  document.addEventListener('click', function(e){
+    var badge = e.target.closest('.apex-leech-badge');
+    if (!badge) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    var card = badge.closest('[data-id]');
+    if (!card) return;
+    var id = card.dataset.id;
+    var s = S.sessions.find(function(x){ return x.id === id; })
+         || S.errors.find(function(x){ return x.id === id; });
+    if (!s) return;
+
+    var name = s.name || s.title || 'this card';
+    openModal(
+      'Reset this card?',
+      '<p class="muted small" style="line-height:1.6;margin-bottom:14px">' +
+      '<b>' + esc(name) + '</b> was rated Again 4+ times in the last 8 reviews. ' +
+      'Continuing to rate it again and again is not helping. Two real options:</p>' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+        '<button class="btn primary" data-leech-reset="' + esc(id) + '">Reset — clear history, review from scratch</button>' +
+        '<button class="btn" data-leech-snooze="' + esc(id) + '">Snooze — push next review 7 days out</button>' +
+      '</div>' +
+      '<div class="hint" style="margin-top:14px;line-height:1.55">' +
+        'Reset is best when the topic was never really learned. ' +
+        'Snooze is best when the card is just badly worded or the topic is low-priority.' +
+      '</div>',
+      function(){}, 'Close'
+    );
+    var sv = document.querySelector('[data-msave]');
+    if (sv) sv.style.display = 'none';
+  }, true);
+
+  document.addEventListener('click', function(e){
+    var r = e.target.closest('[data-leech-reset]');
+    if (r) {
+      var id = r.getAttribute('data-leech-reset');
+      var s = S.sessions.find(function(x){ return x.id === id; })
+           || S.errors.find(function(x){ return x.id === id; });
+      if (!s) return;
+      snapshot();
+      s.interval = 0;
+      s.ease = 2.5;
+      s.history = [];
+      s.masteredReviews = 0;
+      s.masteredAt = null;
+      s.stage = '1st Time Study';
+      s.lastReviewed = null;
+      s.nextReview = todayISO();
+      saveLocal();
+      closeModal();
+      rerender();
+      toast('Card reset', 'Ready for a fresh start');
+      return;
+    }
+    var z = e.target.closest('[data-leech-snooze]');
+    if (z) {
+      var id2 = z.getAttribute('data-leech-snooze');
+      var s2 = S.sessions.find(function(x){ return x.id === id2; })
+            || S.errors.find(function(x){ return x.id === id2; });
+      if (!s2) return;
+      snapshot();
+      s2.nextReview = addDays(todayISO(), 7);
+      saveLocal();
+      closeModal();
+      rerender();
+      toast('Snoozed 7 days');
+    }
+  }, true);
+})();
+
+/* ---- 5. Auto-prune on 80% storage threshold, once per session ---- */
+(function(){
+  if (window._apexAutoPruneRan) return;
+  window._apexAutoPruneRan = true;
+  setTimeout(function(){
+    try {
+      if (typeof checkStorageHealth !== 'function') return;
+      var h = checkStorageHealth();
+      if (!h.needsPrune) return;
+      if (typeof pruneOldData !== 'function') return;
+      var r = pruneOldData();
+      if (r.pruned > 0) {
+        console.log('[apex] auto-pruned ' + r.pruned + ' entries at ' + h.pct + '%');
+        setTimeout(function(){ if (typeof rerender === 'function') rerender(); }, 200);
+      }
+    } catch(e) { console.warn('[apex] auto-prune skipped:', e.message); }
+  }, 3000);
+})();
+
+console.log('[apex-final-batch] leech reset + auto-prune added');
