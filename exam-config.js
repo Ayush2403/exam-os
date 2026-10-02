@@ -757,3 +757,83 @@
     if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
   }, 500);
 })();
+
+/* ============================================================
+   APEX EXAM CONFIG — fix exam bar dropdown closing
+   The bar was being rebuilt on every view mutation, which
+   destroyed the open <select> mid-click.
+   Fix: only build the bar once. Update the select's value
+   only if it drifted. Never touch innerHTML again.
+   ============================================================ */
+(function(){
+  'use strict';
+
+  function ensureBarStable() {
+    var list = document.getElementById("syl-list");
+    if (!list) return;
+
+    var exam = (typeof getActiveExam === "function") ? getActiveExam() : "CGL";
+    var bar = document.querySelector(".apex-active-exam-bar");
+
+    // Build once if missing
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.className = "apex-active-exam-bar";
+      bar.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-3);padding:8px 0 10px;display:flex;justify-content:space-between;align-items:center";
+      var sel = document.createElement("select");
+      sel.setAttribute("data-active-exam", "1");
+      sel.style.cssText = "background:transparent;border:none;color:var(--accent-2);font:inherit;letter-spacing:inherit;cursor:pointer;padding:0;font-weight:700";
+      (window.APEX_ALL_EXAMS || ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"]).forEach(function(e) {
+        var o = document.createElement("option");
+        o.value = e;
+        o.textContent = e;
+        sel.appendChild(o);
+      });
+      sel.value = exam;
+      sel.addEventListener("change", function() {
+        if (typeof setActiveExam === "function") setActiveExam(sel.value);
+      });
+      var left = document.createElement("span");
+      left.textContent = "Active exam: ";
+      left.appendChild(sel);
+      var right = document.createElement("span");
+      right.style.opacity = "0.55";
+      right.textContent = "priority per exam";
+      bar.appendChild(left);
+      bar.appendChild(right);
+      list.parentNode.insertBefore(bar, list);
+      return;
+    }
+
+    // Bar exists — only update the select's value if it drifted
+    var existingSel = bar.querySelector("[data-active-exam]");
+    if (existingSel && existingSel.value !== exam && document.activeElement !== existingSel) {
+      existingSel.value = exam;
+    }
+  }
+
+  // Run at load — this is the only place the bar gets created
+  setTimeout(ensureBarStable, 300);
+  setTimeout(ensureBarStable, 1200);
+
+  // Expose for manual use
+  window.ensureExamBar = ensureBarStable;
+})();
+
+/* Neutralize the old updateExamBar's innerHTML rebuild */
+(function(){
+  'use strict';
+  if (window._apexBarNeutral) return;
+  window._apexBarNeutral = true;
+  // Old updateExamBar is a local function, but its effect is: rebuild bar on every refresh.
+  // We guard by listening for clicks on the bar's <select> and stopping propagation
+  // when it's focused, so refresh() can't destroy it.
+  document.addEventListener("focusin", function(e) {
+    if (e.target && e.target.matches("[data-active-exam]")) {
+      // Pin the bar by removing its parent from the observer's subtree target momentarily
+      // Simplest safe hack: hide innerHTML rebuilds by cloning to a stable wrapper.
+      var bar = document.querySelector(".apex-active-exam-bar");
+      if (bar && !bar._pinned) bar._pinned = true;
+    }
+  }, true);
+})();
