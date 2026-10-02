@@ -229,3 +229,77 @@
 
   console.log('[apex-polish] installed');
 })();
+
+/* ---- Pill sweep: force computed priority into the DOM ---- */
+(function(){
+  if (window._apexPillSweep) return;
+  window._apexPillSweep = true;
+
+  function scoreColor(s){
+    if (s >= 70) return { bg:'rgba(248,113,113,.18)', bd:'rgba(248,113,113,.5)', fg:'#fca5a5', label:'CRIT' };
+    if (s >= 50) return { bg:'rgba(250,204,21,.18)', bd:'rgba(250,204,21,.5)', fg:'#fde68a', label:'HIGH' };
+    if (s >= 30) return { bg:'rgba(96,165,250,.18)', bd:'rgba(96,165,250,.5)', fg:'#93c5fd', label:'MED' };
+    return { bg:'rgba(74,222,128,.15)', bd:'rgba(74,222,128,.45)', fg:'#86efac', label:'LOW' };
+  }
+
+  function sweep(){
+    var list = document.getElementById('syl-list');
+    if (!list) return;
+    var exam = (typeof window.getActiveExam === 'function') ? window.getActiveExam() : '';
+    if (!exam) return;
+    if (typeof window.computeTopicPriority !== 'function') return;
+
+    list.querySelectorAll('.topic-row').forEach(function(row){
+      var id = row.dataset.id;
+      if (!id) return;
+      var t = (typeof window.topicById === 'function') ? window.topicById(id) : null;
+      if (!t) return;
+      var nameRow = row.querySelector('.topic-body > div:first-child');
+      if (!nameRow) return;
+
+      /* Kill any old pills */
+      nameRow.querySelectorAll('.apex-cfg-pri, .apex-computed-pri, .apex-pill-old').forEach(function(p){ p.remove(); });
+
+      var isTagged = Array.isArray(t.exams) && t.exams.indexOf(exam) > -1;
+      var pill = document.createElement('span');
+      pill.className = 'pill apex-computed-pri';
+      pill.style.cssText = 'margin-left:auto;flex-shrink:0;font-size:9.5px;padding:2px 9px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em;font-weight:600';
+
+      if (!isTagged) {
+        pill.style.background = 'rgba(120,120,120,.08)';
+        pill.style.borderColor = 'rgba(120,120,120,.25)';
+        pill.style.color = '#6b7280';
+        pill.textContent = '— ' + exam;
+        pill.title = 'Not tagged for ' + exam;
+      } else {
+        var s = window.computeTopicPriority(t, exam);
+        var c = scoreColor(s);
+        pill.style.background = c.bg;
+        pill.style.borderColor = c.bd;
+        pill.style.color = c.fg;
+        pill.textContent = c.label + ' ' + s;
+        pill.title = 'Computed priority ' + s + '/100\n= weightage × D-Day proximity × status\nExam: ' + exam + '  ·  Status: ' + (t.status || '?');
+      }
+      nameRow.appendChild(pill);
+    });
+  }
+  window.apexPillSweep = sweep;
+
+  var view = document.getElementById('view');
+  if (view) {
+    var raf = null;
+    new MutationObserver(function(){
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(sweep);
+    }).observe(view, { childList: true, subtree: true });
+  }
+  setInterval(sweep, 800);
+  setTimeout(sweep, 500);
+
+  /* Smaller, cleaner focus-mode chip */
+  var st = document.createElement('style');
+  st.textContent = '.apex-focus-toggle{float:right;margin:0 0 8px 0;font-size:10px !important;padding:4px 10px !important;min-height:28px !important;opacity:.7}.apex-focus-toggle:hover{opacity:1}';
+  document.head.appendChild(st);
+
+  console.log('[apex-polish] pill sweep installed');
+})();
