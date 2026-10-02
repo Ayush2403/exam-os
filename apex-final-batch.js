@@ -121,3 +121,14 @@
 
   console.log('[apex-final-batch] installed');
 })();
+
+/* Kill FOUC: hide legacy priority chips before first paint */
+(function(){
+  var st = document.createElement('style');
+  st.textContent = [
+    '.toolbar [data-pri]{display:none !important}',
+    '.topic-row select.mini-sel[data-change="syl-priority"]{display:none !important}',
+    '.topic-row select.mini-sel[data-change="syl-weight"]{display:none !important}'
+  ].join('\n');
+  document.head.appendChild(st);
+})();
