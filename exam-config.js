@@ -837,3 +837,104 @@
     }
   }, true);
 })();
+
+/* ============================================================
+   APEX EXAM CONFIG — break the flutter loop
+   The exam bar is a child of #view. The observer watches #view.
+   Any rebuild of the bar re-triggers the observer, which
+   rebuilds the bar — infinite loop. The <select> dies mid-click.
+   Fix: move the bar to be a sibling of #view (child of #main,
+   before #view). Mutations inside the bar are now invisible to
+   the observer.
+   ============================================================ */
+(function(){
+  'use strict';
+
+  function moveBarOut() {
+    var bar = document.querySelector(".apex-active-exam-bar");
+    var view = document.getElementById("view");
+    if (!bar || !view) return;
+    if (bar.parentNode === view) {
+      // Move bar to be a direct child of #main, right before #view
+      view.parentNode.insertBefore(bar, view);
+      // Match #view's horizontal padding so it lines up
+      bar.style.paddingLeft = "34px";
+      bar.style.paddingRight = "34px";
+      bar.style.paddingTop = "16px";
+      bar.style.paddingBottom = "0";
+      bar.style.maxWidth = "1320px";
+      bar.style.margin = "0 auto";
+      bar.style.width = "100%";
+      bar.style.boxSizing = "border-box";
+      console.log("[apex-bar] detached from #view — flutter should stop");
+    } else if (!document.getElementById("apex-view-observer-protect")) {
+      // Bar already outside — that's what we want
+    }
+  }
+
+  // Move it whenever it appears. Once it's outside #view,
+  // subsequent refreshes will find it via querySelector and
+  // won't try to insert a duplicate.
+  setTimeout(moveBarOut, 400);
+  setTimeout(moveBarOut, 1200);
+  setTimeout(moveBarOut, 2500);
+
+  // Also watch for the bar getting recreated inside #view
+  var view = document.getElementById("view");
+  if (view) {
+    new MutationObserver(moveBarOut).observe(view, { childList: true });
+  }
+
+  console.log("[apex-exam-config] bar-outside-view patch installed");
+})();
+
+/* ============================================================
+   Block innerHTML rebuilds of the exam bar after the first build.
+   The old updateExamBar() does bar.innerHTML = "...". We can't
+   override it (it's local), but we can watch for the resulting
+   mutation and immediately restore the previous innerHTML if it
+   wipes the select mid-interaction.
+   ============================================================ */
+(function(){
+  'use strict';
+  var lastGoodHTML = null;
+  var bar = null;
+
+  function capture() {
+    bar = document.querySelector(".apex-active-exam-bar");
+    if (!bar) return;
+    if (bar.querySelector("[data-active-exam]")) {
+      lastGoodHTML = bar.innerHTML;
+    }
+  }
+
+  function protect() {
+    if (!bar) return;
+    var hasSelect = !!bar.querySelector("[data-active-exam]");
+    var selectFocused = document.activeElement && document.activeElement.matches("[data-active-exam]");
+    if (hasSelect && !selectFocused) {
+      lastGoodHTML = bar.innerHTML;
+      return;
+    }
+    // Bar got wiped OR select is focused but bar was rebuilt — restore
+    if (lastGoodHTML && !hasSelect) {
+      bar.innerHTML = lastGoodHTML;
+      // Re-attach the change handler
+      var sel = bar.querySelector("[data-active-exam]");
+      if (sel && !sel._apexBound) {
+        sel._apexBound = true;
+        sel.addEventListener("change", function() {
+          if (typeof setActiveExam === "function") setActiveExam(sel.value);
+        });
+      }
+    }
+  }
+
+  setTimeout(capture, 600);
+  setTimeout(capture, 1500);
+
+  setInterval(function() {
+    capture();
+    protect();
+  }, 250);
+})();
