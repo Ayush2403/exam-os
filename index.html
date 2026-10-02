@@ -8806,7 +8806,7 @@ function gradeReview(id,grade){
   let newInterval,newEase=ease;
   if(grade==="again"){newInterval=1;newEase=Math.max(1.3,ease-0.2);}
   else if(grade==="hard"){newInterval=Math.max(1,Math.round(oldInterval*1.2));newEase=Math.max(1.3,ease-0.15);}
-  else if(grade==="good"){newInterval=oldInterval===0?1:Math.max(2,Math.round(oldInterval*ease));}
+  else if(grade==="good"){newInterval=oldInterval===0?1:Math.max(2,Math.round(oldInterval*ease));newEase=Math.min(3.0,ease+0.05);}
   else{newInterval=oldInterval===0?4:Math.max(4,Math.round(oldInterval*ease*1.3));newEase=Math.min(3.0,ease+0.1);}
   const wasMastered=stageFromInterval(oldInterval)==="Mastered";
   const becomingMastered=!wasMastered&&stageFromInterval(newInterval)==="Mastered";
@@ -8843,7 +8843,7 @@ function gradeError(id,grade){
   let newInterval,newEase=ease;
   if(grade==="again"){newInterval=1;newEase=Math.max(1.3,ease-0.2);}
   else if(grade==="hard"){newInterval=Math.max(1,Math.round(oldInterval*1.2));newEase=Math.max(1.3,ease-0.15);}
-  else if(grade==="good"){newInterval=oldInterval===0?1:Math.max(2,Math.round(oldInterval*ease));}
+  else if(grade==="good"){newInterval=oldInterval===0?1:Math.max(2,Math.round(oldInterval*ease));newEase=Math.min(3.0,ease+0.05);}
   else{newInterval=oldInterval===0?4:Math.max(4,Math.round(oldInterval*ease*1.3));newEase=Math.min(3.0,ease+0.1);}
   const wasMastered=stageFromInterval(oldInterval)==="Mastered";
   const becomingMastered=!wasMastered&&stageFromInterval(newInterval)==="Mastered";
@@ -9990,7 +9990,7 @@ function wirePicker(el){
           const indent=28+depth*16;
           html+='<div class="pick-opt'+(isSel?" sel":"")+(hasChildren?" has-children":"")+'" data-pick="'+t.id+'" role="button" tabindex="0" aria-pressed="'+(isSel?"true":"false")+'" style="padding-left:'+indent+'px">';
           if(hasChildren){
-            html+='<span class="pick-caret" data-pick-toggle="'+t.id+'" role="button" tabindex="0" aria-expanded="'+(isChildOpen?"true":"false")+'" aria-label="Toggle children" style="transform:rotate('+(isChildOpen?'90':'0')+'deg)">;<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
+            html+='<span class="pick-caret" data-pick-toggle="'+t.id+'" role="button" tabindex="0" aria-expanded="'+(isChildOpen?"true":"false")+'" aria-label="Toggle children" style="transform:rotate('+(isChildOpen?'90':'0')+'deg)"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>';
           }else{
             html+='<span class="pick-caret-spacer"></span>';
           }
@@ -10003,7 +10003,7 @@ function wirePicker(el){
         return html;
       };
       return '<div class="pick-group'+(isOpen?" open":"")+'">'
-  +'<div class="pick-group-h" data-pick-group-h="'+esc(sub)+'" role="button" tabindex="0" aria-expanded="'+(isOpen?"true":"false")+'">;<i class="sdot" style="background:'+subjColor(sub)+'"></i><b>'+esc(sub)+'</b><span class="cnt'+(selCount?" has":"")+'">'+selCount+'/'+items.length+'</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>'
+  +'<div class="pick-group-h" data-pick-group-h="'+esc(sub)+'" role="button" tabindex="0" aria-expanded="'+(isOpen?"true":"false")+'"><i class="sdot" style="background:'+subjColor(sub)+'"></i><b>'+esc(sub)+'</b><span class="cnt'+(selCount?" has":"")+'">'+selCount+'/'+items.length+'</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>'
         +(isOpen?'<div class="pick-group-body">'+renderTree(null,0)+'</div>':'')
         +'</div>';
     }).join("");
@@ -11958,7 +11958,7 @@ function renderOMList(taxKey){const el=$("#om-list");if(!el)return;const list=ta
 function openScratch(){const d=$("#scratch-drawer");const b=$("#scratch-backdrop");if(d)d.classList.add("open");if(b)b.classList.add("open");renderScratch();}
 function closeScratch(){const d=$("#scratch-drawer");const b=$("#scratch-backdrop");if(d)d.classList.remove("open");if(b)b.classList.remove("open");}
 function scratchItemHTML(x){return'<div class="sc-item'+(x.done?" done":"")+'" data-id="'+x.id+'"><div class="cbox" data-action="scratch-toggle" data-id="'+x.id+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><textarea class="txt" data-sc-text="'+x.id+'" rows="1">'+esc(x.text)+'</textarea><button class="del" data-action="scratch-del" data-id="'+x.id+'" aria-label="Delete"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>';}
-function renderScratch(){const body=$("#scratch-body");if(!body)return;const items=S.scratch||[];const open=items.filter(x=>!x.done);const done=items.filter(x=>x.done);let html='<div class="sc-add-row"><input class="inp" id="sc-input" placeholder="Add a note or task…"><button class="btn primary" data-action="scratch-add">Add</button></div>';if(!items.length){html+='<div class="sc-empty">Nothing here yet.<br>Add a doubt, a topic to revise, anything.</div>';}else{if(open.length)html+=open.map(scratchItemHTML).join("");if(done.length){html+='<div class="hgroup" style="margin-top:16px">Done ('+done.length+')</div>';html+=done.map(scratchItemHTML).join("");}}html+='<div class="hgroup" style="margin-top:22px">Freeform note</div>';html+='<textarea class="sc-freeform" id="sc-note" placeholder="Scribble anything here — persists automatically.">'+esc(S.scratchNote||"")+'</textarea>';body.innerHTML=html;const inp=$("#sc-input");if(inp){inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();ACTIONS["scratch-add"]();}});setTimeout(()=>inp.focus(),80);}const note=$("#sc-note");if(note)note.addEventListener("input",()=>{S.scratchNote=note.value;store.set(KEY,JSON.stringify(S));queueSync();});$$("[data-sc-text]").forEach(ta=>{ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";});}
+function renderScratch(){const body=$("#scratch-body");if(!body)return;const items=S.scratch||[];const open=items.filter(x=>!x.done);const done=items.filter(x=>x.done);let html='<div class="sc-add-row"><input class="inp" id="sc-input" placeholder="Add a note or task…"><button class="btn primary" data-action="scratch-add">Add</button></div>';if(!items.length){html+='<div class="sc-empty">Nothing here yet.<br>Add a doubt, a topic to revise, anything.</div>';}else{if(open.length)html+=open.map(scratchItemHTML).join("");if(done.length){html+='<div class="hgroup" style="margin-top:16px">Done ('+done.length+')</div>';html+=done.map(scratchItemHTML).join("");}}html+='<div class="hgroup" style="margin-top:22px">Freeform note</div>';html+='<textarea class="sc-freeform" id="sc-note" placeholder="Scribble anything here — persists automatically.">'+esc(S.scratchNote||"")+'</textarea>';body.innerHTML=html;const inp=$("#sc-input");if(inp){inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();ACTIONS["scratch-add"]();}});setTimeout(()=>inp.focus(),80);}const note=$("#sc-note");if(note){let _scT=null;note.addEventListener("input",()=>{S.scratchNote=note.value;if(_scT)clearTimeout(_scT);_scT=setTimeout(()=>{store.set(KEY,JSON.stringify(S));queueSync();},600);});}$$("[data-sc-text]").forEach(ta=>{ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";});}
 function validateImport(d){
   if(!d||typeof d!=="object"||Array.isArray(d))return"Not an object";
   if(!Array.isArray(d.syllabus))return"Missing 'syllabus' array";
@@ -11966,6 +11966,7 @@ function validateImport(d){
     const t=d.syllabus[i];
     if(!t||typeof t!=="object")return"syllabus["+i+"] not an object";
     if(typeof t.id!=="string")return"syllabus["+i+"].id missing";
+    if(!/^[A-Za-z0-9_-]+$/.test(t.id))return"syllabus["+i+"].id has invalid characters";
     if(typeof t.topic!=="string")return"syllabus["+i+"].topic missing";
     if(typeof t.subject!=="string")return"syllabus["+i+"].subject missing";
   }
@@ -11977,6 +11978,7 @@ function validateImport(d){
       const item=d[k][i];
       if(!item||typeof item!=="object")return k+"["+i+"] not an object";
       if(typeof item.id!=="string")return k+"["+i+"].id missing";
+      if(!/^[A-Za-z0-9_-]+$/.test(item.id))return k+"["+i+"].id has invalid characters";
     }
   }
   if(d.habits!==undefined){
