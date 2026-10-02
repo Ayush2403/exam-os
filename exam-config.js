@@ -440,3 +440,134 @@
 
   console.log("[apex-exam-config] ready — " + ALL_EXAMS.length + " exams, " + migratedCount + " topics migrated");
 })();
+
+/* ============================================================
+   APEX EXAM CONFIG — one-time population
+   Fills examConfig for every topic using subject-exam map
+   + weightage database. Runs once per device.
+   ============================================================ */
+(function(){
+  'use strict';
+
+  var POPULATE_VERSION = 1;
+  if (S.settings && S.settings._examConfigVersion >= POPULATE_VERSION) return;
+
+  // Which exams test which subjects
+  var SUBJECT_EXAM_MAP = {
+    "maths": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "reasoning": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "english grammar": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "descriptive english": ["RBI GRADE B","RBI GRADE A","NABARD GRADE A"],
+    "general science": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "geography": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","IBPS PO","RRB PO"],
+    "history": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","IBPS PO","RRB PO"],
+    "polity": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","IBPS PO","RRB PO"],
+    "economics": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","IBPS PO","RRB PO"],
+    "economical issues": ["RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A"],
+    "finance": ["RBI GRADE B","RBI GRADE A","RBI ASSISTANT"],
+    "management": ["RBI GRADE B","RBI GRADE A"],
+    "social issues": ["RBI GRADE B","RBI GRADE A","NABARD GRADE A"],
+    "environment": ["CGL","CHSL","IB ACIO","RBI GRADE B","NABARD GRADE A","SBI PO","IBPS PO"],
+    "ca": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "misc gk": ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT","NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK","RRB PO","RRB CLERK"],
+    "defence": ["CGL","CHSL","IB ACIO"],
+    "ard": ["NABARD GRADE A"]
+  };
+
+  function weightageToPriority(w) {
+    if (w >= 5) return "Critical";
+    if (w >= 4) return "High";
+    if (w >= 3) return "Medium";
+    if (w >= 2) return "Low";
+    if (w >= 1) return "Low";
+    return "";
+  }
+
+  function weightageToLabel(w) {
+    if (w >= 4) return "High";
+    if (w >= 3) return "Medium";
+    if (w >= 1) return "Low";
+    return "";
+  }
+
+  function populate() {
+    var getW = window.getTopicWeightage;
+    if (typeof getW !== "function") {
+      console.log("[apex-populate] weightage fn not loaded yet, retrying in 500ms");
+      setTimeout(populate, 500);
+      return;
+    }
+
+    var totalTopics = 0, totalConfigs = 0, skipped = 0;
+
+    S.syllabus.forEach(function(t) {
+      totalTopics++;
+      var subj = (t.subject || "").toLowerCase();
+      var mappedExams = SUBJECT_EXAM_MAP[subj] || [];
+
+      var existingExams = Array.isArray(t.exams) ? t.exams : [];
+      var allExams = Array.from(new Set(mappedExams.concat(existingExams)));
+
+      // Only keep exams where weightage > 0
+      var validExams = [];
+      allExams.forEach(function(ex) {
+        var w = getW(t, ex);
+        if (w >= 1) validExams.push(ex);
+      });
+
+      if (!validExams.length) {
+        // Unknown subject — leave exams as-is
+        skipped++;
+        return;
+      }
+
+      t.exams = validExams;
+      if (!t.examConfig || typeof t.examConfig !== "object") t.examConfig = {};
+
+      validExams.forEach(function(ex) {
+        var w = getW(t, ex);
+        var pri = weightageToPriority(w);
+        var lbl = weightageToLabel(w);
+        if (!t.examConfig[ex]) t.examConfig[ex] = {};
+        if (!t.examConfig[ex].priority) t.examConfig[ex].priority = pri;
+        if (!t.examConfig[ex].weightage) t.examConfig[ex].weightage = lbl;
+        totalConfigs++;
+      });
+    });
+
+    // Fix activeExam if it's stuck on "All"
+    if (!S.settings.activeExam ||
+        String(S.settings.activeExam).toLowerCase() === "all" ||
+        String(S.settings.activeExam).toLowerCase() === "all exams") {
+      var targets = Array.isArray(S.settings.exams) ? S.settings.exams : [];
+      var future = targets.filter(function(x) {
+        return x.date && x.examTag && diffD(x.date, todayISO()) >= 0;
+      });
+      if (future.length) {
+        future.sort(function(a, b) {
+          return diffD(a.date, todayISO()) - diffD(b.date, todayISO());
+        });
+        S.settings.activeExam = future[0].examTag;
+      } else {
+        S.settings.activeExam = "CGL";
+      }
+    }
+
+    S.settings._examConfigVersion = POPULATE_VERSION;
+    try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+
+    console.log("[apex-populate] " + totalTopics + " topics scanned, " +
+      totalConfigs + " exam configs written, " + skipped + " skipped (unknown subject)");
+    console.log("[apex-populate] activeExam = " + S.settings.activeExam);
+  }
+
+  populate();
+
+  // Refresh pills after populate
+  setTimeout(function() {
+    if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
+  }, 400);
+  setTimeout(function() {
+    if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
+  }, 1500);
+})();
