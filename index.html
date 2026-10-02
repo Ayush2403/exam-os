@@ -12865,6 +12865,27 @@ function pruneOldData(){
     result.pruned+=S.mocks.length-500;
     S.mocks=S.mocks.slice(-500);
   }
+  /* Orphan sweep: sessions/errors whose topic no longer exists */
+  if(Array.isArray(S.syllabus)){
+    var validTopics = {};
+    S.syllabus.forEach(function(t){ if(t&&t.id) validTopics[t.id]=1; });
+    if(Array.isArray(S.sessions)){
+      S.sessions.forEach(function(s){
+        if(s && s.topicId && !validTopics[s.topicId]){
+          result.pruned++;
+          s.topicId = null;
+        }
+      });
+    }
+    if(Array.isArray(S.errors)){
+      S.errors.forEach(function(e){
+        if(e && e.topicId && !validTopics[e.topicId]){
+          result.pruned++;
+          e.topicId = null;
+        }
+      });
+    }
+  }
   saveLocal();
   return result;
 }
@@ -14228,6 +14249,7 @@ try{
 <script src="./apex-final.js?v=2"></script>
 <script src="./apex-a11y.js?v=1"></script>
 <script src="./apex-keys.js?v=1"></script>
+<script src="./apex-final-batch.js?v=1"></script>
 <script src="./exam-priority-live.js?v=1"></script>
 </body>
 </html>
