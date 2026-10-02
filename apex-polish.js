@@ -1,5 +1,5 @@
 /* ============================================================
-   APEX POLISH — passphrase memory, banking subjects, syllabus focus
+   APEX POLISH v2 — passphrase memory, banking subjects, default-collapse
    ============================================================ */
 (function(){
   'use strict';
@@ -10,7 +10,6 @@
   var REMEMBER_KEY = 'apex-sync-pass-remembered';
   var REMEMBER_NEXT = 'apex-sync-remember-next';
 
-  /* Auto-unlock from localStorage on load */
   setTimeout(function(){
     if (!S.sync || !S.sync.enabled || !S.sync.room) return;
     if (typeof syncKey !== 'undefined' && syncKey) return;
@@ -26,14 +25,12 @@
     });
   }, 1800);
 
-  /* Inject checkbox into Sync settings */
   function injectCheckbox(){
     var modal = document.querySelector('.modal');
     if (!modal) return;
     var passField = modal.querySelector('[name="syncPass"]');
     if (!passField) return;
     if (passField.parentElement.querySelector('.apex-remember-cb')) return;
-
     var label = document.createElement('label');
     label.className = 'apex-remember-cb';
     label.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:12.5px;color:var(--text-2);padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-2)';
@@ -43,7 +40,6 @@
       '<input type="checkbox" ' + (checked ? 'checked' : '') + ' style="accent-color:var(--accent);flex-shrink:0">' +
       '<span><b>Remember on this device</b> — auto-unlock next time. Anyone with devtools access can read it.</span>';
     passField.parentElement.appendChild(label);
-
     label.querySelector('input').addEventListener('change', function(e){
       try {
         if (e.target.checked) {
@@ -57,11 +53,9 @@
       } catch(_){}
     });
   }
-
   var modalRoot = document.getElementById('modal-root');
   if (modalRoot) new MutationObserver(injectCheckbox).observe(modalRoot, { childList: true, subtree: true });
 
-  /* Capture passphrase as it's typed if "remember next" is armed */
   document.addEventListener('input', function(e){
     if (!e.target || e.target.name !== 'syncPass') return;
     try {
@@ -71,7 +65,6 @@
     } catch(_){}
   }, true);
 
-  /* On sync Save, capture the passphrase from the form */
   document.addEventListener('click', function(e){
     if (!e.target.closest('[data-msave]')) return;
     var modal = e.target.closest('.modal');
@@ -88,7 +81,7 @@
     }, 400);
   }, true);
 
-  /* ---- 2. Seed banking awareness + computer awareness subjects ---- */
+  /* ---- 2. Seed banking + computer awareness subjects ---- */
   var SEED = {
     'banking awareness': [
       'RBI — Role, Functions, and Monetary Policy',
@@ -134,15 +127,9 @@
       if (existing.has(name.toLowerCase())) return;
       S.syllabus.push({
         id: 't_' + subj.replace(/\s+/g,'_') + '_' + added + '_' + Date.now().toString(36),
-        topic: name,
-        subject: subj,
-        exams: exams.slice(),
-        priority: '',
-        status: 'Not started',
-        weightage: '',
-        remarks: '',
-        notes: '',
-        parentId: null
+        topic: name, subject: subj, exams: exams.slice(),
+        priority: '', status: 'Not started', weightage: '',
+        remarks: '', notes: '', parentId: null
       });
       added++;
     });
@@ -157,7 +144,6 @@
     if (n1 + n2 > 0) console.log('[apex-polish] added ' + n1 + ' banking + ' + n2 + ' computer topics');
   }
 
-  /* Also tag existing finance topics for banking exams */
   if (!S.settings._apexFinanceTagged) {
     S.syllabus.forEach(function(t){
       if (t.subject === 'finance' && Array.isArray(t.exams)) {
@@ -175,131 +161,28 @@
     try { store.set(KEY, JSON.stringify(S)); } catch(e){}
   }
 
-  /* ---- 3. Focus syllabus on active exam + collapse by default ---- */
-  var FOCUS_KEY = 'apex-syl-focus-mode';
-  function focusMode(){ try { return localStorage.getItem(FOCUS_KEY) !== 'all'; } catch(e) { return true; } }
-
-  /* Show only subjects that have topics for the active exam */
-  function filterSylByActiveExam(){
-    if (!focusMode()) return null;
-    var exam = (typeof window.getActiveExam === 'function') ? window.getActiveExam() : '';
-    if (!exam) return null;
-    var subs = new Set();
-    S.syllabus.forEach(function(t){
-      if (t.archived) return;
-      if (Array.isArray(t.exams) && t.exams.indexOf(exam) > -1) subs.add(t.subject);
-    });
-    return subs;
-  }
-
-  /* Patch renderSylList to hide irrelevant subjects + force-collapse */
-  function wrapRender(){
-    if (typeof window.renderSylList !== 'function') { setTimeout(wrapRender, 300); return; }
-    if (window._apexPolishWrapped) return;
-    window._apexPolishWrapped = true;
-    var orig = window.renderSylList;
-    window.renderSylList = function(){
-      var subs = filterSylByActiveExam();
-      var r = orig.apply(this, arguments);
-      if (subs) {
-        document.querySelectorAll('#syl-list .subj-group').forEach(function(g){
-          if (!subs.has(g.dataset.subj)) g.style.display = 'none';
+  /* ---- 3. Collapse all subjects on first visit ---- */
+  /* sf.closed lives in apex-syl-state-v1 localStorage. We seed it once. */
+  if (!S.settings._apexSubjectsCollapsed) {
+    try {
+      var raw = localStorage.getItem('apex-syl-state-v1');
+      var st = raw ? JSON.parse(raw) : { closed: {}, closedTopics: {} };
+      if (!st.closed) st.closed = {};
+      if (!st.closedTopics) st.closedTopics = {};
+      /* If nothing was ever closed, close everything except the first subject */
+      if (Object.keys(st.closed).length === 0) {
+        var subs = [];
+        S.syllabus.forEach(function(t){ if (t.subject && subs.indexOf(t.subject) === -1) subs.push(t.subject); });
+        /* Leave first two subjects open, collapse the rest */
+        subs.forEach(function(sub, i){
+          if (i >= 2) st.closed[sub] = true;
         });
+        localStorage.setItem('apex-syl-state-v1', JSON.stringify({ closed: st.closed, closedTopics: st.closedTopics }));
       }
-      /* Show-all toggle chip */
-      var list = document.getElementById('syl-list');
-      if (list && !document.querySelector('.apex-focus-toggle')) {
-        var chip = document.createElement('button');
-        chip.className = 'btn ghost sm apex-focus-toggle';
-        chip.style.cssText = 'position:sticky;top:0;float:right;z-index:10;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase';
-        chip.textContent = focusMode() ? '▾ Show all subjects' : '▴ Only active exam';
-        chip.addEventListener('click', function(){
-          try {
-            localStorage.setItem(FOCUS_KEY, focusMode() ? 'all' : 'focus');
-          } catch(e){}
-          if (typeof window.renderSylList === 'function') window.renderSylList();
-        });
-        list.parentNode.insertBefore(chip, list);
-      }
-      return r;
-    };
-    console.log('[apex-polish] syllabus focus installed');
-  }
-  wrapRender();
-
-  console.log('[apex-polish] installed');
-})();
-
-/* ---- Pill sweep: force computed priority into the DOM ---- */
-(function(){
-  if (window._apexPillSweep) return;
-  window._apexPillSweep = true;
-
-  function scoreColor(s){
-    if (s >= 70) return { bg:'rgba(248,113,113,.18)', bd:'rgba(248,113,113,.5)', fg:'#fca5a5', label:'CRIT' };
-    if (s >= 50) return { bg:'rgba(250,204,21,.18)', bd:'rgba(250,204,21,.5)', fg:'#fde68a', label:'HIGH' };
-    if (s >= 30) return { bg:'rgba(96,165,250,.18)', bd:'rgba(96,165,250,.5)', fg:'#93c5fd', label:'MED' };
-    return { bg:'rgba(74,222,128,.15)', bd:'rgba(74,222,128,.45)', fg:'#86efac', label:'LOW' };
+      S.settings._apexSubjectsCollapsed = 1;
+      try { store.set(KEY, JSON.stringify(S)); } catch(e){}
+    } catch(e){ console.log('[apex-polish] collapse seed failed', e.message); }
   }
 
-  function sweep(){
-    var list = document.getElementById('syl-list');
-    if (!list) return;
-    var exam = (typeof window.getActiveExam === 'function') ? window.getActiveExam() : '';
-    if (!exam) return;
-    if (typeof window.computeTopicPriority !== 'function') return;
-
-    list.querySelectorAll('.topic-row').forEach(function(row){
-      var id = row.dataset.id;
-      if (!id) return;
-      var t = (typeof window.topicById === 'function') ? window.topicById(id) : null;
-      if (!t) return;
-      var nameRow = row.querySelector('.topic-body > div:first-child');
-      if (!nameRow) return;
-
-      /* Kill any old pills */
-      nameRow.querySelectorAll('.apex-cfg-pri, .apex-computed-pri, .apex-pill-old').forEach(function(p){ p.remove(); });
-
-      var isTagged = Array.isArray(t.exams) && t.exams.indexOf(exam) > -1;
-      var pill = document.createElement('span');
-      pill.className = 'pill apex-computed-pri';
-      pill.style.cssText = 'margin-left:auto;flex-shrink:0;font-size:9.5px;padding:2px 9px;font-family:"JetBrains Mono",monospace;letter-spacing:.08em;font-weight:600';
-
-      if (!isTagged) {
-        pill.style.background = 'rgba(120,120,120,.08)';
-        pill.style.borderColor = 'rgba(120,120,120,.25)';
-        pill.style.color = '#6b7280';
-        pill.textContent = '— ' + exam;
-        pill.title = 'Not tagged for ' + exam;
-      } else {
-        var s = window.computeTopicPriority(t, exam);
-        var c = scoreColor(s);
-        pill.style.background = c.bg;
-        pill.style.borderColor = c.bd;
-        pill.style.color = c.fg;
-        pill.textContent = c.label + ' ' + s;
-        pill.title = 'Computed priority ' + s + '/100\n= weightage × D-Day proximity × status\nExam: ' + exam + '  ·  Status: ' + (t.status || '?');
-      }
-      nameRow.appendChild(pill);
-    });
-  }
-  window.apexPillSweep = sweep;
-
-  var view = document.getElementById('view');
-  if (view) {
-    var raf = null;
-    new MutationObserver(function(){
-      if (raf) cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(sweep);
-    }).observe(view, { childList: true, subtree: true });
-  }
-  setInterval(sweep, 800);
-  setTimeout(sweep, 500);
-
-  /* Smaller, cleaner focus-mode chip */
-  var st = document.createElement('style');
-  st.textContent = '.apex-focus-toggle{float:right;margin:0 0 8px 0;font-size:10px !important;padding:4px 10px !important;min-height:28px !important;opacity:.7}.apex-focus-toggle:hover{opacity:1}';
-  document.head.appendChild(st);
-
-  console.log('[apex-polish] pill sweep installed');
+  console.log('[apex-polish] v2 installed');
 })();
