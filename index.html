@@ -8061,14 +8061,29 @@ body.route-welcome #apex-cosmos{display:none}
   .toolbar [data-pri]{display:none !important}
   .topic-row select.mini-sel[data-change="syl-priority"]{display:none !important}
   .topic-row select.mini-sel[data-change="syl-weight"]{display:none !important}
-  /* Stack sticky layers: exam bar under topbar, toolbar under exam bar */
-  .apex-active-exam-bar, .apex-stable-bar{ top: 64px !important; }
-  #view .toolbar{ top: 108px !important; }
-  @media (max-width: 860px){
-    .apex-active-exam-bar, .apex-stable-bar{ top: 56px !important; }
-    #view .toolbar{ top: 96px !important; }
-  }
+  /* Stack sticky layers using runtime-measured heights */
+  .apex-active-exam-bar, .apex-stable-bar{ top: var(--apex-topbar-h, 52px) !important; }
+  #view .toolbar{ top: calc(var(--apex-topbar-h, 52px) + var(--apex-exambar-h, 40px)) !important; }
 </style>
+<script id="apex-measure">
+(function(){
+  function sync(){
+    var tb = document.getElementById('topbar');
+    var eb = document.querySelector('.apex-active-exam-bar, .apex-stable-bar');
+    if (tb) document.documentElement.style.setProperty('--apex-topbar-h', tb.offsetHeight + 'px');
+    if (eb) document.documentElement.style.setProperty('--apex-exambar-h', eb.offsetHeight + 'px');
+  }
+  sync();
+  window.addEventListener('resize', sync);
+  document.addEventListener('DOMContentLoaded', sync);
+  setInterval(sync, 1200);
+  if (window.ResizeObserver) {
+    var tb = document.getElementById('topbar');
+    if (tb) new ResizeObserver(sync).observe(tb);
+  }
+  window.apexMeasureSticky = sync;
+})();
+</script>
 </head>
 <body>
   <!-- APEX BRAND MARK · single source of truth · theme-independent -->
