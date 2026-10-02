@@ -318,19 +318,20 @@
         pill.style.color = "#6b7280";
         pill.textContent = "— " + exam;
         pill.title = "Not tagged for " + exam;
-      } else if (!pri && !wt) {
-        pill.style.background = "rgba(120,120,120,.12)";
-        pill.style.borderColor = "rgba(120,120,120,.3)";
-        pill.style.color = "#9ca3af";
-        pill.textContent = "SET PRIORITY";
-        pill.title = "Click the pencil icon to set priority for " + exam;
       } else {
-        var c = priorityColor(pri || "Medium");
-        pill.style.background = c.bg;
-        pill.style.borderColor = c.bd;
-        pill.style.color = c.fg;
-        pill.textContent = (pri || "—") + (wt ? " · " + wt : "");
-        pill.title = exam + " priority: " + (pri || "not set") + "\nWeightage: " + (wt || "not set");
+        var score = 0;
+        try { if (typeof window.computeTopicPriority === "function") score = window.computeTopicPriority(t, exam); } catch(e){}
+        var lbl = score >= 70 ? "CRIT" : score >= 50 ? "HIGH" : score >= 30 ? "MED" : "LOW";
+        var bg, bd, fg;
+        if (score >= 70) { bg="rgba(248,113,113,.18)"; bd="rgba(248,113,113,.5)"; fg="#fca5a5"; }
+        else if (score >= 50) { bg="rgba(250,204,21,.18)"; bd="rgba(250,204,21,.5)"; fg="#fde68a"; }
+        else if (score >= 30) { bg="rgba(96,165,250,.18)"; bd="rgba(96,165,250,.5)"; fg="#93c5fd"; }
+        else { bg="rgba(74,222,128,.15)"; bd="rgba(74,222,128,.45)"; fg="#86efac"; }
+        pill.style.background = bg;
+        pill.style.borderColor = bd;
+        pill.style.color = fg;
+        pill.textContent = lbl + " " + score;
+        pill.title = "Computed: " + score + "/100\nweightage x D-Day x status\nExam: " + exam;
       }
       nameRow.appendChild(pill);
     });
