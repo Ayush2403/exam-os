@@ -372,11 +372,19 @@
     var opts = ALL_EXAMS.map(function(e) {
       return '<option value="' + esc(e) + '"' + (e === exam ? " selected" : "") + '>' + esc(e) + '</option>';
     }).join("");
-    bar.innerHTML =
-      '<span>Active exam: <select data-active-exam style="background:transparent;border:none;color:var(--accent-2);font:inherit;letter-spacing:inherit;cursor:pointer;padding:0;font-weight:700">' + opts + '</select></span>' +
-      '<span style="opacity:.55">priority per exam</span>';
-    var sel = bar.querySelector("[data-active-exam]");
-    if (sel) sel.addEventListener("change", function() { setActiveExam(sel.value); });
+    if (!bar._apexBuilt) {
+      bar._apexBuilt = true;
+      bar.innerHTML =
+        '<span>Active exam: <select data-active-exam style="background:transparent;border:none;color:var(--accent-2);font:inherit;letter-spacing:inherit;cursor:pointer;padding:0;font-weight:700">' + opts + '</select></span>' +
+        '<span style="opacity:.55">priority per exam</span>';
+      var sel = bar.querySelector("[data-active-exam]");
+      if (sel) sel.addEventListener("change", function() { setActiveExam(sel.value); });
+    } else {
+      var curSel = bar.querySelector("[data-active-exam]");
+      if (curSel && curSel.value !== exam && document.activeElement !== curSel) {
+        curSel.value = exam;
+      }
+    }
   }
 
   // ============================================================
