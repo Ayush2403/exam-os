@@ -686,3 +686,74 @@
     if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
   }, 1500);
 })();
+
+/* ============================================================
+   APEX EXAM CONFIG — final cleanup
+   1. Saves the correct examConfig (persist, don't re-populate)
+   2. Hides exam chips on syllabus rows (declutter)
+   3. Clears legacy priority/weightage fields
+    ============================================================ */
+(function(){
+  'use strict';
+  var FINAL_VERSION = 3;
+  if (S.settings && S.settings._examConfigFinalVersion >= FINAL_VERSION) return;
+
+  // ---- 1. Persist + clear legacy fields ----
+  function cleanLegacy() {
+    var cleared = 0;
+    S.syllabus.forEach(function(t) {
+      if (t.priority !== undefined && t.priority !== "") {
+        t.priority = "";
+        cleared++;
+      }
+      if (t.weightage !== undefined && t.weightage !== "") {
+        t.weightage = "";
+      }
+    });
+    S.settings._examConfigFinalVersion = FINAL_VERSION;
+    try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+    console.log("[apex-exam-config] final v3 — legacy priority cleared on " + cleared + " topics");
+  }
+
+  // ---- 2. Inject declutter style ----
+  function injectStyle() {
+    if (document.getElementById("apex-declutter-v3")) return;
+    var st = document.createElement("style");
+    st.id = "apex-declutter-v3";
+    st.textContent =
+      // Hide exam tag chips on the syllabus list only (not in picker / modal)
+      "#syl-list .topic-row .tags .exam-tag{display:none !important}" +
+      // Also hide any stray span with the exam-tag class inside the topic row
+      "#syl-list .topic-row .topic-body > .tags{min-height:0 !important}" +
+      // Hide the exam tag row entirely when it only contained exam-tags
+      "#syl-list .topic-row .tags > .exam-tag + .tiny{display:none !important}";
+    document.head.appendChild(st);
+  }
+
+  // ---- 3. Set default activeExam if unset ----
+  function ensureActive() {
+    var cur = S.settings.activeExam;
+    if (cur && String(cur).toLowerCase() !== "all" && String(cur).toLowerCase() !== "all exams") return;
+    var targets = Array.isArray(S.settings.exams) ? S.settings.exams : [];
+    var future = targets.filter(function(x) {
+      return x.date && x.examTag && diffD(x.date, todayISO()) >= 0;
+    });
+    if (future.length) {
+      future.sort(function(a, b) {
+        return diffD(a.date, todayISO()) - diffD(b.date, todayISO());
+      });
+      S.settings.activeExam = future[0].examTag;
+    } else {
+      S.settings.activeExam = "CGL";
+    }
+    try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+  }
+
+  cleanLegacy();
+  injectStyle();
+  ensureActive();
+
+  setTimeout(function() {
+    if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
+  }, 500);
+})();
