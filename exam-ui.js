@@ -131,3 +131,56 @@
 
   console.log("[apex-exam-ui] " + VERSION + " — single source of truth");
 })();
+
+/* ============================================================
+   APEX EXAM UI — hide stored priority everywhere
+   Priority is computed, not stored. The stored field stays in
+   data (backwards compat) but disappears from every UI surface.
+   ============================================================ */
+(function(){
+  'use strict';
+  if (window._apexExamUIHidePriority) return;
+  window._apexExamUIHidePriority = true;
+
+  function hidePriorityEverywhere() {
+    // 1. Priority field in the Edit Topic modal
+    // The modal has .frow rows with labels. Find the one labeled "Priority".
+    document.querySelectorAll(".modal .frow").forEach(function(frow) {
+      var label = frow.querySelector("label");
+      if (label && /^\s*priority\s*$/i.test(label.textContent)) {
+        frow.style.display = "none";
+      }
+    });
+
+    // 2. Priority dropdown in the topic picker groups (populated from picker's priClass)
+    document.querySelectorAll(".pick-opt .ptag").forEach(function(ptag) {
+      // ptag holds the priority abbreviation (Crit, High, Med, Low)
+      ptag.style.display = "none";
+    });
+
+    // 3. Priority pills in parent topic picker list
+    document.querySelectorAll(".pick-opt .pill[class*='pri-']").forEach(function(pill) {
+      pill.style.display = "none";
+    });
+
+    // 4. Priority chips in any topic picker toolbar (rare)
+    document.querySelectorAll(".picker-list .chip[class*='pri-']").forEach(function(chip) {
+      chip.style.display = "none";
+    });
+  }
+
+  // Watch for modal opens
+  var modalRoot = document.getElementById("modal-root");
+  if (modalRoot) {
+    new MutationObserver(hidePriorityEverywhere).observe(modalRoot, { childList: true, subtree: true });
+  }
+
+  // Also run on view mutations (in case picker is opened outside modal)
+  var viewRoot = document.getElementById("view");
+  if (viewRoot) {
+    new MutationObserver(hidePriorityEverywhere).observe(viewRoot, { childList: true, subtree: true });
+  }
+
+  hidePriorityEverywhere();
+  console.log("[apex-exam-ui] priority hidden from modal + picker");
+})();
