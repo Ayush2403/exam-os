@@ -1051,3 +1051,107 @@
   st.textContent = ".apex-active-exam-bar:not(.apex-stable-bar){display:none!important}";
   document.head.appendChild(st);
 })();
+
+/* ============================================================
+   APEX EXAM CONFIG — final bar takeover
+   Old updateExamBar() rebuilds the bar every refresh and
+   destroys the open <select>. This owns the bar now.
+   ============================================================ */
+(function(){
+  'use strict';
+
+  var EXAM_LIST = ["CGL","CHSL","IB ACIO","RBI GRADE B","RBI GRADE A","RBI ASSISTANT",
+                   "NABARD GRADE A","SBI PO","SBI CLERK","IBPS PO","IBPS CLERK",
+                   "RRB PO","RRB CLERK"];
+
+  function buildBar() {
+    var bar = document.createElement("div");
+    bar.className = "apex-active-exam-bar apex-stable-bar";
+    bar.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-3);padding:16px 34px 4px;max-width:1320px;margin:0 auto;width:100%;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center";
+
+    var left = document.createElement("span");
+    left.textContent = "Active exam: ";
+    var sel = document.createElement("select");
+    sel.setAttribute("data-apex-exam", "1");
+    sel.style.cssText = "background:transparent;border:none;color:var(--accent-2);font:inherit;letter-spacing:inherit;cursor:pointer;padding:0;font-weight:700;outline:none";
+    EXAM_LIST.forEach(function(e) {
+      var o = document.createElement("option");
+      o.value = e;
+      o.textContent = e;
+      sel.appendChild(o);
+    });
+    sel.value = (typeof window.getActiveExam === "function" ? window.getActiveExam() : "CGL");
+    sel.addEventListener("change", function() {
+      if (typeof window.setActiveExam === "function") window.setActiveExam(sel.value);
+      setTimeout(function() {
+        if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
+      }, 50);
+    });
+    left.appendChild(sel);
+
+    var right = document.createElement("span");
+    right.style.opacity = "0.55";
+    right.textContent = "priority per exam";
+    bar.appendChild(left);
+    bar.appendChild(right);
+    return bar;
+  }
+
+  var _bar = null;
+
+  function ensureBar() {
+    var view = document.getElementById("view");
+    var main = document.getElementById("main");
+    if (!view || !main) return;
+
+    document.querySelectorAll(".apex-active-exam-bar:not(.apex-stable-bar)").forEach(function(el) {
+      el.remove();
+    });
+
+    if (!_bar || !document.contains(_bar)) {
+      _bar = buildBar();
+      main.insertBefore(_bar, view);
+    } else if (_bar.nextSibling !== view) {
+      main.insertBefore(_bar, view);
+    }
+
+    var sel = _bar.querySelector("[data-apex-exam]");
+    var exam = (typeof window.getActiveExam === "function" ? window.getActiveExam() : "CGL");
+    if (sel && sel.value !== exam && document.activeElement !== sel) {
+      sel.value = exam;
+    }
+  }
+
+  var view = document.getElementById("view");
+  if (view) {
+    new MutationObserver(function(muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var m = muts[i];
+        for (var j = 0; j < m.addedNodes.length; j++) {
+          var n = m.addedNodes[j];
+          if (n.nodeType === 1 && n.classList &&
+              n.classList.contains("apex-active-exam-bar") &&
+              !n.classList.contains("apex-stable-bar")) {
+            n.remove();
+          }
+        }
+      }
+      ensureBar();
+    }).observe(view, { childList: true });
+  }
+
+  setInterval(ensureBar, 400);
+  setTimeout(ensureBar, 100);
+  setTimeout(ensureBar, 500);
+  setTimeout(ensureBar, 1500);
+  setTimeout(ensureBar, 3000);
+
+  window.ensureStableBar = ensureBar;
+  console.log("[apex-final-bar] takeover installed");
+})();
+
+(function(){
+  var st = document.createElement("style");
+  st.textContent = ".apex-active-exam-bar:not(.apex-stable-bar){display:none!important}";
+  document.head.appendChild(st);
+})();
