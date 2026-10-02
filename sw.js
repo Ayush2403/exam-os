@@ -5,7 +5,7 @@
    - Cache-first for CDN assets, stale-while-revalidate for app
    ============================================================ */
 
-const CACHE = 'apex-v3';
+const CACHE = 'apex-v5';
 
 const ASSETS = [
   './',
@@ -15,6 +15,8 @@ const ASSETS = [
   './apex-mobile.js',
   './apex-mobile-ux.css',
   './sync.js',
+  './exam-config.js',
+  './exam-weightage.js',
   './favicon.png',
   './icon.svg',
   './icons/icon-192.png',
