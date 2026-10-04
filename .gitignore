@@ -28,3 +28,7 @@ deepseek_mobile_optimization_prompt.txt
 # Stray files from accidental command paste
 shows
 this
+Thumbs.db
+*.swp
+*.swo
+*~
