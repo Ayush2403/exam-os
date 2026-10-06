@@ -9483,7 +9483,50 @@ function focusZenRender(){
 function focusUI(){updateTimerUI();if(FS.panel)focusPanelRender();if(FS.zen)focusZenRender();else{const el=$("#focus-screen");if(el){el.classList.remove("open");el.setAttribute("aria-hidden","true");}}}
 function focusTickUI(){updateTimerUI();const pct=focusProgress();if(FS.panel){const p=$("#focus-panel");if(p){const fg=p.querySelector(".fp-ring .fg");if(fg)fg.setAttribute("stroke-dashoffset",(2*Math.PI*42*(1-pct)).toFixed(1));const t=p.querySelector(".fp-time");if(t)t.textContent=focusClock();}}if(FS.zen){const el=$("#focus-screen");if(el){const fg=el.querySelector(".fs-ring .fg");if(fg)fg.setAttribute("stroke-dashoffset",(2*Math.PI*120*(1-pct)).toFixed(1));const t=el.querySelector(".fs-time");if(t)t.textContent=focusClock();}}}
 function focusApplyPreset(id){if(FS.mode!=="pomodoro")FS.mode="pomodoro";const p=focusPreset(id);FS.preset=id;FS.focusSec=p.focus*60;FS.breakSec=p.brk*60;if(!FS.running){FS.remaining=focusTotal();FS.elapsed=0;}focusUI();}
-function focusMode(mode){if(FS.running)return toast("Stop the timer first");if(mode===FS.mode)return;FS.mode=mode;if(mode==="stopwatch"){FS.phase="focus";}else{FS.phase="focus";FS.remaining=focusTotal();}FS.elapsed=0;focusUI();}
+function focusMode(mode){
+  if(FS.running) return toast("Stop the timer first");
+  if(mode===FS.mode) return;
+
+  var mins = Math.round(FS.elapsed / 60);
+
+  if(mins >= 1){
+    var keep = confirm(
+      "You have " + mins + " min elapsed in " + FS.mode + " mode.\n\n" +
+      "Switch to " + mode + " mode?\n\n" +
+      "OK     = log those " + mins + " min now, then switch\n" +
+      "Cancel = stay in " + FS.mode + " mode"
+    );
+    if(!keep) return;
+
+    var label = FS.label || "Focus session";
+    snapshot();
+    S.focusLog.push({
+      id: uid("f"),
+      label: label,
+      taskId: FS.taskId,
+      topicId: FS.topicId,
+      startedAt: new Date(FS.startedAt || Date.now()).toISOString(),
+      endedAt: new Date().toISOString(),
+      minutes: mins,
+      quality: focusQuality(mins, _focusDistractions)
+    });
+    if(FS.topicId) attachFocusToSession(mins, FS.topicId);
+    logActivity("focus.logged", FS.topicId || FS.taskId || null, { minutes: mins, label: label });
+    saveLocal();
+    updateBadges();
+    toast("Logged " + mins + " min", "Switching to " + mode + " mode");
+  }
+
+  FS.mode = mode;
+  FS.phase = "focus";
+  if(mode !== "stopwatch") FS.remaining = focusTotal();
+  FS.elapsed = 0;
+  FS.startedAt = null;
+  _focusDistractions = 0;
+  _focusAwayMs = 0;
+  _warnChimed = false;
+  focusUI();
+}
 function focusOpen(opts){opts=opts||{};
   if(!FS.running&&FS.elapsed===0){
     const p=focusPreset(FS.preset);
