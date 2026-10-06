@@ -9550,9 +9550,11 @@ function focusStart(){
   FS.running=true;
   FS.startedAt=FS.startedAt||Date.now();
   FS._lastTickMs=Date.now();
-  if(!FS.elapsed)_focusDistractions=0;
-_focusAwayMs=0;
-_warnChimed=false;
+    if(!FS.elapsed){
+    _focusDistractions=0;
+    _focusAwayMs=0;
+    _warnChimed=false;
+  }
 ambientStart();
   if(FS.tick)clearInterval(FS.tick);
   FS.tick=setInterval(focusTick,1000);
