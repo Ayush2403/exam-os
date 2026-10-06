@@ -1,35 +1,15 @@
-# macOS
+# Local editor + OS
 .DS_Store
-
-# Backups
-*.bak
-*.bak2
-*.bak3
-*.bak4
-*.bak-*
-
-# Local copies / folders
-index copy.html
-JSON backup/
-old icons/
-
-# IDE
-.vscode/
-.idea/
-install.sh
-
-# Wrangler cache
-.wrangler/
-
-# Scratch files
-v12.html
-deepseek_mobile_optimization_prompt.txt
-
-# Stray files from accidental command paste
-shows
-this
-Thumbs.db
 *.swp
-*.swo
 *~
-pyq/data/local-library.json
+
+# Debug artifacts from one-off fixes
+*.bak
+*.bak.*
+*.broken
+fix-*.sh
+restore.sh
+patch-*.js
+
+# Keep the KaTeX fix
+!apex-katex-fix.js
