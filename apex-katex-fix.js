@@ -97,6 +97,32 @@
   ].join('\n');
   document.head.appendChild(style);
 
+
+  /* ---- Re-render math in the dashboard hero card + agenda ---- */
+  function rerenderDashboardMath() {
+    // Hero card title and subtitle
+    var hero = document.querySelector('.next-hero');
+    if (hero) {
+      hero.querySelectorAll('.nh-title, .nh-sub, .nh-reason').forEach(function(el){
+        if (el.querySelector && el.querySelector('.katex')) return;
+        var raw = el.textContent || '';
+        if (raw.indexOf('\\(') > -1 || raw.indexOf('\\[') > -1 || raw.indexOf('$$') > -1) {
+          el.innerHTML = window.renderMath(raw);
+        }
+      });
+    }
+    // Dashboard agenda rows (error rows on the Home page)
+    var dash = document.getElementById('view');
+    if (!dash) return;
+    dash.querySelectorAll('.row-item .t, .weak-t, .detail-row').forEach(function(el){
+      if (el.querySelector && el.querySelector('.katex')) return;
+      var raw = el.textContent || '';
+      if (raw.indexOf('\\(') > -1 || raw.indexOf('\\[') > -1 || raw.indexOf('$$') > -1) {
+        el.innerHTML = window.renderMath(raw);
+      }
+    });
+  }
+
   /* ---- Re-render math in error cards ---- */
   function rerenderErrorMath() {
     var list = document.getElementById('err-list');
@@ -158,13 +184,14 @@
       raf = requestAnimationFrame(function(){
         rerenderErrorMath();
         rerenderSessMath();
+        rerenderDashboardMath();
       });
     }).observe(view, { childList: true, subtree: true });
   }
 
-  setTimeout(function(){ rerenderErrorMath(); rerenderSessMath(); }, 400);
-  setTimeout(function(){ rerenderErrorMath(); rerenderSessMath(); }, 1200);
-  setTimeout(function(){ rerenderErrorMath(); rerenderSessMath(); }, 2500);
+  setTimeout(function(){ rerenderErrorMath(); rerenderSessMath(); rerenderDashboardMath(); }, 400);
+  setTimeout(function(){ rerenderErrorMath(); rerenderSessMath(); rerenderDashboardMath(); }, 1200);
+  setTimeout(function(){ rerenderErrorMath(); rerenderSessMath(); rerenderDashboardMath(); }, 2500);
 
   var _origEdit = window.edit;
   if (typeof _origEdit === 'function') {
@@ -174,6 +201,24 @@
     };
     try { edit = window.edit; } catch(e){}
   }
+  /* ---- Hero card title: click to expand/collapse ---- */
+  function wireHeroExpand() {
+    document.querySelectorAll('.next-hero .nh-title').forEach(function(el){
+      if (el.dataset.heroWired === '1') return;
+      el.dataset.heroWired = '1';
+      el.title = 'Click to expand';
+      el.addEventListener('click', function(){
+        this.classList.toggle('expanded');
+        this.title = this.classList.contains('expanded') ? 'Click to collapse' : 'Click to expand';
+      });
+    });
+  }
 
+  var _viewEl = document.getElementById('view');
+  if (_viewEl) {
+    new MutationObserver(wireHeroExpand).observe(_viewEl, { childList: true, subtree: true });
+  }
+  setTimeout(wireHeroExpand, 600);
+  setTimeout(wireHeroExpand, 1500);
   console.log('[apex-katex-fix] installed');
 })();
