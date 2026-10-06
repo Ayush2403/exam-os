@@ -1,0 +1,132 @@
+/* ============================================================
+   APEX LAYOUT FIX
+   - Stops error cards from bleeding off the right edge
+   - Caps review/error card width for readability
+   - Keeps KaTeX math inside its card
+   ============================================================ */
+
+/* ---- 1. Both lists: consistent, capped width ---- */
+#err-list,
+#sess-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* ---- 2. Every direct card in the list ---- */
+#err-list > .card,
+#sess-list > .card,
+#sess-list > .sess-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* ---- 3. Error cards: stop horizontal bleed ---- */
+#err-list .card,
+#sess-list .card,
+#sess-list .sess-card,
+.sess-card {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* All inner wrappers must respect the card width */
+#err-list .card > div,
+#err-list .card > div > div,
+#sess-list .sess-card > div,
+#sess-list .sess-card > div > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ---- 4. Error detail blocks: the actual culprit ---- */
+.err-detail {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.err-detail > div,
+.err-detail > div > div,
+.err-detail > div > div:last-child {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* ---- 5. KaTeX math: scroll inside its block, never expand the card ---- */
+.err-detail .katex,
+.err-detail .katex-html,
+.sess-notes-body .katex,
+.sess-notes-body .katex-html {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.err-detail .katex-display,
+.sess-notes-body .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}
+
+/* ---- 6. Review card: fix the empty-space-on-right issue ---- */
+#sess-list .sess-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* The card's own text rows shouldn't stretch */
+#sess-list .sess-name {
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* The meta grid should fill but not stretch weirdly */
+#sess-list .sess-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px 16px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ---- 7. On small screens: narrow everything ---- */
+@media (max-width: 860px) {
+  #err-list,
+  #sess-list {
+    gap: 10px;
+  }
+  #err-list > .card,
+  #sess-list > .sess-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+  #sess-list .sess-meta {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+  }
+}
+
+/* ---- 8. On very wide screens: keep cards from stretching absurdly ---- */
+@media (min-width: 1400px) {
+  #err-list,
+  #sess-list {
+    max-width: 960px;
+    margin-left: 0;
+  }
+}
