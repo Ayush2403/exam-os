@@ -124,9 +124,15 @@
 
 /* ---- 8. On very wide screens: keep cards from stretching absurdly ---- */
 @media (min-width: 1400px) {
-  #err-list,
-  #sess-list {
-    max-width: 960px;
-    margin-left: 0;
-  }
+  
 }
+
+/* ---- Force grid cells to fill the container width ---- */
+#err-list,
+#sess-list {
+  grid-template-columns: 100%;
+}
+
+/* ---- Cap and center card width for balance ---- */
+
+/* Cap card width to match the tab strip */
