@@ -13,3 +13,6 @@ patch-*.js
 
 # Keep the KaTeX fix
 !apex-katex-fix.js
+
+# Wrangler local cache
+.wrangler/
