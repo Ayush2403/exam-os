@@ -9365,18 +9365,18 @@ function focusPanelRender(){
   const preset=focusPreset(FS.preset);const phaseText=FS.mode==="stopwatch"?"Stopwatch":(FS.phase==="focus"?"Focus":"Break");
   const presetsHTML=FS.mode==="pomodoro"?('<div class="fp-presets">'+FOCUS_PRESETS.map(x=>'<button class="fp-chip'+(FS.preset===x.id?" on":"")+'" data-action="focus-preset" data-id="'+x.id+'">'+x.focus+'/'+x.brk+'</button>').join("")+'</div>'):'';
   p.innerHTML='<div class="fp-head"><span class="fp-title">Focus</span><span class="fp-badge">'+esc(FS.mode==="stopwatch"?"Stopwatch":preset.name)+'</span><button class="fp-x" data-action="focus-panel-close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>'
-    +'<div class="fp-modes"><button class="fp-mode'+(FS.mode==="pomodoro"?" on":"")+'" data-action="focus-mode" data-id="pomodoro">Pomodoro</button><button class="fp-mode'+(FS.mode==="stopwatch"?" on":"")+'" data-action="focus-mode" data-id="stopwatch">Stopwatch</button></div>'
+    +'<div class="fp-modes"><button class="fp-mode'+(FS.mode==="pomodoro"?" on":"")+'" data-action="focus-mode" data-id="pomodoro"'+(FS.running?' disabled style="opacity:.4;pointer-events:none"':'')+'>Pomodoro</button><button class="fp-mode'+(FS.mode==="stopwatch"?" on":"")+'" data-action="focus-mode" data-id="stopwatch"'+(FS.running?' disabled style="opacity:.4;pointer-events:none"':'')+'>Stopwatch</button></div>'
     +'<div class="fp-ringwrap"><svg class="fp-ring" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="'+R+'"/><circle class="fg" cx="50" cy="50" r="'+R+'" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+(C*(1-pct)).toFixed(1)+'"/></svg>'
     +'<div class="fp-center"><div class="fp-time">'+focusClock()+'</div><div class="fp-phase">'+phaseText+'</div></div></div>'
-    +'<div class="fp-label" data-action="focus-pick-topic" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 8px;border-radius:6px;transition:background .2s ease" onmouseover="this.style.background=\'rgba(139,92,246,.08)\'" onmouseout="this.style.background=\'transparent\'" title="Click to change topic">'+esc(FS.label||"Focus session")+'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div>'
+    +'<div class="fp-label" data-action="focus-pick-topic" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 8px;border-radius:6px;transition:background .2s ease'+(FS.running?';opacity:.4;pointer-events:none':'')+'" title="Click to change topic">'+esc(FS.label||"Focus session")+'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div>'
     +'<div class="fp-pomos" style="text-align:center;font-family:JetBrains Mono,monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-3);margin:-6px 0 10px"><span style="color:var(--accent-2);font-weight:700">'+_pomoCount()+'</span> blocks today</div>'
     +presetsHTML
     +focusTargetsHTML()
     +focusMusicHTML()
     +'<div class="fp-controls">'
       +(FS.running?'<button class="btn primary wide" data-action="focus-pause">⏸ Pause</button>':'<button class="btn primary wide" data-action="focus-start">▶ '+(FS.elapsed>0?"Resume":"Start")+'</button>')
-      +'<button class="btn sm ghost" data-action="focus-reset">↺ Reset</button>'
-      +(FS.mode==="pomodoro"?'<button class="btn sm ghost" data-action="focus-skip">Skip →</button>':'<span></span>')
+      +'<button class="btn sm ghost" data-action="focus-reset"'+(FS.running?' disabled style="opacity:.4;pointer-events:none"':'')+'>↺ Reset</button>'
+      +(FS.mode==="pomodoro"?'<button class="btn sm ghost" data-action="focus-skip"'+(FS.running?' disabled style="opacity:.4;pointer-events:none"':'')+'>Skip →</button>':'<span></span>')
       +'<button class="btn green wide" data-action="focus-complete">✓ Log &amp; Finish</button>'
     +'</div>'
     +'<div class="fp-foot"><button class="fp-link" data-action="focus-history">📊 History</button><button class="fp-link" data-action="focus-zen">⛶ Zen mode</button></div>';
@@ -9469,8 +9469,8 @@ function focusZenRender(){
       +'<div class="fs-center"><div class="fs-phase">'+phaseText+'</div><div class="fs-time">'+focusClock()+'</div><div class="fs-label">'+esc(FS.label||"Focus session")+'</div></div></div>'
     +'<div class="fs-controls">'
       +(FS.running?'<button class="btn" data-action="focus-pause">⏸ Pause</button>':'<button class="btn primary" data-action="focus-start">▶ '+(FS.elapsed>0?"Resume":"Start")+'</button>')
-      +'<button class="btn sm ghost" data-action="focus-reset">↺ Reset</button>'
-      +(FS.mode==="pomodoro"?'<button class="btn sm ghost" data-action="focus-skip">Skip</button>':'')
+      +'<button class="btn sm ghost" data-action="focus-reset"'+(FS.running?' disabled style="opacity:.4;pointer-events:none"':'')+'>↺ Reset</button>'
+      +(FS.mode==="pomodoro"?'<button class="btn sm ghost" data-action="focus-skip"'+(FS.running?' disabled style="opacity:.4;pointer-events:none"':'')+'>Skip</button>':'')
       +'<button class="btn green" data-action="focus-complete">✓ Log &amp; Finish</button>'
     +'</div>'
     +focusMusicHTML()
@@ -12295,7 +12295,7 @@ const ACTIONS={
   "grade-error":(id,el)=>gradeError(id,el.dataset.grade),
   "grade-review":(id,el)=>gradeReview(id,el.dataset.grade),
   "focus-start-topic":id=>{const t=topicById(id);if(!t)return;focusOpen({label:t.topic,topicId:id,autostart:true});toast("⚡ Focus started");},
-  "focus-pick-topic":()=>{
+  "focus-pick-topic":()=>{if(FS.running){toast("Stop the timer first");return;}
   const t=FS.topicId?topicById(FS.topicId):null;
   const body='<div class="frow"><label>What are you working on?</label>'+pickerHTML("focusTopic",FS.topicId?[FS.topicId]:[],false)+'</div>'
     +'<div class="chips" style="margin-top:8px"><button class="btn ghost sm" data-action="focus-clear-topic">Clear — free study (no topic)</button></div>'
@@ -12463,12 +12463,12 @@ const ACTIONS={
   "focus-sound-vol":(id,el)=>{S.settings.ambientVolume=Math.max(0,Math.min(1,(parseFloat(el.value)||0)/100));store.set(KEY,JSON.stringify(S));if(_ambientNode){var v=S.settings.ambientVolume;try{_ambientNode.gain.gain.linearRampToValueAtTime(v,_audioCtx.currentTime+0.2);}catch(e){}}},
   "focus-history":()=>{focusHistoryModal();},
 "focus-music-open":()=>{_focusMusicOpenedAt=Date.now();window.open("https://youtube.com/playlist?list=PLGfK5KRW2ZmQ","_blank","noopener");},
-  "focus-preset":id=>focusApplyPreset(id),
-  "focus-mode":id=>focusMode(id),
+  "focus-preset":id=>{if(FS.running){toast("Stop the timer first");return;}focusApplyPreset(id);},
+  "focus-mode":id=>{if(FS.running){toast("Stop the timer first");return;}focusMode(id);},
   "focus-start":()=>focusStart(),
   "focus-pause":()=>focusPause(),
-  "focus-reset":()=>focusReset(),
-  "focus-skip":()=>focusSkip(),
+  "focus-reset":()=>{if(FS.running){toast("Stop the timer first");return;}focusReset();},
+  "focus-skip":()=>{if(FS.running){toast("Stop the timer first");return;}focusSkip();},
   "focus-complete":()=>focusComplete(),
   "focus-panel-close":()=>focusPanelClose(),
   "focus-zen":()=>focusZen(true),
