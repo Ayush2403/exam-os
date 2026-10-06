@@ -11389,7 +11389,8 @@ function exportNotesHTML(){
     +'</header>'
     +sections
     +'<footer style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e5e0;font-size:11.5px;color:#a1a1aa;text-align:center"><span style="display:inline-flex;align-items:center;gap:6px;justify-content:center"><span style="display:inline-grid;place-items:center;width:16px;height:16px;border-radius:4px;background:#18181b;color:#fff;font-size:9px;font-weight:800;font-family:-apple-system,BlinkMacSystemFont,sans-serif">A</span>Designed &amp; built by Ayush Tomar · Generated '+new Date().toLocaleString()+'</span></footer>'
-    +'</body></html>';
+    +'<script src="./apex-katex-fix.js?v=1"></script>
+</body></html>';
   const blob=new Blob([html],{type:"text/html;charset=utf-8"});
   const url=URL.createObjectURL(blob);
   const win=window.open(url,"_blank");
@@ -14026,6 +14027,10 @@ try{
         changed++;
       }
       else if(b.textContent.trim() === "Calibration dial"){
+    app && \
+git add -A && \
+git commit -m "Setup: pyq folder + gitignore local-library" && \
+git push    b.textContent = "Tuning orbits";
         if(tiny) tiny.textContent = "Settings — theme, exams, sync, backup";
         if(iconWrap) iconWrap.innerHTML = ORBIT_ICON;
         changed++;

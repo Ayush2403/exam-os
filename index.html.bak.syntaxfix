@@ -14026,6 +14026,10 @@ try{
         changed++;
       }
       else if(b.textContent.trim() === "Calibration dial"){
+    app && \
+git add -A && \
+git commit -m "Setup: pyq folder + gitignore local-library" && \
+git push    b.textContent = "Tuning orbits";
         if(tiny) tiny.textContent = "Settings — theme, exams, sync, backup";
         if(iconWrap) iconWrap.innerHTML = ORBIT_ICON;
         changed++;
@@ -14301,6 +14305,5 @@ try{
 <script src="./apex-scope2.js?v=1"></script>
 <script src="./apex-task-rollover.js?v=1"></script>
 <script src="./apex-obsidian-link.js?v=1"></script>
-<script src="./apex-katex-fix.js?v=1"></script>
 </body>
 </html>
