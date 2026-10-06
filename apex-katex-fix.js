@@ -102,7 +102,7 @@
     var list = document.getElementById('err-list');
     if (!list) return;
     list.querySelectorAll('.err-detail > div > div:last-child').forEach(function(el){
-      if (el.dataset.katexDone === '1') return;
+      if (el.querySelector && el.querySelector('.katex')) return;
       var raw = el.textContent || '';
       if (raw.indexOf('\\(') > -1 || raw.indexOf('\\[') > -1 || raw.indexOf('$$') > -1) {
         el.innerHTML = window.renderMath(raw).replace(/\n/g, '<br>');
@@ -110,7 +110,7 @@
       }
     });
     list.querySelectorAll('.row-item .t').forEach(function(el){
-      if (el.dataset.katexDone === '1') return;
+      if (el.querySelector && el.querySelector('.katex')) return;
       var raw = el.textContent || '';
       if (raw.indexOf('\\(') > -1 || raw.indexOf('$$') > -1) {
         el.innerHTML = window.renderMath(raw);
@@ -124,7 +124,7 @@
     var list = document.getElementById('sess-list');
     if (!list) return;
     list.querySelectorAll('.sess-notes-body').forEach(function(el){
-      if (el.dataset.katexDone === '1') return;
+      if (el.querySelector && el.querySelector('.katex')) return;
       var raw = el.textContent || '';
       if (raw.indexOf('\\(') > -1 || raw.indexOf('\\[') > -1 || raw.indexOf('$$') > -1) {
         el.innerHTML = window.renderMath(raw).replace(/\n/g, '<br>');
@@ -132,7 +132,7 @@
       }
     });
     list.querySelectorAll('.err-detail > div > div:last-child').forEach(function(el){
-      if (el.dataset.katexDone === '1') return;
+      if (el.querySelector && el.querySelector('.katex')) return;
       var raw = el.textContent || '';
       if (raw.indexOf('\\(') > -1 || raw.indexOf('\\[') > -1 || raw.indexOf('$$') > -1) {
         el.innerHTML = window.renderMath(raw).replace(/\n/g, '<br>');
@@ -140,7 +140,7 @@
       }
     });
     list.querySelectorAll('.sess-name').forEach(function(el){
-      if (el.dataset.katexDone === '1') return;
+      if (el.querySelector && el.querySelector('.katex')) return;
       var raw = el.textContent || '';
       if (raw.indexOf('\\(') > -1 || raw.indexOf('$$') > -1) {
         el.innerHTML = window.renderMath(raw);
