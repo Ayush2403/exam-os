@@ -341,20 +341,26 @@
   // 8. Hide priority filter chips + legacy priority dropdowns
   // ============================================================
   function hideLegacy() {
-    document.querySelectorAll('.toolbar [data-pri]').forEach(function(el) { el.style.display = "none"; });
-    document.querySelectorAll('.topic-row select.mini-sel[data-change="syl-priority"]').forEach(function(el) {
-      el.style.display = "none";
-    });
-    document.querySelectorAll('.topic-row select.mini-sel[data-change="syl-weight"]').forEach(function(el) {
-      el.style.display = "none";
-    });
-    // Hide the legacy Priority frow in the old modal (if it still opens for some reason)
-    document.querySelectorAll('.modal .frow').forEach(function(frow) {
-      var label = frow.querySelector("label");
-      if (label && /^\s*Priority\s*$/i.test(label.textContent)) frow.style.display = "none";
-      if (label && /^\s*Weightage\s*$/i.test(label.textContent)) frow.style.display = "none";
-    });
-  }
+  document.querySelectorAll('.toolbar [data-pri]').forEach(function(el) { el.style.display = "none"; });
+  document.querySelectorAll('.topic-row select.mini-sel[data-change="syl-priority"]').forEach(function(el) {
+    el.style.display = "none";
+  });
+  document.querySelectorAll('.topic-row select.mini-sel[data-change="syl-weight"]').forEach(function(el) {
+    el.style.display = "none";
+  });
+
+  var modal = document.querySelector('.modal');
+  if (!modal) return;
+  var h3 = modal.querySelector('h3');
+  if (!h3) return;
+  if (!/topic/i.test(h3.textContent)) return;
+
+  modal.querySelectorAll('.frow').forEach(function(frow) {
+    var label = frow.querySelector("label");
+    if (label && /^\s*Priority\s*$/i.test(label.textContent)) frow.style.display = "none";
+    if (label && /^\s*Weightage\s*$/i.test(label.textContent)) frow.style.display = "none";
+  });
+}
 
   // ============================================================
   // 9. Exam bar above syllabus list
