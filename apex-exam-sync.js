@@ -38,8 +38,20 @@
   }
 
   var st = document.createElement('style');
-  st.textContent = '.ready-card .chips{display:none !important}';
+  st.textContent = '.ready-card .chips{display:none !important}' +
+    '#syl-exam{display:none !important}';
   document.head.appendChild(st);
+
+
+  /* One-time migration: if theme is piru (removed), switch to apex */
+  (function migratePiru(){
+    if (S && S.settings && S.settings.theme === 'piru') {
+      S.settings.theme = 'apex';
+      try { store.set(KEY, JSON.stringify(S)); } catch(e){}
+      if (typeof applyTheme === 'function') applyTheme('apex');
+      console.log('[apex] migrated theme: piru → apex');
+    }
+  })();
 
   console.log('[apex-exam-sync] canonical active exam installed');
 })();

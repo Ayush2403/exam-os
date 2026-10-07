@@ -43,7 +43,7 @@
     window.renderBoard = function(){
       const backup = S.tasks;
       if (tf.f !== 'all') {
-        const cutoff = addDays(todayISO(), -5);
+        const cutoff = addDays(todayISO(), -7);
         S.tasks = S.tasks.filter(function(t){
           if (t.status !== 'Completed') return true;
           if (!t.completedOn) return true;

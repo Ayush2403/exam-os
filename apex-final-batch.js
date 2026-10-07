@@ -214,13 +214,11 @@
       if (typeof checkStorageHealth !== 'function') return;
       var h = checkStorageHealth();
       if (!h.needsPrune) return;
-      if (typeof pruneOldData !== 'function') return;
-      var r = pruneOldData();
-      if (r.pruned > 0) {
-        console.log('[apex] auto-pruned ' + r.pruned + ' entries at ' + h.pct + '%');
-        setTimeout(function(){ if (typeof rerender === 'function') rerender(); }, 200);
-      }
-    } catch(e) { console.warn('[apex] auto-prune skipped:', e.message); }
+      // Do not auto-prune. Just warn — the banner on Home already offers
+      // a manual "Prune old data" button. Silent deletion of study evidence
+      // is a trust violation for an exam archive.
+      console.log('[apex] storage at ' + h.pct + '% — prune available on Home banner (not auto-running)');
+    } catch(e) { console.warn('[apex] storage check skipped:', e.message); }
   }, 3000);
 })();
 

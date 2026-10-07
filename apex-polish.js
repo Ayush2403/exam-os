@@ -14,7 +14,7 @@
     if (!S.sync || !S.sync.enabled || !S.sync.room) return;
     if (typeof syncKey !== 'undefined' && syncKey) return;
     var remembered = null;
-    try { remembered = localStorage.getItem(REMEMBER_KEY); } catch(e){}
+    try { remembered = sessionStorage.getItem(REMEMBER_KEY); } catch(e){}
     if (!remembered) return;
     if (typeof setPassphrase !== 'function') return;
     setPassphrase(remembered).then(function(){
@@ -35,7 +35,7 @@
     label.className = 'apex-remember-cb';
     label.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:12.5px;color:var(--text-2);padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-2)';
     var checked = false;
-    try { checked = !!localStorage.getItem(REMEMBER_KEY); } catch(e){}
+    try { checked = !!sessionStorage.getItem(REMEMBER_KEY); } catch(e){}
     label.innerHTML =
       '<input type="checkbox" ' + (checked ? 'checked' : '') + ' style="accent-color:var(--accent);flex-shrink:0">' +
       '<span><b>Remember on this device</b> — auto-unlock next time. Anyone with devtools access can read it.</span>';
@@ -44,11 +44,11 @@
       try {
         if (e.target.checked) {
           var pass = passField.value;
-          if (pass) { localStorage.setItem(REMEMBER_KEY, pass); }
-          else { localStorage.setItem(REMEMBER_NEXT, '1'); }
+          if (pass) { sessionStorage.setItem(REMEMBER_KEY, pass); }
+          else { sessionStorage.setItem(REMEMBER_NEXT, '1'); }
         } else {
-          localStorage.removeItem(REMEMBER_KEY);
-          localStorage.removeItem(REMEMBER_NEXT);
+          sessionStorage.removeItem(REMEMBER_KEY);
+          sessionStorage.removeItem(REMEMBER_NEXT);
         }
       } catch(_){}
     });
@@ -59,8 +59,8 @@
   document.addEventListener('input', function(e){
     if (!e.target || e.target.name !== 'syncPass') return;
     try {
-      if (localStorage.getItem(REMEMBER_NEXT) === '1' && e.target.value) {
-        localStorage.setItem(REMEMBER_KEY, e.target.value);
+      if (sessionStorage.getItem(REMEMBER_NEXT) === '1' && e.target.value) {
+        sessionStorage.setItem(REMEMBER_KEY, e.target.value);
       }
     } catch(_){}
   }, true);
@@ -75,7 +75,7 @@
     setTimeout(function(){
       try {
         if (cb.checked && passField.value) {
-          localStorage.setItem(REMEMBER_KEY, passField.value);
+          sessionStorage.setItem(REMEMBER_KEY, passField.value);
         }
       } catch(_){}
     }, 400);

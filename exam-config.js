@@ -85,14 +85,12 @@
         return diffD(a.date, todayISO()) - diffD(b.date, todayISO());
       });
       S.settings.activeExam = future[0].examTag;
-        S.settings.readinessExam = future[0].examTag;
       return;
     }
 
     // Fallback: any tagged exam
     var tagged = targets.filter(function(x) { return x.examTag; });
     S.settings.activeExam = tagged.length ? tagged[0].examTag : "CGL";
-    S.settings.readinessExam = S.settings.activeExam;
   }
 
   function getActiveExam() {
@@ -103,6 +101,7 @@
     if (typeof window.setActiveExam === 'function' && window.setActiveExam !== setActiveExam) {
       return window.setActiveExam(exam);
     }
+    // Fallback for early load — before apex-exam-sync.js is ready
     if (!S.settings) S.settings = {};
     S.settings.activeExam = exam;
     S.settings.readinessExam = exam;
@@ -291,56 +290,66 @@
   // 7. Syllabus pill — reads activeExam's config
   // ============================================================
   function repaintPills() {
-    var list = document.getElementById("syl-list");
-    if (!list) return;
-    var exam = getActiveExam();
+  var list = document.getElementById("syl-list");
+  if (!list) return;
+  var exam = getActiveExam();
 
-    list.querySelectorAll(".topic-row").forEach(function(row) {
-      var id = row.dataset.id;
-      if (!id) return;
-      var t = topicById(id);
-      if (!t) return;
+  list.querySelectorAll(".topic-row").forEach(function(row) {
+    var id = row.dataset.id;
+    if (!id) return;
+    var t = topicById(id);
+    if (!t) return;
 
-      var nameRow = row.querySelector('.topic-body > div:first-child');
-      if (!nameRow) return;
+    var nameRow = row.querySelector('.topic-body > div:first-child');
+    if (!nameRow) return;
 
-      // Remove any old pill
-      nameRow.querySelectorAll(".apex-computed-pri, .apex-cfg-pri").forEach(function(p) { p.remove(); });
-      // Hide the legacy priority pill if it slipped through
-      nameRow.querySelectorAll('.pill[class*="pri-"]').forEach(function(p) { p.style.display = "none"; });
+    var isTagged = Array.isArray(t.exams) && t.exams.indexOf(exam) > -1;
 
-      var isTagged = Array.isArray(t.exams) && t.exams.indexOf(exam) > -1;
-      var pri = isTagged ? getPriority(t, exam) : "";
-      var wt = isTagged ? getWeightage(t, exam) : "";
-
-      var pill = document.createElement("span");
+    // Find existing pill — only create if missing. This is the fix for
+    // the remove+appendChild churn that nopillchurn.js was papering over.
+    var pill = nameRow.querySelector(".apex-cfg-pri");
+    if (!pill) {
+      pill = document.createElement("span");
       pill.className = "pill apex-cfg-pri";
       pill.style.cssText = "margin-left:auto;flex-shrink:0;font-size:9.5px;padding:2px 9px;font-family:'JetBrains Mono',monospace;letter-spacing:.08em;font-weight:600";
-
-      if (!isTagged) {
-        pill.style.background = "rgba(120,120,120,.08)";
-        pill.style.borderColor = "rgba(120,120,120,.25)";
-        pill.style.color = "#6b7280";
-        pill.textContent = "— " + exam;
-        pill.title = "Not tagged for " + exam;
-      } else {
-        var score = 0;
-        try { if (typeof window.computeTopicPriority === "function") score = window.computeTopicPriority(t, exam); } catch(e){}
-        var lbl = score >= 70 ? "CRIT" : score >= 50 ? "HIGH" : score >= 30 ? "MED" : "LOW";
-        var bg, bd, fg;
-        if (score >= 70) { bg="rgba(248,113,113,.18)"; bd="rgba(248,113,113,.5)"; fg="#fca5a5"; }
-        else if (score >= 50) { bg="rgba(250,204,21,.18)"; bd="rgba(250,204,21,.5)"; fg="#fde68a"; }
-        else if (score >= 30) { bg="rgba(96,165,250,.18)"; bd="rgba(96,165,250,.5)"; fg="#93c5fd"; }
-        else { bg="rgba(74,222,128,.15)"; bd="rgba(74,222,128,.45)"; fg="#86efac"; }
-        pill.style.background = bg;
-        pill.style.borderColor = bd;
-        pill.style.color = fg;
-        pill.textContent = lbl + " " + score;
-        pill.title = "Computed: " + score + "/100\nweightage x D-Day x status\nExam: " + exam;
-      }
       nameRow.appendChild(pill);
+    }
+
+    // Hide legacy pills that slipped through (only once)
+    nameRow.querySelectorAll('.pill[class*="pri-"]').forEach(function(p) {
+      if (p !== pill && p.style.display !== "none") p.style.display = "none";
     });
-  }
+
+    if (!isTagged) {
+      var bgA = "rgba(120,120,120,.08)";
+      var bdA = "rgba(120,120,120,.25)";
+      var fgA = "#6b7280";
+      if (pill.style.background !== bgA) pill.style.background = bgA;
+      if (pill.style.borderColor !== bdA) pill.style.borderColor = bdA;
+      if (pill.style.color !== fgA) pill.style.color = fgA;
+      var txtA = "\u2014 " + exam;
+      if (pill.textContent !== txtA) pill.textContent = txtA;
+      var ttlA = "Not tagged for " + exam;
+      if (pill.title !== ttlA) pill.title = ttlA;
+    } else {
+      var score = 0;
+      try { if (typeof window.computeTopicPriority === "function") score = window.computeTopicPriority(t, exam); } catch(e){}
+      var lbl = score >= 70 ? "CRIT" : score >= 50 ? "HIGH" : score >= 30 ? "MED" : "LOW";
+      var bg, bd, fg;
+      if (score >= 70) { bg="rgba(248,113,113,.18)"; bd="rgba(248,113,113,.5)"; fg="#fca5a5"; }
+      else if (score >= 50) { bg="rgba(250,204,21,.18)"; bd="rgba(250,204,21,.5)"; fg="#fde68a"; }
+      else if (score >= 30) { bg="rgba(96,165,250,.18)"; bd="rgba(96,165,250,.5)"; fg="#93c5fd"; }
+      else { bg="rgba(74,222,128,.15)"; bd="rgba(74,222,128,.45)"; fg="#86efac"; }
+      if (pill.style.background !== bg) pill.style.background = bg;
+      if (pill.style.borderColor !== bd) pill.style.borderColor = bd;
+      if (pill.style.color !== fg) pill.style.color = fg;
+      var txtB = lbl + " " + score;
+      if (pill.textContent !== txtB) pill.textContent = txtB;
+      var ttlB = "Computed: " + score + "/100\nweightage x D-Day x status\nExam: " + exam;
+      if (pill.title !== ttlB) pill.title = ttlB;
+    }
+  });
+}
 
   // ============================================================
   // 8. Hide priority filter chips + legacy priority dropdowns
@@ -568,10 +577,8 @@
           return diffD(a.date, todayISO()) - diffD(b.date, todayISO());
         });
         S.settings.activeExam = future[0].examTag;
-        S.settings.readinessExam = future[0].examTag;
       } else {
         S.settings.activeExam = "CGL";
-        S.settings.readinessExam = "CGL";
       }
     }
 
@@ -765,10 +772,8 @@
         return diffD(a.date, todayISO()) - diffD(b.date, todayISO());
       });
       S.settings.activeExam = future[0].examTag;
-        S.settings.readinessExam = future[0].examTag;
     } else {
       S.settings.activeExam = "CGL";
-        S.settings.readinessExam = "CGL";
     }
     try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
   }

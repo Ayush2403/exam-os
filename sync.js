@@ -200,8 +200,9 @@
   window.startSync = async function() {
     if (!S.sync.enabled || !S.sync.room) { setSyncStatus("off"); return; }
     if (!syncKey) { setSyncStatus("locked"); return; }
-    // Do an immediate pull so we get accurate state on load
-    try { await pullNow(true); } catch(e) {}
+    // Do NOT pull on every startSync. The caller decides whether a pull
+    // is appropriate (first-load, explicit user action, or post-merge).
+    // Auto-pulling here can silently replace local state.
     if (_pollTimer) clearInterval(_pollTimer);
     _pollTimer = setInterval(async function() {
       if (document.hidden) return;
