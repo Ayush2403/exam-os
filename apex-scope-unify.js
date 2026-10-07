@@ -1,13 +1,13 @@
 /* ============================================================
-   APEX SCOPE UNIFY v1
-   - One source of truth: activeExam
-   - readinessScope, readinessProjection, ddayBannerHTML all follow it
-   - Orphan activeExam (no exam target) auto-heals to nearest target
-   - Chip click updates both activeExam and readinessExam
+   APEX SCOPE UNIFY v2
+   Trust the user's explicit pick. Only auto-bootstrap when
+   nothing is set at all. Never rewrite a chosen exam to
+   "nearest target".
    ============================================================ */
 (function(){
   'use strict';
-  if (window._apexScopeUnify) return;
+  if (window._apexScopeUnifyV2) return;
+  window._apexScopeUnifyV2 = true;
   window._apexScopeUnify = true;
 
   function getTargets(){
@@ -27,18 +27,16 @@
     });
   }
 
-  /* ---- 1. Unified active exam ---- */
+  /* Trust the pick. Only bootstrap if user has never picked. */
   window.getActiveExamTag = function(){
-    var active = (S.settings.activeExam || S.settings.readinessExam || '');
-    if (active && findTargetFor(active)) return active;
+    var active = (S.settings.activeExam || S.settings.readinessExam || '').trim();
+    if (active) return active;
 
-    // Auto-heal: nearest future target
     var future = getTargets().filter(function(x){ return diffD(x.date, todayISO()) >= 0; });
     if (future.length) {
       future.sort(function(a,b){ return diffD(a.date, todayISO()) - diffD(b.date, todayISO()); });
       return future[0].examTag;
     }
-    // Fall back to nearest past target
     var past = getTargets();
     if (past.length) {
       past.sort(function(a,b){ return diffD(b.date, todayISO()) - diffD(a.date, todayISO()); });
@@ -47,34 +45,27 @@
     return '';
   };
 
-  /* ---- 2. Heal orphan activeExam on load ---- */
-  (function healOrphan(){
-    var cur = S.settings.activeExam || S.settings.readinessExam;
-    if (cur && findTargetFor(cur)) return;
-    var fixed = window.getActiveExamTag();
-    if (fixed && fixed !== cur) {
-      S.settings.activeExam = fixed;
-      S.settings.readinessExam = fixed;
-      try { store.set(KEY, JSON.stringify(S)); } catch(e){}
-      console.log('[apex-scope-unify] healed orphan activeExam → ' + fixed);
-    }
-  })();
-
-  /* ---- 3. Scope: tags come from targets, current from active ---- */
   window.readinessScope = function(){
     var tags = [];
-    getTargets().forEach(function(x){
-      if (tags.indexOf(x.examTag) === -1) tags.push(x.examTag);
+    (S.settings.exams || []).forEach(function(x){
+      if (x.examTag && tags.indexOf(x.examTag) === -1) tags.push(x.examTag);
+    });
+    (S.tax.exams || []).forEach(function(e){
+      if (tags.indexOf(e) !== -1) return;
+      if (S.syllabus.some(function(t){
+        return !t.archived && Array.isArray(t.exams) && t.exams.indexOf(e) > -1;
+      })) tags.push(e);
     });
     return { tags: tags, current: window.getActiveExamTag() };
   };
 
-  /* ---- 4. Projection: only when scope has a target ---- */
   window.readinessProjection = function(){
     var scopeTag = window.getActiveExamTag();
     if (!scopeTag) return null;
     var target = findTargetFor(scopeTag);
     if (!target) return null;
+    var days = diffD(target.date, todayISO());
+    if (days < 0) return null;
 
     var scopedTopics = S.syllabus.filter(function(t){
       return !t.archived && !hasKids(t.id) && _tagMatchesTopic(t, scopeTag);
@@ -83,9 +74,6 @@
     if (!total) return null;
 
     var mastered = scopedTopics.filter(function(t){ return isTopicMastered(t); }).length;
-    var days = diffD(target.date, todayISO());
-    if (days < 0) return null;
-
     var cutoff30 = addDays(todayISO(), -30);
     var recentMastered = new Set(
       S.sessions
@@ -112,97 +100,19 @@
     };
   };
 
-  /* ---- 5. D-Day banner follows scope ---- */
-  window.ddayBannerHTML = function(){
-    var scopeTag = window.getActiveExamTag();
-    var scopeTarget = scopeTag ? findTargetFor(scopeTag) : null;
-
-    var allTargets = (S.settings && Array.isArray(S.settings.exams))
-      ? S.settings.exams.filter(function(x){ return x.date; })
-      : [];
-
-    if (!allTargets.length) {
-      return '<button class="dday-empty" data-action="open-exams-manager">' +
-        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px">' +
-        '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>' +
-        '</svg>Add an exam target to unlock the D-Day counter</button>';
-    }
-
-    if (!scopeTarget) {
-      return '<button class="dday-empty" data-action="open-exams-manager">' +
-        'No exam target for <b style="color:var(--accent-2);margin:0 4px">' + esc(scopeTag || 'this scope') + '</b> — click to add</button>';
-    }
-
-    var withDays = allTargets.map(function(x){
-      return Object.assign({}, x, { days: diffD(x.date, todayISO()) });
-    });
-
-    var hero = withDays.find(function(x){ return x.id === scopeTarget.id; });
-    var rest = withDays.filter(function(x){ return x.id !== hero.id; });
-
-    // Sort rest: future soonest first, then past most-recent
-    rest.sort(function(a,b){
-      var aF = a.days >= 0, bF = b.days >= 0;
-      if (aF && !bF) return -1;
-      if (!aF && bF) return 1;
-      if (aF && bF) return a.days - b.days;
-      return b.days - a.days;
-    });
-
-    var isPast = hero.days < 0;
-    var cls = isPast ? 'past'
-            : hero.days === 0 ? 'urgent'
-            : hero.days <= 30 ? 'urgent'
-            : hero.days <= 90 ? 'soon'
-            : 'ok';
-
-    var labelLine = esc(hero.label) + (hero.examTag ? ' · ' + esc(hero.examTag) : '');
-
-    var subLine;
-    if (isPast) {
-      var dPast = Math.abs(hero.days);
-      subLine = (dPast === 1 ? '1 day since' : dPast + ' days since') + ' · ' + fmtDY(hero.date);
-    } else if (hero.days === 0) {
-      subLine = 'today — go get it · ' + fmtDY(hero.date);
-    } else {
-      subLine = (hero.days === 1 ? '1 day to go' : hero.days + ' days to go') + ' · ' + fmtDY(hero.date);
-    }
-
-    var numDisplay = isPast
-      ? '<span style="font-size:.55em;letter-spacing:.08em;opacity:.7">✓</span>'
-      : Math.abs(hero.days);
-
-    var html = '<div class="dday-wrap">' +
-      '<div class="dday-banner ' + cls + '" data-action="open-exams-manager" style="cursor:pointer" title="Click to edit exam dates">' +
-        '<div class="dday-num">' + numDisplay + '</div>' +
-        '<div class="dday-info">' +
-          '<div class="dday-label">' + labelLine + '</div>' +
-          '<div class="dday-sub">' + subLine + '</div>' +
-        '</div>' +
-      '</div>';
-
-    if (rest.length) {
-      html += '<div class="dday-rest">' + rest.map(function(x){
-        var isPastX = x.days < 0;
-        var c = isPastX ? 'var(--text-3)'
-              : x.days <= 30 ? 'var(--pri-critical-fg)'
-              : x.days <= 90 ? 'var(--pri-medium-fg)'
-              : 'var(--text-2)';
-        var num = isPastX
-          ? '<span style="opacity:.7">✓ ' + Math.abs(x.days) + 'd</span>'
-          : Math.abs(x.days) + 'd';
-        return '<span class="dday-rest-item" data-action="open-exams-manager" style="cursor:pointer" title="Click to edit exam dates">' +
-          '<span class="dday-rest-num" style="color:' + c + '">' + num + '</span>' +
-          '<span class="dday-rest-label">' + esc(x.label) + '</span>' +
-        '</span>';
-      }).join('') + '</div>';
-    }
-
-    html += '</div>';
-    return html;
+  /* Chip click — sets both, clears cache, rerenders */
+  ACTIONS['readiness-exam-set'] = function(id){
+    if (!S.settings) S.settings = {};
+    var exam = id || '';
+    S.settings.readinessExam = exam;
+    S.settings.activeExam = exam;
+    try { store.set(KEY, JSON.stringify(S)); } catch(e){}
+    if (window._apexRCache) window._apexRCache.clear();
+    rerender();
+    console.log('[scope] switched to', exam);
   };
 
-  /* ---- 6. Chip click writes both fields and clears cache ---- */
+  /* Exam bar dropdown — same sync */
   var _origSetActive = window.setActiveExam;
   if (typeof _origSetActive === 'function') {
     window.setActiveExam = function(exam){
@@ -213,14 +123,5 @@
     try { setActiveExam = window.setActiveExam; } catch(e){}
   }
 
-  /* ---- 7. readiness-exam-set also clears the render cache ---- */
-  var _origChipSet = ACTIONS['readiness-exam-set'];
-  if (typeof _origChipSet === 'function') {
-    ACTIONS['readiness-exam-set'] = function(id){
-      if (window._apexRCache) window._apexRCache.clear();
-      return _origChipSet.apply(this, arguments);
-    };
-  }
-
-  console.log('[apex-scope-unify] installed · scope=' + window.getActiveExamTag());
+  console.log('[apex-scope-unify] v2 installed · scope=' + window.getActiveExamTag());
 })();
