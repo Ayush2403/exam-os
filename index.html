@@ -14049,8 +14049,11 @@ try{
 
   /* ---- Override sectionWeakness (called by every weaknessScore) ---- */
   const _origSectionWeakness = sectionWeakness;
-  sectionWeakness = function(){
-    return window.apexRcache("sectionWeakness", _origSectionWeakness);
+  sectionWeakness = function(examTag){
+    return window.apexRcache(
+      "sectionWeakness:" + (examTag || ""),
+      function(){ return _origSectionWeakness(examTag); }
+    );
   };
 
   /* ---- Override weakTopics (computes score for every leaf topic) ---- */

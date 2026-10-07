@@ -112,9 +112,15 @@
     if (friction <= 0) return 0;
 
     let importance = 1.0;
-    if (t.priority === 'Critical') importance += 0.3;
-    else if (t.priority === 'High') importance += 0.15;
-    if (t.weightage === 'High') importance += 0.15;
+    // Prefer per-exam config when available. exam-config.js clears the
+    // legacy t.priority / t.weightage fields, so reading them alone
+    // silently loses the priority multiplier on modern topics.
+    var _cfg = (t.examConfig && examTag) ? t.examConfig[examTag] : null;
+    var _pri = (_cfg && _cfg.priority) || t.priority || '';
+    var _wt = (_cfg && _cfg.weightage) || t.weightage || '';
+    if (_pri === 'Critical') importance += 0.3;
+    else if (_pri === 'High') importance += 0.15;
+    if (_wt === 'High') importance += 0.15;
     importance += examUrgencyForTopic(t) * 0.15;
 
     const statusMap = { 'Not started': 0.7, 'Learning': 1.0, 'Practicing': 0.9, 'Reviewing': 0.7, 'Mastered': 0 };
@@ -560,7 +566,13 @@
     const cutoff30 = addDays(todayISO(), -30);
     const masteredRecent = new Set(
       S.sessions
-        .filter(function(s){ return s.masteredAt && s.masteredAt >= cutoff30 && s.topicId; })
+        .filter(function(s){
+          if (!s.masteredAt || s.masteredAt < cutoff30 || !s.topicId) return false;
+          // Only count sessions whose exam matches the current scope.
+          // Unscoped (legacy) sessions still count for every exam.
+          if (s.examTag && String(s.examTag).toLowerCase() !== String(scopeTag).toLowerCase()) return false;
+          return true;
+        })
         .map(function(s){ return s.topicId; })
     ).size;
 
