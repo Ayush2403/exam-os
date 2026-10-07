@@ -6,6 +6,11 @@
 (function(){
   if (window._apexTagsFinal) return;
   window._apexTagsFinal = true;
+  if (S && S.settings && S.settings._apexTagsFinalRun) return;
+  if (S && S.settings) {
+    S.settings._apexTagsFinalRun = 1;
+    try { store.set(KEY, JSON.stringify(S)); } catch(e){}
+  }
   if (typeof S === 'undefined' || !Array.isArray(S.syllabus)) return;
 
   var ALL_EXAMS = ['CGL','CHSL','IB ACIO','RBI GRADE B','RBI GRADE A','RBI ASSISTANT','NABARD GRADE A','SBI PO','SBI CLERK','IBPS PO','IBPS CLERK','RRB PO','RRB CLERK'];
