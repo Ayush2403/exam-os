@@ -12185,7 +12185,7 @@ function examTargetModal(t){
   const isNew=!t;
   const body='<div class="frow"><label>Label</label><input class="inp" name="label" value="'+esc(t?t.label:"")+'" placeholder="e.g. SSC CGL Tier 1" autofocus></div>'
     +'<div class="f2"><div class="frow"><label>Date</label>'+dateFieldHTML("date",(t&&t.date)||"")+'</div><div class="frow"><label>Priority</label><select class="inp" name="priority">'+selOpts(pris,(t&&t.priority)||"Primary")+'</select></div></div>'
-    +'<div class="frow"><label>Exam tag (links to your syllabus)</label><select class="inp" name="examTag"><option value="">— None (generic) —</option>'+selOpts(exams,(t&&t.examTag)||"")+'</select><div class="hint">Pick the tag your syllabus topics are tagged with. A topic tagged <b>CGL</b> inherits urgency from the nearest exam whose tag is <b>CGL</b>.</div></div>';
+    +'<div class="frow"><label>Exam tag (links to your syllabus)</label><select class="inp" name="examTag"><option value="">— None (generic) —</option>'+selOpts(exams,(t&&t.examTag)||"")+'</select><div class="hint">Pick the tag your syllabus topics are tagged with. A topic inherits urgency from the nearest exam whose tag matches its own.</div></div>';
   openModal(isNew?"Add exam target":"Edit exam target",body,v=>{
     if(!v.label||!v.label.trim()){toast("⚠️ Label required");return false;}
     if(!v.date){toast("⚠️ Date required");return false;}
