@@ -127,19 +127,34 @@
     try {
       setSyncStatus("syncing");
       let needMerge = false;
+      // Preflight GET must succeed OR the push aborts. A failed read
+      // means we do not know if the cloud is newer. Pushing blind can
+      // overwrite newer cloud state.
+      let remote;
       try {
-        const remote = await apiGet(S.sync.room);
-        if (remote && remote.updatedAt && S._lastSync && remote.updatedAt > S._lastSync
-            && S._lastLocalEdit && S._lastLocalEdit > S._lastSync) {
-          needMerge = true;
-          try {
-            const parsed = JSON.parse(remote.blob);
-            const remoteState = await decryptState(parsed);
-            S = mergeForSync(S, remoteState);
-            if (!silent) toast("Merged with cloud", "Local + cloud preserved");
-          } catch(e) {}
+        remote = await apiGet(S.sync.room);
+      } catch (err) {
+        recordSyncError();
+        if (!silent) toast("Push aborted", "Could not reach cloud to check for conflicts");
+        return;
+      }
+      // Compare numerically: remote.updatedAt is epoch seconds.
+      // S._lastSync is stored as ISO; convert before comparing.
+      var lastSyncEpoch = S._lastSync ? Math.floor(new Date(S._lastSync).getTime() / 1000) : 0;
+      if (remote && remote.updatedAt && remote.updatedAt > lastSyncEpoch
+          && S._lastLocalEdit && new Date(S._lastLocalEdit).getTime() / 1000 > lastSyncEpoch) {
+        needMerge = true;
+        try {
+          const parsed = JSON.parse(remote.blob);
+          const remoteState = await decryptState(parsed);
+          S = mergeForSync(S, remoteState);
+          if (!silent) toast("Merged with cloud", "Local + cloud preserved");
+        } catch (e) {
+          recordSyncError();
+          if (!silent) toast("Merge failed", "Push aborted — cloud copy unreadable");
+          return;
         }
-      } catch(e) {}
+      }
       const payload = JSON.parse(JSON.stringify(S));
       delete payload.sync;
       delete payload._lastSync;
@@ -151,7 +166,7 @@
       const blob = JSON.stringify(encrypted);
       const saltB64 = bufToB64(syncSalt);
       const resp = await apiPut(S.sync.room, saltB64, blob);
-      S._lastSync = new Date(resp.updatedAt * 1000).toISOString();
+      S._lastSync = resp.updatedAt; // epoch seconds — matches remote.updatedAt
       recordSyncSuccess();
       if (!silent && !needMerge) toast("Pushed (encrypted)");
       if (!silent && needMerge) rerender();
@@ -182,7 +197,7 @@
       Object.keys(remote).forEach(k => { S[k] = remote[k]; });
       S.schemaVersion = SCHEMA_VERSION;
       S.sync = { enabled: true, room: S.sync.room };
-      S._lastSync = new Date(row.updatedAt * 1000).toISOString();
+      S._lastSync = row.updatedAt; // epoch seconds
       _applyingRemote = false;
       applyTheme(S.settings.theme || "apex");
       try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
@@ -211,7 +226,7 @@
         const row = await apiGet(S.sync.room);
         if (!row) return;
         const remoteUpdated = row.updatedAt;
-        const localUpdated = S._lastSync ? Math.floor(new Date(S._lastSync).getTime() / 1000) : 0;
+        const localUpdated = typeof S._lastSync === "number" ? S._lastSync : (S._lastSync ? Math.floor(new Date(S._lastSync).getTime() / 1000) : 0);
         if (remoteUpdated <= localUpdated) return;
         const parsed = JSON.parse(row.blob);
         const remote = await decryptState(parsed);

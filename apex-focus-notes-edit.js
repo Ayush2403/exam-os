@@ -1,8 +1,9 @@
 /* ============================================================
    APEX FOCUS NOTES EDITOR
    Adds a pencil icon next to "Recent focus notes" on review
-   cards. Click it to edit or clear focus notes on that topic.
-   Session time is preserved — only the note text changes.
+   cards. Click it to edit note text AND minutes for any
+   focus log entry. Session time is preserved unless you
+   change it. Clearing a note does not delete the session.
    ============================================================ */
 (function(){
   'use strict';
@@ -11,7 +12,7 @@
 
   function notesFor(topicId){
     return (S.focusLog || []).filter(function(f){
-      return f.topicId === topicId && (f.win || f.gap);
+      return f.topicId === topicId;
     }).sort(function(a, b){
       return (b.startedAt || '').localeCompare(a.startedAt || '');
     });
@@ -23,11 +24,11 @@
     var notes = notesFor(topicId);
 
     var body = '<div class="sub-h">' + esc(t.topic) + ' · ' + notes.length +
-               ' note' + (notes.length === 1 ? '' : 's') + '</div>';
+               ' entr' + (notes.length === 1 ? 'y' : 'ies') + '</div>';
 
     if (!notes.length) {
       body += '<div class="empty" style="padding:24px 12px">' +
-              '<b>No focus notes</b>' +
+              '<b>No focus entries</b>' +
               '<p>They come from the Focus capture modal after a session.</p>' +
               '</div>';
     } else {
@@ -36,10 +37,13 @@
         var mins = f.minutes || 0;
         return '<div data-note-row="' + f.id + '" ' +
           'style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--surface-2)">' +
-          '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">' +
-            '<span class="tiny" style="font-family:\'JetBrains Mono\',monospace;letter-spacing:.08em">' +
-              esc(date) + ' · ' + mins + 'm' +
-            '</span>' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px">' +
+            '<span class="tiny" style="font-family:\'JetBrains Mono\',monospace;letter-spacing:.08em;flex:1">' + esc(date) + '</span>' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              '<input type="number" min="0" max="1440" step="1" data-note-mins="' + f.id + '" value="' + (mins || 0) + '" ' +
+                'style="width:64px;min-height:32px;padding:4px 8px;font-size:12px;font-family:\'JetBrains Mono\',monospace;text-align:center;background:var(--surface);border:1px solid var(--border-2);border-radius:6px;color:var(--text)">' +
+              '<span class="tiny" style="font-family:\'JetBrains Mono\',monospace;letter-spacing:.08em">min</span>' +
+            '</div>' +
             '<button type="button" class="mini-icon danger" data-clear-note="' + f.id + '" ' +
               'title="Clear both fields (session time stays)">×</button>' +
           '</div>' +
@@ -55,7 +59,7 @@
       }).join('');
     }
 
-    openModal('Focus notes', body, function(){
+    openModal('Focus entries', body, function(){
       snapshot();
       var changed = 0;
       document.querySelectorAll('[data-note-win]').forEach(function(inp){
@@ -72,17 +76,23 @@
         var v = inp.value.trim();
         if ((f.gap || '') !== v){ f.gap = v; changed++; }
       });
+      document.querySelectorAll('[data-note-mins]').forEach(function(inp){
+        var id = inp.getAttribute('data-note-mins');
+        var f = S.focusLog.find(function(x){ return x.id === id; });
+        if (!f) return;
+        var v = Math.max(0, Math.min(1440, parseInt(inp.value, 10) || 0));
+        if ((f.minutes || 0) !== v){ f.minutes = v; changed++; }
+      });
       if (changed){
         saveLocal();
         rerender();
-        toast('Saved', changed + ' note' + (changed === 1 ? '' : 's') + ' updated');
+        toast('Saved', changed + ' field' + (changed === 1 ? '' : 's') + ' updated');
       } else {
         toast('No changes');
       }
       return true;
     }, 'Save');
 
-    // Wire the × clear buttons inside the modal
     var modal = document.querySelector('.modal');
     if (modal){
       modal.addEventListener('click', function(e){
@@ -102,14 +112,13 @@
           var m = document.createElement('div');
           m.className = 'tiny apex-clear-marker';
           m.style.cssText = 'margin-top:8px;color:var(--pri-critical-fg);font-family:JetBrains Mono,monospace;letter-spacing:.1em';
-          m.textContent = 'WILL BE CLEARED ON SAVE';
+          m.textContent = 'NOTES WILL BE CLEARED ON SAVE';
           row.appendChild(m);
         }
       });
     }
   }
 
-  /* Inject the pencil icon into each "Recent focus notes" header */
   function addEditButtons(){
     document.querySelectorAll('.sess-notes-h').forEach(function(h){
       var txt = (h.textContent || '').trim();
@@ -126,7 +135,7 @@
       btn.type = 'button';
       btn.className = 'notes-edit';
       btn.setAttribute('data-edit-focus-notes', s.topicId);
-      btn.title = 'Edit focus notes';
+      btn.title = 'Edit focus entries';
       btn.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" ' +
         'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>';
@@ -134,7 +143,6 @@
     });
   }
 
-  /* Click handler — open editor */
   document.addEventListener('click', function(e){
     var btn = e.target.closest('[data-edit-focus-notes]');
     if (!btn) return;
@@ -143,7 +151,6 @@
     openEditor(btn.getAttribute('data-edit-focus-notes'));
   }, true);
 
-  /* Re-run on every render */
   var view = document.getElementById('view');
   if (view){
     var raf = null;
@@ -157,5 +164,5 @@
   setTimeout(addEditButtons, 2500);
   window.addEventListener('hashchange', function(){ setTimeout(addEditButtons, 100); });
 
-  console.log('[apex-focus-notes-edit] installed');
+  console.log('[apex-focus-notes-edit] installed — minutes + notes editable');
 })();
