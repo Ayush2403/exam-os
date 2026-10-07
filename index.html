@@ -10905,23 +10905,6 @@ function readinessHTML(){
     var c=val>=70?"#10B981":val>=50?"#F59E0B":"#EF4444";
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px"><span>'+label+'</span><b style="color:'+c+'">'+val+'%</b></div>';
   }).join(""):"";
-    // Precompute composite for every scope tag so inactive chips can show it.
-  // Bypass the Perf-v3 examReadiness cache by clearing it before each call.
-  const _tagComposites = {};
-  if(ready && ready.scopeTags && ready.scopeTags.length > 1){
-    const savedTag = S.settings.readinessExam;
-    ready.scopeTags.forEach(function(tag){
-      try{
-        S.settings.readinessExam = tag;
-        if(window._apexRCache) window._apexRCache.delete("examReadiness");
-        const r = examReadiness();
-        _tagComposites[tag] = r ? r.composite : null;
-      }catch(e){ _tagComposites[tag] = null; }
-    });
-    S.settings.readinessExam = savedTag;
-    if(window._apexRCache) window._apexRCache.delete("examReadiness");
-    // Re-prime the cache for the actual active tag so downstream consumers get the right value
-    examReadiness();
   }
   return '<div class="ready-card '+cls+'" style="padding:22px 26px">'
 +'<div class="ready-head" style="margin-bottom:10px"><div><div class="ready-title">Exam Readiness</div><div class="ready-sub">'+(ready&&ready.scopeTag?('Scope: '+esc(ready.scopeTag)+' — '):'Composite — ')+'coverage × recall × mocks × errors</div></div><div class="ready-pct">'+composite+'<span class="ready-pct-sign">%</span></div></div>'
@@ -12537,7 +12520,7 @@ const ACTIONS={
     _rerenderThemeGrid();
   },
   "enter-app":()=>{try{localStorage.setItem("apex-entered","1");}catch(e){}go("dashboard");},
-  "readiness-exam-set":(id)=>{S.settings.readinessExam=id||"";store.set(KEY,JSON.stringify(S));rerender();},
+  "readiness-exam-set":(id)=>{if(typeof setActiveExam==='function')setActiveExam(id||"");else{S.settings.readinessExam=id||"";store.set(KEY,JSON.stringify(S));rerender();}},
   "open-discord":()=>window.open("https://discord.gg/eTSUBRNp3b","_blank","noopener"),
   "open-exams-manager":()=>openExamsManager(),
   "open-sections-manager":()=>openSectionsManager(),

@@ -85,12 +85,14 @@
         return diffD(a.date, todayISO()) - diffD(b.date, todayISO());
       });
       S.settings.activeExam = future[0].examTag;
+        S.settings.readinessExam = future[0].examTag;
       return;
     }
 
     // Fallback: any tagged exam
     var tagged = targets.filter(function(x) { return x.examTag; });
     S.settings.activeExam = tagged.length ? tagged[0].examTag : "CGL";
+    S.settings.readinessExam = S.settings.activeExam;
   }
 
   function getActiveExam() {
@@ -98,10 +100,13 @@
   }
 
   function setActiveExam(exam) {
+    if (typeof window.setActiveExam === 'function' && window.setActiveExam !== setActiveExam) {
+      return window.setActiveExam(exam);
+    }
     if (!S.settings) S.settings = {};
     S.settings.activeExam = exam;
+    S.settings.readinessExam = exam;
     try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
-    // Force re-render of syllabus list and pill
     if (typeof renderSylList === "function") renderSylList();
     if (typeof window.apexConfigRefresh === "function") window.apexConfigRefresh();
   }
@@ -563,8 +568,10 @@
           return diffD(a.date, todayISO()) - diffD(b.date, todayISO());
         });
         S.settings.activeExam = future[0].examTag;
+        S.settings.readinessExam = future[0].examTag;
       } else {
         S.settings.activeExam = "CGL";
+        S.settings.readinessExam = "CGL";
       }
     }
 
@@ -758,8 +765,10 @@
         return diffD(a.date, todayISO()) - diffD(b.date, todayISO());
       });
       S.settings.activeExam = future[0].examTag;
+        S.settings.readinessExam = future[0].examTag;
     } else {
       S.settings.activeExam = "CGL";
+        S.settings.readinessExam = "CGL";
     }
     try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
   }
