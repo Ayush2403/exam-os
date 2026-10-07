@@ -42,6 +42,10 @@
       return _origGet.apply(this, arguments);
     };
   }
+  /* Hide the scope chips — the exam bar on Syllabus is the single picker */
+var st = document.createElement('style');
+st.textContent = '.ready-card .chips{display:none !important}';
+document.head.appendChild(st);
 
   console.log('[apex-exam-sync] installed — activeExam ↔ readinessExam unified');
 })();
