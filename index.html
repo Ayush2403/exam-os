@@ -9094,6 +9094,7 @@ function focusSaveResume(){
       mode:FS.mode, phase:FS.phase, remaining:FS.remaining, elapsed:FS.elapsed,
       startedAt:FS.startedAt, focusSec:FS.focusSec, breakSec:FS.breakSec,
       preset:FS.preset, label:FS.label, taskId:FS.taskId, topicId:FS.topicId,
+      examTag:FS.examTag || '',
       savedAt:Date.now()
     }));
   }catch(e){}
@@ -9203,7 +9204,7 @@ function focusMode(mode){
       label: label,
       taskId: FS.taskId,
       topicId: FS.topicId,
-      examTag: (typeof getActiveExamTag==="function"?getActiveExamTag():""),
+      examTag: (FS.examTag||(typeof getActiveExamTag==="function"?getActiveExamTag():"")),
       startedAt: new Date(FS.startedAt || Date.now()).toISOString(),
       endedAt: new Date().toISOString(),
       minutes: mins,
@@ -9237,6 +9238,7 @@ function focusOpen(opts){opts=opts||{};
     _focusAwayMs=0;
     _focusHiddenAt=0;
     _warnChimed=false;
+    FS.examTag = (typeof getActiveExamTag === 'function') ? getActiveExamTag() : '';
   }
 FS.label=opts.label||FS.label||"Focus session";FS.taskId=opts.taskId||null;FS.topicId=opts.topicId||null;if(!FS.panel&&!FS.zen)focusPanelOpen();if(opts.autostart)focusStart();else focusUI();}
 function focusStart(){
@@ -9282,7 +9284,7 @@ function focusReset(){
       label: label,
       taskId: FS.taskId,
       topicId: FS.topicId,
-      examTag: (typeof getActiveExamTag==="function"?getActiveExamTag():""),
+      examTag: (FS.examTag||(typeof getActiveExamTag==="function"?getActiveExamTag():"")),
       startedAt: new Date(FS.startedAt || Date.now()).toISOString(),
       endedAt: new Date().toISOString(),
       minutes: mins,
@@ -9298,6 +9300,7 @@ function focusReset(){
   if(FS.mode==="pomodoro")FS.remaining=focusTotal();
   FS.elapsed=0;
   FS.startedAt=null;
+  FS.examTag=null;
   _focusDistractions=0;
   _focusAwayMs=0;
   _focusHiddenAt=0;
@@ -9323,7 +9326,7 @@ if(!_warnChimed && FS.remaining <= 60 && FS.remaining > 0){ _warnChimed=true; fo
   }
   focusTickUI();
 }
-function focusFinishBlock(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;focusBeep();if(FS.mode==="pomodoro"&&FS.phase==="focus"){const mins=Math.round(FS.elapsed/60);if(mins>=1){snapshot();S.focusLog.push({id:uid("f"),label:FS.label,taskId:FS.taskId,topicId:FS.topicId,examTag:(typeof getActiveExamTag==="function"?getActiveExamTag():""),startedAt:new Date(FS.startedAt||Date.now()).toISOString(),endedAt:new Date().toISOString(),minutes:mins,quality:focusQuality(mins,_focusDistractions)});logActivity("focus.logged",FS.topicId||FS.taskId||null,{minutes:mins,label:FS.label,quality:focusQuality(mins,_focusDistractions)});if(FS.topicId)attachFocusToSession(mins,FS.topicId);saveLocal();updateBadges();}FS.phase="break";FS.remaining=FS.breakSec;FS.elapsed=0;FS.startedAt=null;_focusDistractions=0;_focusAwayMs=0;_warnChimed=false;ambientStop();toast("⏱ Focus block done","+"+mins+" min logged · break started");focusStart();if(route()==="dashboard")rerender();}else if(FS.mode==="pomodoro"){FS.phase="focus";FS.remaining=FS.focusSec;FS.elapsed=0;FS.startedAt=null;_focusDistractions=0;_focusAwayMs=0;_warnChimed=false;toast("☕ Break over","Ready for the next block");focusUI();}}
+function focusFinishBlock(){if(FS.tick){clearInterval(FS.tick);FS.tick=null;}FS.running=false;focusBeep();if(FS.mode==="pomodoro"&&FS.phase==="focus"){const mins=Math.round(FS.elapsed/60);if(mins>=1){snapshot();S.focusLog.push({id:uid("f"),label:FS.label,taskId:FS.taskId,topicId:FS.topicId,examTag:(FS.examTag||(typeof getActiveExamTag==="function"?getActiveExamTag():"")),startedAt:new Date(FS.startedAt||Date.now()).toISOString(),endedAt:new Date().toISOString(),minutes:mins,quality:focusQuality(mins,_focusDistractions)});logActivity("focus.logged",FS.topicId||FS.taskId||null,{minutes:mins,label:FS.label,quality:focusQuality(mins,_focusDistractions)});if(FS.topicId)attachFocusToSession(mins,FS.topicId);saveLocal();updateBadges();}FS.phase="break";FS.remaining=FS.breakSec;FS.elapsed=0;FS.startedAt=null;_focusDistractions=0;_focusAwayMs=0;_warnChimed=false;ambientStop();toast("⏱ Focus block done","+"+mins+" min logged · break started");focusStart();if(route()==="dashboard")rerender();}else if(FS.mode==="pomodoro"){FS.phase="focus";FS.remaining=FS.focusSec;FS.elapsed=0;FS.startedAt=null;_focusDistractions=0;_focusAwayMs=0;_warnChimed=false;toast("☕ Break over","Ready for the next block");focusUI();}}
 function focusComplete(){
   if(FS.tick){clearInterval(FS.tick);FS.tick=null;}
   FS.running=false;
@@ -9360,7 +9363,7 @@ function focusShowCapture(mins, savedDistractions, savedAwayMs){
       label: capLabel,
       taskId: capTaskId,
       topicId: capTopicId,
-      examTag: (typeof getActiveExamTag==="function"?getActiveExamTag():""),
+      examTag: (FS.examTag||(typeof getActiveExamTag==="function"?getActiveExamTag():"")),
       startedAt: new Date(capStartedAt || Date.now()).toISOString(),
       endedAt: new Date().toISOString(),
       minutes: mins,
@@ -9380,6 +9383,7 @@ function focusShowCapture(mins, savedDistractions, savedAwayMs){
         date: todayISO(),
         link: "",
         topicId: capTopicId,
+        examTag: FS.examTag || (typeof getActiveExamTag === 'function' ? getActiveExamTag() : ''),
         interval: 0, ease: 2.5, nextReview: todayISO(),
         stage: "1st Time Study", history: []
       });
@@ -9663,6 +9667,7 @@ function attachFocusToSession(minutes, topicId){
     logDate: today,
     lastReviewed: null,
     duration: minutes,
+    examTag: (typeof getActiveExamTag === 'function' ? getActiveExamTag() : ''),
     interval: 0,
     ease: 2.5,
     nextReview: today,
@@ -10440,7 +10445,7 @@ function quickLogDo(forcedTopicId){
   }
   snapshot();
   const now=todayISO();
-  S.sessions.push({id:uid("s"),name:t.topic,topicId:t.id,logDate:now,lastReviewed:null,duration:parsed.minutes||0,interval:0,ease:2.5,nextReview:now,stage:"1st Time Study",history:[]});
+  S.sessions.push({id:uid("s"),name:t.topic,topicId:t.id,logDate:now,lastReviewed:null,duration:parsed.minutes||0,examTag:(typeof getActiveExamTag==="function"?getActiveExamTag():""),interval:0,ease:2.5,nextReview:now,stage:"1st Time Study",history:[]});
   saveLocal();
   inp.value="";
   const box=document.querySelector("[data-quicklog-suggest]");
@@ -11252,7 +11257,25 @@ function notesEditor(topicId){
       toast("Notes saved");
     },"Save");
 }
-function topicDetail(id){const t=topicById(id);if(!t)return;const sess=S.sessions.filter(s=>s.topicId===id);const errs=S.errors.filter(e=>e.topicId===id);const mocks=S.mocks.filter(m=>(m.weak||[]).indexOf(id)>-1);const fmin=topicFocusMin(id);const parent=t.parentId?topicById(t.parentId):null;const children=S.syllabus.filter(x=>x.parentId===id);const body='<div class="sub-h">'+esc(t.subject)+(t.priority?" · "+esc(t.priority):"")+(t.weightage?" · "+esc(t.weightage):"")+'</div><div class="chips" style="margin-bottom:16px"><span class="pill" style="background:'+statusColor(t.status)+';color:#fff;border-color:transparent">'+esc(t.status)+'</span>'+(fmin?'<span class="pill">'+fmtMin(fmin)+'</span>':"")+(parent?'<button class="rel-pill" data-action="topic-detail" data-id="'+parent.id+'">↰ '+esc(parent.topic)+'</button>':"")+'<button class="btn sm" data-action="timer-start-topic" data-id="'+t.id+'">Focus</button><button class="btn sm" data-action="edit-topic" data-id="'+t.id+'">'+ICONS.pencil+' Edit</button></div>'+(children.length?'<div class="detail-block"><h5>Sub-topics<span class="cnt">'+children.length+'</span></h5>'+children.map(c=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(c.topic)+'</span>'+stagePill(c.status)+'</div>').join("")+'</div>':"")+'<div class="detail-block"><h5>Sessions<span class="cnt">'+sess.length+'</span></h5>'+(sess.length?sess.map(s=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(s.name)+'</span>'+stagePill(s.stage)+'<span class="tiny">'+fmtD(reviewState(s).nr||s.logDate)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">No sessions yet</div>')+'<button class="btn ghost sm" style="margin-top:8px" data-action="session-for-topic" data-id="'+t.id+'">+ Log session</button></div><div class="detail-block"><h5>Errors<span class="cnt">'+errs.length+'</span></h5>'+(errs.length?errs.map(e=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(e.title)+'</span><span class="pill">'+esc(e.type)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">No errors logged</div>')+'<button class="btn ghost sm" style="margin-top:8px" data-action="error-for-topic" data-id="'+t.id+'">+ Log error</button></div><div class="detail-block"><h5>Mock weak tags<span class="cnt">'+mocks.length+'</span></h5>'+(mocks.length?mocks.map(m=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(m.title)+'</span><span class="tiny">'+fmtD(m.date)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">Not tagged</div>')+'</div>'+effectivenessBlockHTML(id)
+function topicDetail(id){
+  const t=topicById(id);if(!t)return;
+  const _activeExam = (typeof getActiveExamTag === 'function') ? getActiveExamTag() : '';
+  const _sessAll = S.sessions.filter(s=>s.topicId===id);
+  const _errsAll = S.errors.filter(e=>e.topicId===id);
+  const _mocksAll = S.mocks.filter(m=>(m.weak||[]).indexOf(id)>-1);
+  // Show scoped + total counts so the user can see both
+  const _sessScoped = _activeExam ? _sessAll.filter(s => !s.examTag || String(s.examTag).toLowerCase() === String(_activeExam).toLowerCase()) : _sessAll;
+  const _errsScoped = _activeExam ? _errsAll.filter(e => !e.examTag || String(e.examTag).toLowerCase() === String(_activeExam).toLowerCase()) : _errsAll;
+  const sess = _sessAll;
+  const errs = _errsAll;
+  const mocks = _mocksAll;
+  const fmin=topicFocusMin(id);
+  const parent=t.parentId?topicById(t.parentId):null;
+  const children=S.syllabus.filter(x=>x.parentId===id);
+  const _scopeNote = _activeExam
+    ? ' · <span style="color:var(--accent-2);font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:.08em">SCOPE: '+esc(_activeExam)+' ('+_sessScoped.length+'/'+_sessAll.length+' sess · '+_errsScoped.length+'/'+_errsAll.length+' err)</span>'
+    : '';
+  const body='<div class="sub-h">'+esc(t.subject)+(t.priority?" · "+esc(t.priority):"")+(t.weightage?" · "+esc(t.weightage):"")+_scopeNote+'</div><div class="chips" style="margin-bottom:16px"><span class="pill" style="background:'+statusColor(t.status)+';color:#fff;border-color:transparent">'+esc(t.status)+'</span>'+(fmin?'<span class="pill">'+fmtMin(fmin)+'</span>':"")+(parent?'<button class="rel-pill" data-action="topic-detail" data-id="'+parent.id+'">↰ '+esc(parent.topic)+'</button>':"")+'<button class="btn sm" data-action="timer-start-topic" data-id="'+t.id+'">Focus</button><button class="btn sm" data-action="edit-topic" data-id="'+t.id+'">'+ICONS.pencil+' Edit</button></div>'+(children.length?'<div class="detail-block"><h5>Sub-topics<span class="cnt">'+children.length+'</span></h5>'+children.map(c=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(c.topic)+'</span>'+stagePill(c.status)+'</div>').join("")+'</div>':"")+'<div class="detail-block"><h5>Sessions<span class="cnt">'+sess.length+'</span></h5>'+(sess.length?sess.map(s=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(s.name)+'</span>'+stagePill(s.stage)+'<span class="tiny">'+fmtD(reviewState(s).nr||s.logDate)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">No sessions yet</div>')+'<button class="btn ghost sm" style="margin-top:8px" data-action="session-for-topic" data-id="'+t.id+'">+ Log session</button></div><div class="detail-block"><h5>Errors<span class="cnt">'+errs.length+'</span></h5>'+(errs.length?errs.map(e=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(e.title)+'</span><span class="pill">'+esc(e.type)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">No errors logged</div>')+'<button class="btn ghost sm" style="margin-top:8px" data-action="error-for-topic" data-id="'+t.id+'">+ Log error</button></div><div class="detail-block"><h5>Mock weak tags<span class="cnt">'+mocks.length+'</span></h5>'+(mocks.length?mocks.map(m=>'<div class="detail-row"><span style="flex:1;min-width:0">'+esc(m.title)+'</span><span class="tiny">'+fmtD(m.date)+'</span></div>').join(""):'<div class="tiny" style="padding:6px 8px">Not tagged</div>')+'</div>'+effectivenessBlockHTML(id)
 +'<div class="detail-block"><h5>Practice batches<span class="cnt">'+(function(){var s=pyqStatsFor(id);return s?s.batches:0;})()+'</span></h5>'+(function(){var s=pyqStatsFor(id);if(!s)return '<div class="tiny" style="padding:6px 8px">No Practice batches yet</div>';var batches=(S.pyqLog||[]).filter(function(p){return p.topicId===id;});var tagged={};batches.forEach(function(b){var k=b.examTag||"Unscoped";tagged[k]=(tagged[k]||0)+1;});var tagLine=Object.keys(tagged).sort().map(function(k){return '<span class="pill" style="font-size:10px;padding:2px 7px">'+esc(k)+' <b>'+tagged[k]+'</b></span>';}).join(" ");return '<div style="display:flex;gap:10px;padding:6px 8px;font-size:12.5px;flex-wrap:wrap"><span><b>' + s.attempted + '</b> attempted</span><span><b style="color:#10B981">' + s.correct + '</b> correct</span><span><b style="color:#EF4444">' + s.wrong + '</b> wrong</span><span><b>' + s.accuracy + '%</b> accuracy</span>' + (s.avgTimeSec ? '<span><b>' + s.avgTimeSec + 's</b> avg</span>' : '') + '</div>' + (tagLine?'<div style="display:flex;gap:5px;padding:4px 8px;flex-wrap:wrap">'+tagLine+'</div>':'');})()+'<button class="btn ghost sm" style="margin-top:8px" data-action="open-pyq-for-topic" data-id="' + t.id + '">+ Log practice session</button></div>'+(t.notes?'<div class="detail-block" style="border-left:2px solid var(--accent-2)"><h5>Study notes</h5><div style="font-size:12.5px;line-height:1.65;padding:4px 8px;white-space:pre-wrap;color:var(--text)">'+renderMath(t.notes).replace(/\n/g,"<br>")+'</div></div>':"")
 +(t.remarks?'<div class="detail-block"><h5>Remarks</h5><div class="tiny" style="padding:4px 8px;white-space:pre-wrap">'+esc(t.remarks)+'</div></div>':"");openModal(t.topic,body,()=>{},"Done");}
 function viewGuide(){
@@ -12189,6 +12212,7 @@ const ACTIONS={
     FS.mode=r.mode; FS.phase=r.phase; FS.remaining=r.remaining; FS.elapsed=r.elapsed;
     FS.startedAt=r.startedAt; FS.focusSec=r.focusSec; FS.breakSec=r.breakSec;
     FS.preset=r.preset; FS.label=r.label; FS.taskId=r.taskId; FS.topicId=r.topicId;
+    FS.examTag=r.examTag || (typeof getActiveExamTag === 'function' ? getActiveExamTag() : '');
     FS.running=false;
     focusPanelOpen(); focusUI();
     toast("Session restored", "Press Start when ready");
@@ -12196,6 +12220,11 @@ const ACTIONS={
   },
   "focus-log-lost":()=>{
     var r = window._focusPendingResume; if(!r) return;
+    // Never log break time as study time
+    if(r.phase === 'break'){
+      toast("Break session", "Break time is not logged as study");
+      return;
+    }
     var mins = Math.round((r.elapsed||0)/60);
     if(mins<1){ toast("Nothing to log"); return; }
     snapshot();
@@ -12204,6 +12233,7 @@ const ACTIONS={
       label: r.label||"Focus session",
       taskId: r.taskId||null,
       topicId: r.topicId||null,
+      examTag: r.examTag || (typeof getActiveExamTag === 'function' ? getActiveExamTag() : ''),
       startedAt: new Date(r.startedAt||Date.now()).toISOString(),
       endedAt: new Date().toISOString(),
       minutes: mins
