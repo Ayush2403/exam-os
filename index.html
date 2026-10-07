@@ -7755,6 +7755,7 @@ body.route-welcome #apex-cosmos{display:none}
 }
 </style>
 <link rel="stylesheet" href="./apex-mobile-ux.css">
+<link rel="stylesheet" href="./apex-desktop-polish.css?v=4">
 <style id="apex-fouc">
   /* Hide legacy priority chips before the first paint */
   .toolbar [data-pri]{display:none !important}
@@ -8390,27 +8391,28 @@ function b64ToBuf(b64){const s=atob(b64);const bytes=new Uint8Array(s.length);fo
 async function deriveKey(passphrase,saltBytes){const enc=new TextEncoder();const baseKey=await crypto.subtle.importKey("raw",enc.encode(passphrase),{name:"PBKDF2"},false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt:saltBytes,iterations:250000,hash:"SHA-256"},baseKey,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
 async function setPassphrase(pass){
   if(!S.sync.room)throw new Error("Set a room code first");
-  const saltKey="apex-salt-"+S.sync.room;
-  let saltB64=null;
-  try{
-    if(await initFirebase()){
-      const snap=await firebase.firestore().collection("exam_os_rooms").doc(S.sync.room).get();
-      if(snap.exists){
-        const data=snap.data();
-        if(data&&data.salt)saltB64=data.salt;
+  if(!pass || pass.length < 1) throw new Error("Passphrase required");
+  const saltKey = "apex-salt-" + S.sync.room;
+  let saltB64 = null;
+  try {
+    if (typeof apiGet === "function") {
+      const remote = await apiGet(S.sync.room);
+      if (remote && typeof remote.salt === "string" && remote.salt.length > 0) {
+        saltB64 = remote.salt;
       }
     }
-  }catch(e){}
-  if(!saltB64)saltB64=localStorage.getItem(saltKey);
-  if(!saltB64){
-    const salt=new Uint8Array(16);
+  } catch(e) { console.warn("[apex] remote salt fetch failed:", e.message); }
+  if (!saltB64) saltB64 = localStorage.getItem(saltKey);
+  if (!saltB64) {
+    const salt = new Uint8Array(16);
     crypto.getRandomValues(salt);
-    saltB64=bufToB64(salt);
+    saltB64 = bufToB64(salt);
   }
-  localStorage.setItem(saltKey,saltB64);
-  syncSalt=b64ToBuf(saltB64);
-  syncKey=await deriveKey(pass,syncSalt);
+  localStorage.setItem(saltKey, saltB64);
+  syncSalt = b64ToBuf(saltB64);
+  syncKey = await deriveKey(pass, syncSalt);
 }
+
 async function encryptState(obj){if(!syncKey)throw new Error("Locked");const iv=new Uint8Array(12);crypto.getRandomValues(iv);const plain=new TextEncoder().encode(JSON.stringify(obj));const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},syncKey,plain);return{v:1,iv:bufToB64(iv),ct:bufToB64(ct)};}
 async function decryptState(payload){if(!syncKey)throw new Error("Locked");const iv=b64ToBuf(payload.iv);const ct=b64ToBuf(payload.ct);const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv},syncKey,ct);return JSON.parse(new TextDecoder().decode(plain));}
 function clearSyncKey(){syncKey=null;syncSalt=null;}
@@ -11999,8 +12001,16 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     
     const rawFb=(v.fbcfg||"").trim();
     if(rawFb){try{let clean=rawFb.replace(/^\s*\/\/.*$/gm,"").replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");FBCFG=JSON.parse(clean);saveFBCFG();}catch(e){toast("⚠️ Invalid Firebase config");return false;}}else if(!FBCFG.apiKey){FBCFG={};saveFBCFG();}
-    const newRoom=(v.roomCode||"").trim();
-    if(newRoom!==(S.sync.room||"")){S.sync.room=newRoom;}
+   const newRoom=(v.roomCode||"").trim();
+if(newRoom){
+  if(!/^[A-HJ-NP-Z2-9]{22,40}$/.test(newRoom)){
+    toast("Invalid room code","22–40 chars · A–Z (no I/O) · digits 2–9 (no 0/1)");
+    return false;
+  }
+  S.sync.room=newRoom;
+}
+S.sync.enabled = !!S.sync.room;
+
     S.sync.enabled=!!S.sync.room;store.set(KEY,JSON.stringify(S));
     const pass=(v.syncPass||"").trim();
     if(pass){if(pass.length<6){toast("⚠️ Passphrase must be at least 6 characters");return false;}try{await setPassphrase(pass);sessionStorage.setItem("apex-sync-pass",pass);if(!localStorage.getItem("apex-sync-warned")){alert("⚠️ IMPORTANT\n\nYour passphrase is not stored permanently. While this browser session is unlocked, Apex temporarily retains it in sessionStorage so you do not have to retype it every time. It is cleared when you close the tab.\n\nIf you forget it, the cloud copy is permanently unreadable.");localStorage.setItem("apex-sync-warned","1");}toast("🔓 Sync unlocked");}catch(e){toast("⚠️ Could not set passphrase",e.message);return false;}}
@@ -12537,7 +12547,7 @@ try{
   updateTimerUI();updateSyncPill();updateUndoBtn();
   setTimeout(focusCheckResume, 500);
   if(!S.settings.welcomeDone)setTimeout(welcomeOverlay,200);
-  if(S.sync.enabled&&S.sync.room&&FBCFG.apiKey){
+if(S.sync.enabled && S.sync.room){
   const cached=sessionStorage.getItem("apex-sync-pass");
   if(cached){
     setPassphrase(cached).then(async()=>{
@@ -14115,6 +14125,72 @@ try{
 
 <script src="./apex-mobile.js" defer></script>
 <script src="./sync.js?v=6"></script>
+<script>
+/* APEX SYNC — AUTO-UNLOCK ON PAGE LOAD */
+(function(){
+  'use strict';
+  if (window._apexSyncAuto) return;
+  window._apexSyncAuto = true;
+
+  var SESSION_KEY = "apex-sync-pass";
+  var LOCAL_KEY   = "apex-sync-pass-persist";
+
+  window.apexRemember = function(pass){
+    if (!pass) {
+      localStorage.removeItem(LOCAL_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
+      console.log("[apex-sync-auto] passphrase forgotten");
+      return;
+    }
+    localStorage.setItem(LOCAL_KEY, pass);
+    sessionStorage.setItem(SESSION_KEY, pass);
+    console.log("[apex-sync-auto] passphrase persisted");
+  };
+
+  function getCached(){
+    return sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(LOCAL_KEY) || null;
+  }
+
+  async function tryUnlock(){
+    try {
+      if (typeof S === "undefined" || !S.sync) return;
+      if (!S.sync.enabled || !S.sync.room) return;
+      if (typeof syncKey !== "undefined" && syncKey) return;
+      if (typeof setPassphrase !== "function") return;
+      var cached = getCached();
+      if (!cached) return;
+      await setPassphrase(cached);
+      sessionStorage.setItem(SESSION_KEY, cached);
+      console.log("[apex-sync-auto] unlocked");
+      if (typeof setSyncStatus === "function") setSyncStatus("synced");
+      if (typeof apiGet === "function") {
+        try {
+          var row = await apiGet(S.sync.room);
+          if (row && row.updatedAt) {
+            var remoteTs = row.updatedAt;
+            var localTs  = S._lastSync ? Math.floor(new Date(S._lastSync).getTime() / 1000) : 0;
+            if (remoteTs > localTs && typeof pullNow === "function") {
+              console.log("[apex-sync-auto] remote newer — pulling");
+              await pullNow(true);
+            }
+          }
+        } catch(e) { console.warn("[apex-sync-auto] pull check:", e.message); }
+      }
+      if (typeof startSync === "function") startSync();
+    } catch(e) {
+      console.warn("[apex-sync-auto] unlock failed:", e.message);
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+  }
+
+  function boot(){ setTimeout(tryUnlock, 400); setTimeout(tryUnlock, 1800); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+
+  console.log("[apex-sync-auto] installed — run apexRemember('your-pass') once per device");
+})();
+</script>
+
 <script src="./exam-weightage.js?v=6"></script>
 <script src="./exam-config.js?v=6"></script>
 <script src="./apex-final.js?v=3"></script>

@@ -1,0 +1,187 @@
+
+
+/* ============================================================
+   APEX DESKTOP POLISH v2 — from UI audit
+   10 cosmetic changes, all apex-theme, all desktop-only
+   ============================================================ */
+
+@media (min-width: 861px){
+
+  /* -----------------------------------------------------------
+     1. Grade rail — the primary action on Review / Error cards
+     ----------------------------------------------------------- */
+  [data-theme="apex"] #sess-list .grade-row,
+  [data-theme="apex"] #err-list .grade-row{
+    gap:8px;
+    margin-top:2px;
+    padding-top:12px;
+    border-top:1px solid rgba(226,232,255,.07);
+  }
+  [data-theme="apex"] #sess-list .grade-btn,
+  [data-theme="apex"] #err-list .grade-btn{
+    min-width:88px;
+    min-height:46px;
+    padding:10px 16px;
+    font-size:12.5px;
+    letter-spacing:.01em;
+  }
+
+  /* -----------------------------------------------------------
+     2. Metadata strip — cap width, stop stretching
+     ----------------------------------------------------------- */
+  [data-theme="apex"] #sess-list .sess-meta,
+  [data-theme="apex"] #err-list .sess-meta{
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    max-width:980px;
+    margin-right:auto;
+    gap:8px 12px;
+    padding:12px 4px;
+  }
+  [data-theme="apex"] #sess-list .sess-meta .fld,
+  [data-theme="apex"] #err-list .sess-meta .fld{
+    padding-left:10px;
+    padding-right:10px;
+  }
+  [data-theme="apex"] #sess-list .sess-meta .fld label,
+  [data-theme="apex"] #err-list .sess-meta .fld label{
+    font-size:10px;
+  }
+  [data-theme="apex"] #sess-list .sess-meta b,
+  [data-theme="apex"] #err-list .sess-meta b,
+  [data-theme="apex"] #sess-list .sess-meta .inp,
+  [data-theme="apex"] #err-list .sess-meta .inp{
+    font-size:12.5px;
+  }
+
+  /* -----------------------------------------------------------
+     3. Home — hero gets authority, secondary cards flatten
+     ----------------------------------------------------------- */
+  [data-theme="apex"] .next-hero{
+    padding:30px 32px;
+    margin-bottom:14px;
+  }
+  [data-theme="apex"] .next-hero .nh-title{
+    font-size:32px;
+    line-height:1.1;
+    max-width:900px;
+  }
+  [data-theme="apex"] .bento .card{
+    background:rgba(14,19,31,.62);
+    box-shadow:none;
+  }
+  [data-theme="apex"] .home-strip .home-stat{
+    padding:10px 12px;
+    box-shadow:none;
+  }
+  [data-theme="apex"] .home-stat .v{
+    font-size:22px;
+  }
+
+  /* -----------------------------------------------------------
+     4. Focus popover — compress vertical stack (do not enlarge)
+     ----------------------------------------------------------- */
+  [data-theme="apex"] .focus-panel{
+    width:348px;
+    padding:14px 16px 16px;
+  }
+  [data-theme="apex"] .fp-head{ margin-bottom:9px; }
+  [data-theme="apex"] .fp-modes{ margin-bottom:9px; }
+  [data-theme="apex"] .fp-ringwrap{
+    width:126px;
+    height:126px;
+    margin:0 auto 2px;
+  }
+  [data-theme="apex"] .fp-label{ margin-bottom:8px; }
+  [data-theme="apex"] .fp-presets{ margin-bottom:8px; }
+  [data-theme="apex"] .fp-controls{ gap:6px; }
+
+  /* -----------------------------------------------------------
+     5. Modals — widen for data-entry forms
+     ----------------------------------------------------------- */
+  [data-theme="apex"] .modal{
+    max-width:620px;
+    padding-left:26px;
+    padding-right:26px;
+  }
+  [data-theme="apex"] .modal-acts{
+    margin-left:-26px;
+    margin-right:-26px;
+    padding-left:26px;
+    padding-right:26px;
+  }
+
+  /* -----------------------------------------------------------
+     6. Sidebar nav — calm the active state
+     ----------------------------------------------------------- */
+  [data-theme="apex"] .nav-item:hover{
+    background:rgba(167,139,250,.05);
+    border-color:rgba(167,139,250,.10);
+    transform:none;
+    box-shadow:none;
+  }
+  [data-theme="apex"] .nav-item:hover>svg{
+    transform:none;
+    filter:none;
+  }
+  [data-theme="apex"] .nav-item.active{
+    background:rgba(167,139,250,.07);
+    border-color:rgba(167,139,250,.14);
+    box-shadow:inset 3px 0 0 rgba(125,211,252,.7);
+  }
+  [data-theme="apex"] .nav-item.active>svg{
+    animation:none;
+    filter:none;
+  }
+  [data-theme="apex"] .nav-item.active::before{
+    display:none;
+    animation:none;
+  }
+
+  /* -----------------------------------------------------------
+     7. Title scale — one notch up on mid-layer headings
+     ----------------------------------------------------------- */
+  [data-theme="apex"] .hero-head h2{
+    font-size:20px;
+    line-height:1.1;
+  }
+  [data-theme="apex"] .card-h h2{ font-size:18px; }
+  [data-theme="apex"] .sess-name{ font-size:15px; }
+
+  /* -----------------------------------------------------------
+     8. Review/Error cards — tighter spacing for long queues
+     ----------------------------------------------------------- */
+  [data-theme="apex"] #sess-list .sess-card,
+  [data-theme="apex"] #err-list .sess-card{
+    padding:20px 22px;
+    gap:12px;
+  }
+  [data-theme="apex"] #sess-list .sess-meta,
+  [data-theme="apex"] #err-list .sess-meta{
+    padding-top:11px;
+    padding-bottom:11px;
+  }
+
+  /* -----------------------------------------------------------
+     9. Muted mono labels — lighten without brightening theme
+     ----------------------------------------------------------- */
+  [data-theme="apex"] #sess-list .sess-meta .fld label,
+  [data-theme="apex"] #err-list .sess-meta .fld label,
+  [data-theme="apex"] .stat .k,
+  [data-theme="apex"] .stat .f,
+  [data-theme="apex"] .home-stat .k,
+  [data-theme="apex"] .home-stat .f{
+    color:#909BB2;
+  }
+  [data-theme="apex"] .home-section-label{
+    color:#8D98B0;
+    opacity:1;
+  }
+
+  /* -----------------------------------------------------------
+     10. Empty states — compact status, not a big empty card
+     ----------------------------------------------------------- */
+  [data-theme="apex"] .empty{ padding:28px 20px; }
+  [data-theme="apex"] .empty .ic{ margin-bottom:10px; }
+  [data-theme="apex"] .empty b{ font-size:13.5px; }
+  [data-theme="apex"] .empty p{ font-size:12px; }
+}

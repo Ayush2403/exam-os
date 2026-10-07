@@ -224,22 +224,51 @@
 
 console.log('[apex-final-batch] leech reset + auto-prune added');
 
-/* ---- 6. beforeunload: flush pending sync push ---- */
+/* ---- 6. lifecycle flush: push pending sync + persist to disk ----
+   beforeunload can't reliably run async work — the browser kills it
+   mid-flight. visibilitychange fires when the tab is hidden but the
+   page is still alive, which is where async actually completes.
+   Keep beforeunload as a best-effort fallback for the local write only.
+   ------------------------------------------------------------------ */
 (function(){
-  if (window._apexFlushOnUnload) return;
-  window._apexFlushOnUnload = true;
-  window.addEventListener('beforeunload', function(){
+  if (window._apexLifecycleFlush) return;
+  window._apexLifecycleFlush = true;
+
+  function persistLocal() {
+    if (typeof S === 'undefined' || typeof KEY === 'undefined') return;
     try {
-      /* Make sure the latest state is on disk synchronously */
-      if (typeof S !== 'undefined' && typeof KEY !== 'undefined') {
-        localStorage.setItem(KEY, JSON.stringify(S));
+      localStorage.setItem(KEY, JSON.stringify(S));
+    } catch(e) {
+      console.warn('[apex] local persist failed:', e.message);
+      if (typeof toast === 'function') {
+        toast('\u26a0\ufe0f Local save failed', 'Storage full \u2014 export a backup');
       }
-      /* Fire the push. Sync flush on hide already handles most cases;
-         this covers the "close tab within the debounce window" edge. */
-      if (typeof S !== 'undefined' && S && S.sync && S.sync.enabled && syncKey) {
-        pushNow(true);
-      }
-    } catch(e) {}
+    }
+  }
+
+  function flushSync() {
+    if (typeof S === 'undefined' || !S || !S.sync || !S.sync.enabled) return;
+    if (typeof syncKey === 'undefined' || !syncKey) return;
+    if (typeof pushNow === 'function') {
+      pushNow(true).catch(function(e){
+        console.warn('[apex] flush push failed:', e.message);
+      });
+    }
+  }
+
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden') {
+      persistLocal();
+      flushSync();
+    }
+  });
+
+  window.addEventListener('pagehide', function(){
+    persistLocal();
+  });
+
+  window.addEventListener('beforeunload', function(){
+    persistLocal();
   });
 })();
 
