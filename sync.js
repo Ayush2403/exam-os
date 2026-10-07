@@ -407,7 +407,7 @@
           '<button class="btn" type="button" data-action="gen-room">New</button>' +
           '<button class="btn" type="button" data-action="copy-room-code">Copy</button>' +
         '</div>' +
-        '<div class="hint">22 characters. Save this on every device you want to sync.</div>' +
+        '<div class="hint">40 characters. Save this on every device you want to sync.</div>' +
       '</div>' +
       '<div class="frow"><label>Passphrase</label>' +
         '<input class="inp" type="password" name="syncPass" placeholder="' +

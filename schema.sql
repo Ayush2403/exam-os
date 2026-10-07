@@ -1,5 +1,5 @@
 -- Apex sync backend — D1 schema
--- One row per room. Room IDs are 22 chars from a 32-char alphabet
+-- One row per room. Room IDs are 40 chars from a 32-char alphabet
 -- (no O, I, 0, 1 to avoid confusion). ~110 bits of entropy.
 -- Blob is AES-GCM ciphertext — server never sees plaintext.
 
