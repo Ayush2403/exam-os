@@ -16,3 +16,12 @@ patch-*.js
 
 # Wrangler local cache
 .wrangler/
+
+# Apex local artifacts
+*.bak
+*.bak.*
+*.full
+.cleanup-archive-*/
+.wrangler/
+node_modules/
+.DS_Store
