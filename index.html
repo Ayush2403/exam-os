@@ -12683,14 +12683,14 @@ function estimateStorageSize(){
         bytes += k.length + (localStorage.getItem(k)||"").length;
       }
     }
-    return bytes*2;
+    return bytes;
   }catch(e){ return 0; }
 }
 
 function checkStorageHealth(){
   const bytes=estimateStorageSize();
   const mb=bytes/1048576;
-  const pct=Math.min(100,Math.round(mb/5*100));
+  const CAP_MB=10;const pct=Math.min(100,Math.round(mb/CAP_MB*100));
   return {pct,mb,needsPrune:pct>=80};
 }
 
@@ -12766,7 +12766,7 @@ function warnStorageIfNeeded(){
   b.id="apex-storage-warn";
   b.className="card";
   b.style.cssText="border-left:3px solid var(--pri-medium-fg);padding:14px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap";
-  b.innerHTML='<div style="flex:1;min-width:220px"><div style="font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:-.01em;margin-bottom:3px">Storage at '+health.pct+'%</div><div class="tiny" style="line-height:1.55">Apex is using '+health.mb.toFixed(2)+' MB of your browser\'s ~5 MB storage. Prune old activity to keep things smooth.</div></div>'
+  b.innerHTML='<div style="flex:1;min-width:220px"><div style="font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:-.01em;margin-bottom:3px">Storage at '+health.pct+'%</div><div class="tiny" style="line-height:1.55">Apex is using '+health.mb.toFixed(2)+' MB of your browser\'s ~10 MB storage. Prune old activity to keep things smooth.</div></div>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary sm" data-action="prune-storage">Prune old data</button><button class="btn ghost sm" data-action="dismiss-storage-warn">Dismiss</button></div>';
   anchor.parentNode.insertBefore(b,anchor.nextSibling);
 }
