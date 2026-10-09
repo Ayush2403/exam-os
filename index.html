@@ -10403,6 +10403,13 @@ function quickLogParse(text){
   }
   return{topicText,minutes};
 }
+function _fragmentSplit(text){
+  var s = String(text || '');
+  var m = s.match(/^(.+?)\s*[:\u2014\u2013]\s*(.+?)\s*$/) ||
+          s.match(/^(.+?)\s+\/\s+(.+?)\s*$/);
+  if (!m) return { topicText: s.trim(), fragment: '' };
+  return { topicText: m[1].trim(), fragment: m[2].trim() };
+}
 function quickLogSuggest(q){
   q=String(q||"").toLowerCase().trim();
   if(!q)return[];
@@ -12557,7 +12564,8 @@ function postDashboard(){
   ql._wired=true;
   ql.addEventListener("input",()=>{
     const parsed=quickLogParse(ql.value);
-    quickLogRenderSuggest(parsed.topicText);
+    const split=_fragmentSplit(parsed.topicText);
+    quickLogRenderSuggest(split.topicText);
   });
   ql.addEventListener("keydown",e=>{
     if(e.key==="Enter"){e.preventDefault();quickLogDo();}
