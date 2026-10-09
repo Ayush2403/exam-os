@@ -10862,7 +10862,7 @@ function ddayBannerHTML(){
   const rest=withDays.filter(x=>x.id!==hero.id).sort(rankFn);
   const isPast=hero.days<0;
   const cls=isPast?"past":hero.days===0?"urgent":hero.days<=30?"urgent":hero.days<=90?"soon":"ok";
-  const labelLine=esc(hero.label)+((hero.examTag)?" · "+esc(hero.examTag):"");
+  const _lbl=String(hero.label||'');const _tag=String(hero.examTag||'');const _dup=_tag&&_lbl&&_lbl.toLowerCase()===_tag.toLowerCase();const labelLine=esc(_lbl)+((_tag&&!_dup)?" · "+esc(_tag):"");
 
   // Grammar-aware sub line
   let subLine;
@@ -14494,14 +14494,18 @@ try{
       const trail = buildTrail(s.topicId, s.id);
       if (!trail) continue;
 
-      const gate = card.querySelector('.apex-start-review');
-      const grade = card.querySelector('.grade-row');
-      const target = gate || grade;
-      if (!target) continue;
-
+      // Put the family view INSIDE the gated grade row so it only
+      // appears after Start review is clicked. No clues before recall.
+      const gated = card.querySelector('.apex-gated-grade-row');
       const holder = document.createElement('div');
       holder.innerHTML = trail;
-      target.parentNode.insertBefore(holder.firstElementChild, target);
+      if (gated) {
+        gated.insertBefore(holder.firstElementChild, gated.firstChild);
+      } else {
+        const grade = card.querySelector('.grade-row');
+        if (!grade) continue;
+        grade.parentNode.insertBefore(holder.firstElementChild, grade);
+      }
     }
   }
 
