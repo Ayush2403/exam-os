@@ -49,6 +49,17 @@
     };
   }
 
+  /* Scope helper — an untagged record inherits the topic's exam tags.
+     Used by weaknessScore. The topic already knows its exams; the
+     record shouldn't have to repeat them. */
+  function _inExamScope(record, examTag, topic){
+    if (!examTag) return true;                       /* no active exam -> everything */
+    if (record.examTag === examTag) return true;     /* explicitly this exam */
+    if (record.examTag) return false;                /* explicitly a different exam */
+    if (!topic) return true;                         /* no topic -> global */
+    return Array.isArray(topic.exams) && topic.exams.indexOf(examTag) > -1;
+  }
+
   /* 3. SCOPE-AWARE WEAKNESS SCORE */
   window.weaknessScore = function(t, examTag){
     if (!t) return 0;
@@ -59,9 +70,7 @@
     const cutoff30 = addDays(now, -30);
 
     const allErrs = S.errors.filter(function(e){ return e.topicId === t.id; });
-    const errs = examTag
-      ? allErrs.filter(function(e){ return !e.examTag || e.examTag === examTag; })
-      : allErrs;
+    const errs = allErrs.filter(function(e){ return _inExamScope(e, examTag, t); });
     const recentErrs = errs.filter(function(e){ return e.date && e.date >= cutoff30; }).length;
     const olderErrs = errs.length - recentErrs;
     const errorSignal = recentErrs * 12 + olderErrs * 4;
@@ -73,9 +82,7 @@
     const mockSignal = recentMocks * 18 + olderMocks * 7;
 
     const allSess = S.sessions.filter(function(s){ return s.topicId === t.id; });
-    const sess = examTag
-      ? allSess.filter(function(s){ return !s.examTag || s.examTag === examTag; })
-      : allSess;
+    const sess = allSess.filter(function(s){ return _inExamScope(s, examTag, t); });
     let again = 0, hard = 0, good = 0, easy = 0;
     sess.forEach(function(s){
       (s.history || []).forEach(function(h){
@@ -308,7 +315,7 @@
   /* 5. SESSION MODAL with exam tag */
   window.sessionModal = function(s, prefillTopicId){
     const activeExam = window.getActiveExamTag();
-    const currentExam = (s && s.examTag) || activeExam || '';
+    const currentExam = (s && s.examTag) || '';  /* blank by default — inherits from topic */
     const exams = taxList('exams');
     const examOpts = '<option value="">— Unscoped (counts for all exams) —</option>'
       + exams.map(function(e){
@@ -318,7 +325,7 @@
     openModal(s ? "Edit Session" : "Log Study Session",
       '<div class="frow"><label>Session name</label><input class="inp" name="name" value="' + esc(s ? s.name : "") + '" placeholder="e.g. Percentage PYQs — Kiran"></div>'
       + '<div class="frow"><label>Linked topic</label>' + pickerHTML("topicIds", s && s.topicId ? [s.topicId] : (prefillTopicId ? [prefillTopicId] : []), false) + '</div>'
-      + '<div class="frow"><label>Exam context <span style="color:var(--text-3);font-weight:500">(optional)</span></label><select class="inp" name="examTag">' + examOpts + '</select><div class="hint">Tags this session for a specific exam. Unscoped counts for all exams in Weak Radar and recommendations.</div></div>'
+      + '<div class="frow"><label>Exam context <span style="color:var(--text-3);font-weight:500">(optional)</span></label><select class="inp" name="examTag">' + examOpts + '</select><div class="hint">Optional. Leave blank to count for every exam. Set it only if you studied this specifically for one exam.</div></div>'
       + '<div class="f2"><div class="frow"><label>Log date</label>' + dateFieldHTML("logDate", (s && s.logDate) || todayISO()) + '</div><div class="frow"><label>Last reviewed</label>' + dateFieldHTML("lastReviewed", (s && s.lastReviewed) || "") + '</div></div>'
       + '<div class="frow"><label>Duration (optional)</label><input class="inp" type="number" min="0" max="1440" step="5" name="duration" value="' + ((s && s.duration) || "") + '" placeholder="minutes" data-noclear><div class="chips" style="margin-top:8px" id="dur-chips">' + [15,30,45,60,90,120].map(function(m){ return '<button type="button" class="chip' + (s && s.duration === m ? " on" : "") + '" data-dur="' + m + '" style="padding:6px 12px;min-height:32px;font-size:12px">' + m + 'm</button>'; }).join("") + '</div><div id="focus-dur-hint" style="display:none;margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--pri-medium-bg);border:1px solid var(--pri-medium-bd);color:var(--pri-medium-fg);font-size:11.5px;line-height:1.5"></div><div class="hint">Skip if you don\'t track time.</div></div>',
       function(v){
@@ -380,7 +387,7 @@
   /* 6. ERROR MODAL with exam tag */
   window.errorModal = function(er, prefillTopicId){
     const activeExam = window.getActiveExamTag();
-    const currentExam = (er && er.examTag) || activeExam || '';
+    const currentExam = (er && er.examTag) || '';  /* blank by default — inherits from topic */
     const exams = taxList('exams');
     const examOpts = '<option value="">— Unscoped (counts for all exams) —</option>'
       + exams.map(function(e){
@@ -394,7 +401,7 @@
       + '<div class="f2"><div class="frow"><label>Type</label>' + selPlus("type", taxList("errTypes"), er ? er.type : "", "errTypes", "Error type") + '</div><div class="frow"><label>Source</label>' + selPlus("source", taxList("errSources"), er ? er.source : "", "errSources", "Error source") + '</div></div>'
       + '<div class="f2"><div class="frow"><label>Date</label>' + dateFieldHTML("date", (er && er.date) || todayISO()) + '</div><div class="frow"><label>Link</label><input class="inp" name="link" value="' + esc(er ? er.link : "") + '" placeholder="Optional"></div></div>'
       + '<div class="frow"><label>Linked topic</label>' + pickerHTML("topicIds", er && er.topicId ? [er.topicId] : (prefillTopicId ? [prefillTopicId] : []), false) + '</div>'
-      + '<div class="frow"><label>Exam context <span style="color:var(--text-3);font-weight:500">(optional)</span></label><select class="inp" name="examTag">' + examOpts + '</select><div class="hint">Tags this mistake for a specific exam. Unscoped counts for all exams.</div></div>',
+      + '<div class="frow"><label>Exam context <span style="color:var(--text-3);font-weight:500">(optional)</span></label><select class="inp" name="examTag">' + examOpts + '</select><div class="hint">Optional. Leave blank to count for every exam. Set it only if you made this mistake specifically in one exam.</div></div>',
       function(v){
         if (!v.title) { toast("⚠️ Question required"); return false; }
         const ids = pickVals(v.topicIds);
