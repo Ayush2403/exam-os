@@ -14504,7 +14504,7 @@ try{
           var row = await apiGet(S.sync.room);
           if (row && row.updatedAt) {
             var remoteTs = row.updatedAt;
-            var localTs  = S._lastSync ? Math.floor(new Date(S._lastSync).getTime() / 1000) : 0;
+            var localTs  = (typeof window._apexToMs === 'function' ? Math.floor(window._apexToMs(S._lastSync) / 1000) : (S._lastSync ? Math.floor(new Date(S._lastSync).getTime() / 1000) : 0));
             if (remoteTs > localTs && typeof pullNow === "function") {
               console.log("[apex-sync-auto] remote newer — pulling");
               await pullNow(true);
