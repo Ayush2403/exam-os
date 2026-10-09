@@ -1,0 +1,14 @@
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Apex \u2014 The Exam OS",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Any",
+  "description": "A study system for competitive exams. Computes a daily action from your own reviews, mistakes, and mocks.",
+  "url": "https://exam-os.pages.dev/",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR"
+  }
+}

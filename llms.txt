@@ -1,0 +1,16 @@
+# Apex — The Exam OS
+
+> A study system for competitive exams. Tells you what to work on today, schedules
+> revision automatically, and ranks weak topics by what actually costs you marks.
+
+## What Apex does
+
+- One daily recommendation computed from your reviews, errors, and mocks
+- Adaptive spaced-repetition scheduling for topics and mistakes
+- Section-wise mock analysis with friction-weighted weak radar
+- Local-first: your data stays on your device unless you opt into encrypted sync
+
+## Links
+
+- [Enter Apex](https://exam-os.pages.dev/)
+- [Guide](https://exam-os.pages.dev/#/guide)

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://exam-os.pages.dev/sitemap.xml
