@@ -298,16 +298,6 @@ body.focus-panel-open::after{
   position:fixed;
   inset:0;
   z-index:519;
-  background:rgba(8,8,12,.35);
-  pointer-events:none;
-  animation:fpDim .3s ease-out;
-  transition:opacity .25s ease;
-}
-body.focus-panel-open::after{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:519;
   background:rgba(8,8,12,.22);
   pointer-events:none;
   animation:fpDim .3s ease-out;
@@ -8140,7 +8130,7 @@ const OLD_KEYS=["apex-exam-os-v13","apex-exam-os-v12","apex-exam-os-v11","apex-e
 const SCHEMA_VERSION=14;
 const FBCFG_KEY="apex-fbcfg-v1";
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
-const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 let _uid=0;const uid=p=>p+Date.now().toString(36)+(_uid++).toString(36);
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const todayISO=()=>iso(new Date());

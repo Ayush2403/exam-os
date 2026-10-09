@@ -30,7 +30,8 @@
     const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ salt: salt, blob: blob })
+      body: JSON.stringify({ salt: salt, blob: blob }),
+      keepalive: true
     });
     if (!r.ok) {
       let m = "HTTP " + r.status;
@@ -358,7 +359,7 @@
       if (label && /firebase/i.test(label.textContent)) frow.style.display = "none";
     });
   });
-  obs.observe(document.body, { childList: true, subtree: false });
+  obs.observe(document.body, { childList: true, subtree: true });
 
   console.log("[apex-sync-d1] v2 installed — 500ms debounce, honest pill");
 })();

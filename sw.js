@@ -5,7 +5,7 @@
    - Cache-first for CDN assets, stale-while-revalidate for app
    ============================================================ */
 
-const CACHE = 'apex-v41';
+const CACHE = 'apex-v42';
 
 const ASSETS = [
   './',
@@ -22,6 +22,9 @@ const ASSETS = [
   './apex-exam-sync.js',
   './apex-final-batch.js',
   './apex-focus-notes-edit.js',
+  './apex-focus-history-edit.js',
+  './apex-scroll-preserve.js',
+  './apex-desktop-polish.css',
   './apex-final.js',
   './apex-katex-fix.js',
   './apex-keys.js',
@@ -89,10 +92,12 @@ self.addEventListener('fetch', function(e){
   /* 2. Google Fonts + CDNs — cache-first */
   if (/fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com/.test(url.hostname)) {
     e.respondWith(
-      caches.match(e.request).then(function(hit){
+      caches.match(e.request, {ignoreSearch: true}).then(function(hit){
         return hit || fetch(e.request).then(function(res){
-          var clone = res.clone();
-          caches.open(CACHE).then(function(c){ c.put(e.request, clone); });
+          if (res && res.ok) {
+            var clone = res.clone();
+            caches.open(CACHE).then(function(c){ c.put(e.request, clone); });
+          }
           return res;
         });
       })
@@ -103,7 +108,7 @@ self.addEventListener('fetch', function(e){
   /* 3. Same-origin — stale-while-revalidate */
   if (url.origin === location.origin) {
     e.respondWith(
-      caches.match(e.request).then(function(cached){
+      caches.match(e.request, {ignoreSearch: true}).then(function(cached){
         var fetchPromise = fetch(e.request).then(function(res){
           if (res && res.status === 200 && res.type === 'basic') {
             var clone = res.clone();
