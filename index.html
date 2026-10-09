@@ -7741,6 +7741,12 @@ body.route-welcome #apex-cosmos{display:none}
 .fc-wrap{margin-bottom:10px}
 .fc-body{animation:fcfade .3s cubic-bezier(.16,1,.3,1)}
 @keyframes fcfade{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+
+/* Apex — grade gating */
+.apex-gated-grade-row{display:none !important}
+.sess-card.apex-review-open .apex-gated-grade-row,
+.card.apex-review-open .apex-gated-grade-row{display:block !important;animation:apexGradeIn .28s cubic-bezier(.16,1,.3,1)}
+@keyframes apexGradeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 </style>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
 <style id="apex-reduced-motion">
@@ -12513,6 +12519,49 @@ function postDashboard(){
     if(e.key==="Escape"){const box=document.querySelector("[data-quicklog-suggest]");if(box){box.innerHTML="";box.classList.remove("on");}}
   });
 }
+/* ── Grade gating ────────────────────────────────────────────
+   Review controls stay hidden until you click Start review.
+   Recall first, then rate. Enforced only on the reviews/errors
+   views; the agenda keeps its inline buttons so it still works
+   as a quick "due" list.
+   ──────────────────────────────────────────────────────────── */
+window._apexGatedGrades = true;
+
+window._apexToggleReview = function(cardEl){
+  if (!cardEl) return;
+  cardEl.classList.add('apex-review-open');
+  var gate = cardEl.querySelector('.apex-start-review');
+  if (gate) gate.remove();
+};
+
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.apex-start-review');
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  var card = btn.closest('.sess-card, .card');
+  if (!card) return;
+  window._apexToggleReview(card);
+}, true);
+
+/* Wrap gradeRowHTML so its output is gated on the reviews/errors tabs only. */
+(function(){
+  if (typeof gradeRowHTML !== 'function') return;
+  var _orig = gradeRowHTML;
+  window.gradeRowHTML = function(id, action){
+    action = action || "grade-review";
+    var row = _orig(id, action);
+    var route = (location.hash || "").replace(/^#\/?/, "");
+    if (route !== "reviews" && route !== "errors") return row;
+    return '<button type="button" class="btn primary apex-start-review" ' +
+             'style="width:100%;justify-content:center;min-height:46px;margin-top:6px">' +
+             'Start review' +
+           '</button>' +
+           '<div class="apex-gated-grade-row">' + row + '</div>';
+  };
+  try { gradeRowHTML = window.gradeRowHTML; } catch(e){}
+})();
+
 const POST={dashboard:postDashboard,syllabus:postSyllabus,reviews:postReviews,errors:postErrors,tasks:postTasks};
 try{
   applyTheme(S.settings.theme||"obsidian");
