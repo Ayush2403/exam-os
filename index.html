@@ -8434,16 +8434,17 @@ async function setPassphrase(pass){
   if(!S.sync.room)throw new Error("Set a room code first");
   if(!pass || pass.length < 1) throw new Error("Passphrase required");
   const saltKey = "apex-salt-" + S.sync.room;
-  let saltB64 = null;
-  try {
-    if (typeof apiGet === "function") {
-      const remote = await apiGet(S.sync.room);
-      if (remote && typeof remote.salt === "string" && remote.salt.length > 0) {
-        saltB64 = remote.salt;
+  let saltB64 = localStorage.getItem(saltKey);
+  if (!saltB64) {
+    try {
+      if (typeof apiGet === "function") {
+        const remote = await apiGet(S.sync.room);
+        if (remote && typeof remote.salt === "string" && remote.salt.length > 0) {
+          saltB64 = remote.salt;
+        }
       }
-    }
-  } catch(e) { console.warn("[apex] remote salt fetch failed:", e.message); }
-  if (!saltB64) saltB64 = localStorage.getItem(saltKey);
+    } catch(e) { console.warn("[apex] remote salt fetch failed:", e.message); }
+  }
   if (!saltB64) {
     const salt = new Uint8Array(16);
     crypto.getRandomValues(salt);
