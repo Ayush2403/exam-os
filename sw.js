@@ -5,7 +5,7 @@
    - Cache-first for CDN assets, stale-while-revalidate for app
    ============================================================ */
 
-const CACHE = 'apex-v37';
+const CACHE = 'apex-v38';
 
 const ASSETS = [
   './',
