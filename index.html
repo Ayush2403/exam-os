@@ -14805,6 +14805,87 @@ try{
 })();
 </script>
 
+
+<script>
+/* ---- Apex Dedupe Fragments ----
+   One-time (and re-runnable) cleanup: merge sessions with the same
+   topicId + trimmed name into a single canonical record.
+   Same topic + same fragment string = same review target. */
+(function(){
+  if (window._apexDedupeFragments) return;
+  window._apexDedupeFragments = true;
+
+  window.apexDedupeFragments = function(){
+    var byKey = new Map();
+    S.sessions.forEach(function(s){
+      if (!s.topicId || !s.name) return;
+      var key = s.topicId + "::" + String(s.name).trim();
+      if (!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key).push(s);
+    });
+
+    var merged = 0;
+    var removedIds = [];
+
+    byKey.forEach(function(list){
+      if (list.length < 2) return;
+      list.sort(function(a, b){
+        return (a.logDate || "") < (b.logDate || "") ? -1 : 1;
+      });
+      var canonical = list[0];
+      for (var i = 1; i < list.length; i++){
+        var dup = list[i];
+        canonical.duration = (canonical.duration || 0) + (dup.duration || 0);
+        if (Array.isArray(dup.history) && dup.history.length){
+          canonical.history = (canonical.history || []).concat(dup.history);
+        }
+        if (dup.nextReview && (!canonical.nextReview || dup.nextReview < canonical.nextReview)){
+          canonical.nextReview = dup.nextReview;
+        }
+        if (dup.lastReviewed && (!canonical.lastReviewed || dup.lastReviewed > canonical.lastReviewed)){
+          canonical.lastReviewed = dup.lastReviewed;
+        }
+        // Higher stage wins if the duplicate was further along
+        var stages = ["1st Time Study","Revise: Day 1","Revise: Day 3","Revise: Day 7","Revise: Day 14","Revise: Day 30","Mastered"];
+        var ci = stages.indexOf(canonical.stage);
+        var di = stages.indexOf(dup.stage);
+        if (di > ci) canonical.stage = dup.stage;
+
+        removedIds.push(dup.id);
+        merged++;
+      }
+    });
+
+    if (!merged) { return 0; }
+
+    if (!S.tombstones) S.tombstones = {};
+    if (!S.tombstones.sessions) S.tombstones.sessions = {};
+    var nowMs = Date.now();
+    removedIds.forEach(function(id){ S.tombstones.sessions[id] = nowMs; });
+
+    S.sessions = S.sessions.filter(function(s){ return removedIds.indexOf(s.id) === -1; });
+    S._lastLocalEdit = new Date().toISOString();
+    saveLocal();
+    rerender();
+
+    if (typeof pushNow === 'function' && typeof syncKey !== 'undefined' && syncKey){
+      pushNow(true);
+    }
+    return merged;
+  };
+
+  // Run once on load — harmless if there's nothing to merge
+  setTimeout(function(){
+    var n = window.apexDedupeFragments();
+    if (n > 0) {
+      console.log('[apex dedupe] merged ' + n + ' duplicate fragment' + (n === 1 ? '' : 's'));
+    }
+  }, 800);
+
+  console.log('[apex dedupe fragments] installed');
+})();
+</script>
+
 </script>
 </body>
 </html>
