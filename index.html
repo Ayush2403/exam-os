@@ -7739,7 +7739,7 @@ body.route-welcome #apex-cosmos{display:none}
 .card.apex-review-open .apex-gated-grade-row{display:block !important;animation:apexGradeIn .28s cubic-bezier(.16,1,.3,1)}
 @keyframes apexGradeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 </style>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+
 <style id="apex-reduced-motion">
 @media (prefers-reduced-motion: reduce){
   #apex-cosmos, #apex-cosmos::before, #apex-cosmos::after,
@@ -7798,7 +7798,38 @@ body.route-welcome #apex-cosmos{display:none}
   window.apexMeasureSticky = sync;
 })();
 </script>
-<style id="apex-noscrolljump">.topic-row{content-visibility:visible !important;contain-intrinsic-size:auto !important}#syl-list{overflow-anchor:none}</style></head>
+<style id="apex-noscrolljump">.topic-row{content-visibility:visible !important;contain-intrinsic-size:auto !important}#syl-list{overflow-anchor:none}</style><script>
+/* ---- Apex lazy KaTeX ---- */
+(function(){
+  if (window._apexLazyKatex) return;
+  window._apexLazyKatex = true;
+  var state = 0; // 0=idle 1=loading 2=ready
+  var queue = [];
+  window.ensureKatex = function(cb){
+    if (state === 2) { cb(); return; }
+    queue.push(cb);
+    if (state === 1) return;
+    state = 1;
+    var css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
+    css.integrity = 'sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV';
+    css.crossOrigin = 'anonymous';
+    document.head.appendChild(css);
+    var js = document.createElement('script');
+    js.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
+    js.integrity = 'sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8';
+    js.crossOrigin = 'anonymous';
+    js.onload = function(){
+      state = 2;
+      var q = queue; queue = [];
+      q.forEach(function(fn){ try { fn(); } catch(e){} });
+    };
+    document.head.appendChild(js);
+  };
+})();
+</script>
+</head>
 <body>
   <!-- APEX BRAND MARK · single source of truth · theme-independent -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -12802,6 +12833,8 @@ if(S.sync.enabled && S.sync.room){
 }catch(err){fatal("Startup: "+err.message);}
 });
 (function neoMinimalGlow(){
+  if (window.matchMedia("(max-width: 860px)").matches) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   let mx=window.innerWidth/2,my=window.innerHeight/2,rx=mx,ry=my,raf=null;
   const root=document.documentElement;
   const tick=()=>{
@@ -12859,7 +12892,13 @@ if(S.sync.enabled && S.sync.room){
 })();
 function renderMath(str){
   if(!str)return"";
-  if(!window.katex)return esc(str);
+  if(!/\$\$|\\\(/.test(str)) return esc(str);
+  if(!window.katex){
+    if(typeof ensureKatex === 'function'){
+      ensureKatex(function(){ if(typeof renderRoute === 'function') renderRoute(); });
+    }
+    return esc(str);
+  }
   const src=String(str);
   const cacheKey = "katex::" + src;
   /* Global cache — persists across renders, invalidated only on notes change */
@@ -14359,6 +14398,47 @@ try{
 <script src="./apex-mobile.js" defer></script>
 <script defer src="./sync.js?v=6"></script>
 <script>
+/* ---- Apex lazy focus-history-edit ---- */
+(function(){
+  if (window._apexLazyFocusHistory) return;
+  window._apexLazyFocusHistory = true;
+  var loaded = false;
+  var loading = false;
+  var pending = [];
+  function load(){
+    if (loaded) { pending.forEach(function(fn){ fn(); }); pending = []; return; }
+    if (loading) return;
+    loading = true;
+    var s = document.createElement('script');
+    s.src = './apex-focus-history-edit.js?v=2';
+    s.onload = function(){
+      loaded = true; loading = false;
+      pending.forEach(function(fn){ try { fn(); } catch(e){} });
+      pending = [];
+    };
+    document.head.appendChild(s);
+  }
+  // Wrap whatever ACTIONS['focus-history'] exists — call load() first
+  function wrap(){
+    if (!window.ACTIONS || !ACTIONS['focus-history']) { setTimeout(wrap, 200); return; }
+    var orig = ACTIONS['focus-history'];
+    ACTIONS['focus-history'] = function(){
+      var args = arguments;
+      if (loaded) { return orig.apply(this, args); }
+      pending.push(function(){
+        var fn = ACTIONS['focus-history'];
+        // If apex-focus-history-edit replaced our wrapped fn, call it
+        if (fn && fn !== arguments.callee) return fn.apply(null, args);
+        return orig.apply(null, args);
+      });
+      load();
+    };
+  }
+  wrap();
+})();
+</script>
+
+<script>
 /* APEX SYNC — AUTO-UNLOCK ON PAGE LOAD */
 (function(){
   'use strict';
@@ -14445,7 +14525,7 @@ try{
 <script defer src="./apex-exam-sync.js?v=1"></script>
 <script defer src="./apex-focus-notes-edit.js?v=2"></script>
 <script defer src="./apex-scroll-preserve.js?v=1"></script>
-<script defer src="./apex-focus-history-edit.js?v=2"></script>
+
 <script>
 /* ---- Apex Trail Strip ---- */
 (function(){
