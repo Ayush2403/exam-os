@@ -10951,7 +10951,7 @@ const mpct=leafCount?Math.round(mastered/leafCount*100):0;
   const AGENDA_SHOW=5;
   const shownAgenda=agendaItems.slice(0,AGENDA_SHOW);
   const hiddenAgenda=agendaItems.length-shownAgenda.length;
-  const agendaHTML=shownAgenda.length?(shownAgenda.map(x=>x.k==="e"?errorAgendaRow(x.v):agendaRow(x.v)).join("")+(hiddenAgenda>0?'<div style="text-align:center;padding:14px 8px 4px;border-top:1px dashed var(--border);margin-top:10px"><button class="btn ghost sm" data-action="goto-reviews-today">+ '+hiddenAgenda+' more · See all →</button></div>':"")):'<div class="empty" style="padding:16px 12px"><b>All clear</b><p>No reviews or errors due today.</p></div>';
+  const agendaHTML=shownAgenda.length?(shownAgenda.map(x=>x.k==="e"?errorAgendaRow(x.v):agendaRow(x.v)).join("")+(hiddenAgenda>0?'<div style="text-align:center;padding:14px 8px 4px;border-top:1px dashed var(--border);margin-top:auto;flex-shrink:0"><button class="btn ghost sm" data-action="goto-reviews-today">+ '+hiddenAgenda+' more · See all →</button></div>':"")):'<div class="empty" style="padding:16px 12px"><b>All clear</b><p>No reviews or errors due today.</p></div>';
   const urgHTML=urgItems.length?urgItems.map(urgentRow).join(""):'<div class="empty" style="padding:16px 12px"><b>No urgent '+esc(urgentExam)+' items</b></div>';
   const weakHTML=weak.length?weak.map(weakRow).join(""):'<div class="empty" style="padding:16px 12px"><b>Nothing flagged yet</b></div>';
   const links=S.links||[];
@@ -10976,7 +10976,7 @@ const mpct=leafCount?Math.round(mastered/leafCount*100):0;
   +'<div class="home-section-label">Today</div>'
     +'<div class="bento stagger">'
     +'<div class="b3" style="display:flex;flex-direction:column;gap:14px">'
-    +'<div class="card b3 hover" data-tour="agenda" style="flex:1 1 auto"><div class="card-h"><h2>Today\'s Agenda</h2><span class="sub">'+totalDue+' due'+(dueErr.length?" · "+dueErr.length+" error"+(dueErr.length===1?"":"s"):"")+'</span></div>'+agendaHTML+'</div>'
+    +'<div class="card b3 hover" data-tour="agenda" style="flex:1 1 auto;display:flex;flex-direction:column"><div class="card-h"><h2>Today\'s Agenda</h2><span class="sub">'+totalDue+' due'+(dueErr.length?" · "+dueErr.length+" error"+(dueErr.length===1?"":"s"):"")+'</span></div>'+agendaHTML+'</div>'
     +'<div class="card b2 hover" style="display:flex;flex-direction:column;flex:1 1 auto"><div class="card-h"><h2>Weak Radar</h2><span class="sub">top '+weak.length+'</span></div>'+weakHTML+(weak.length?'<div style="margin-top:auto;padding-top:14px;text-align:center"><button class="btn ghost sm" data-action="goto-radar">See full radar →</button></div>':'')+'</div>'
     +'</div>'
     +'<div class="b3" style="display:flex;flex-direction:column;gap:14px">'
