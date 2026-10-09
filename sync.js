@@ -9,6 +9,14 @@
   if (window._apexSyncD1v2) return;
   window._apexSyncD1v2 = true;
 
+  /* Normalise any timestamp representation to epoch milliseconds. */
+  function _apexToMs(v){
+    if (v == null) return 0;
+    if (typeof v === 'number') return v < 1e12 ? v * 1000 : v;
+    var t = new Date(v).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+
   // ---- API helpers ----
   async function apiGet(roomId) {
     const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : "";
@@ -230,7 +238,7 @@
         if (remoteUpdated <= localUpdated) return;
         const parsed = JSON.parse(row.blob);
         const remote = await decryptState(parsed);
-        const localDirty = S._lastLocalEdit && S._lastSync && S._lastLocalEdit > S._lastSync;
+        const localDirty = _apexToMs(S._lastLocalEdit) > _apexToMs(S._lastSync);
         _applyingRemote = true;
         if (localDirty) { S = mergeForSync(S, remote); }
         else {
@@ -238,7 +246,7 @@
           S.schemaVersion = SCHEMA_VERSION;
           S.sync = { enabled: true, room: S.sync.room };
         }
-        S._lastSync = new Date(remoteUpdated * 1000).toISOString();
+        S._lastSync = remoteUpdated; /* epoch seconds — consistent with pushNow */
         _applyingRemote = false;
         applyTheme(S.settings.theme || "apex");
         try { store.set(KEY, JSON.stringify(S)); } catch(e) {}

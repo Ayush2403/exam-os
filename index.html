@@ -8468,6 +8468,18 @@ if(!Array.isArray(S.activity))S.activity=[];
 if(!Array.isArray(S.pyqLog))S.pyqLog=[];
 if(!Array.isArray(S.questions))S.questions=[];
 }catch(e){S=seedState();}
+
+/* Apex sync timestamp normaliser — one-time cleanup of legacy _lastSync
+   values that were written as epoch numbers instead of ISO strings. */
+(function _apexSyncNormalise(){
+  if (!S || !S._lastSync) return;
+  if (typeof S._lastSync === 'number') {
+    S._lastSync = new Date(S._lastSync * 1000).toISOString();
+    try { store.set(KEY, JSON.stringify(S)); } catch(e){}
+    console.log('[apex sync normalise] _lastSync converted to ISO');
+  }
+})();
+
 function initApexCosmos(){
   let host=document.getElementById("apex-cosmos");
   if(!host){
