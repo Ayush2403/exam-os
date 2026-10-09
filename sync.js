@@ -345,8 +345,8 @@
         const alpha = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         let s = "";
         for (let i = 0; i < 40; i++) s += alpha[b[i] % alpha.length];
-        const inp = document.querySelector('.modal [name="roomCode"]');
-        if (inp) { inp.value = s; toast("New room code", "40 chars — much stronger than the old 22"); }
+        document.querySelectorAll('.modal [name="roomCode"]').forEach(function(el){ el.value = s; });
+        toast("New room code", "40 chars — much stronger than the old 22");
       };
     }
   } catch(e) { console.log("[apex-sync-d1] ACTIONS override skipped:", e.message); }
