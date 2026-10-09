@@ -17,13 +17,18 @@ export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: JSON_HEADERS });
 }
 
-export async function onRequestGet({ params, env }) {
+export async function onRequestGet({ params, request, env }) {
   const roomId = params.roomId;
   if (!ROOM_ID_RE.test(roomId)) return json({ error: 'invalid room id' }, 400);
+  const sinceParam = new URL(request.url).searchParams.get('since');
+  const since = sinceParam ? (parseInt(sinceParam, 10) || 0) : 0;
   const row = await env.DB
     .prepare('SELECT salt, blob, updated_at FROM rooms WHERE room_id = ?')
     .bind(roomId).first();
   if (!row) return json({ error: 'room not found' }, 404);
+  if (since && row.updated_at <= since) {
+    return json({ unchanged: true, updatedAt: row.updated_at });
+  }
   return json({ salt: row.salt, blob: row.blob, updatedAt: row.updated_at });
 }
 

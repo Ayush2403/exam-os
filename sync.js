@@ -25,6 +25,15 @@
     if (!r.ok) throw new Error("HTTP " + r.status);
     return await r.json();
   }
+
+  async function apiGetSince(roomId, since) {
+    const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : "";
+    const url = base + "/api/sync/" + encodeURIComponent(roomId) + "?since=" + (since || 0);
+    const r = await fetch(url, { cache: "no-store" });
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  }
   async function apiPut(roomId, salt, blob) {
     const base = location.protocol === "file:" ? "https://exam-os.pages.dev" : "";
     const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), {
@@ -232,8 +241,10 @@
       if (document.hidden) return;
       if (!S.sync.enabled || !syncKey || _applyingRemote) return;
       try {
-        const row = await apiGet(S.sync.room);
+        const since = typeof S._lastSync === "number" ? S._lastSync : 0;
+        const row = await apiGetSince(S.sync.room, since);
         if (!row) return;
+        if (row.unchanged) return;
         const remoteUpdated = row.updatedAt;
         const localUpdated = typeof S._lastSync === "number" ? S._lastSync : (S._lastSync ? Math.floor(new Date(S._lastSync).getTime() / 1000) : 0);
         if (remoteUpdated <= localUpdated) return;
