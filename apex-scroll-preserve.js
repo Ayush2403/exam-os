@@ -22,6 +22,13 @@
     window.rerender = function(){
       var y = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
 
+      /* Fast path — nothing to preserve. Common during initial load and
+         while the user is at the top of the page. Skips style toggling,
+         forced reflows, and scrollTo calls entirely. */
+      if (y === 0) {
+        return _orig.apply(this, arguments);
+      }
+
       // Pause scroll anchoring so the browser doesn't "correct" scroll
       // when the DOM below the viewport changes
       var htmlAnchor = document.documentElement.style.overflowAnchor;
@@ -49,14 +56,9 @@
         window.scrollTo(0, Math.min(y, max));
       }
 
-      // Restore on the next frame — after layout has run once
-      requestAnimationFrame(function(){
-        restore();
-        // And again on the frame after — catches slow layouts
-        requestAnimationFrame(restore);
-      });
-
-      // Last-ditch restore and cleanup
+      /* Restore once after layout, then again at 80ms as a safety net
+         for slow layouts. Cleanup happens in the safety-net pass. */
+      requestAnimationFrame(restore);
       setTimeout(function(){
         restore();
         document.documentElement.style.overflowAnchor = htmlAnchor;
