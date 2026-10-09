@@ -10442,6 +10442,52 @@ function quickLogRenderSuggest(q){
   box.innerHTML=matches.map(t=>'<div class="ql-sug-item" data-quicklog-pick="'+t.id+'"><i class="ql-sug-dot" style="background:'+subjColor(t.subject)+'"></i><span class="ql-sug-name">'+esc(t.topic)+'</span><span class="ql-sug-sub">'+esc(t.subject)+'</span></div>').join("");
   box.classList.add("on");
 }
+/* ---- Apex fragment split — persistent override ---- */
+(function(){
+  if (window._apexFragmentPersist) return;
+  window._apexFragmentPersist = true;
+
+  function _fragmentSplit(text){
+    var s = String(text || '').trim();
+    var m = s.match(/^(.+?)\s*[:\u2014\u2013]\s*(.+?)\s*$/) ||
+            s.match(/^(.+?)\s+\/\s+(.+?)\s*$/);
+    if (!m) return { topicText: s, fragment: '' };
+    return { topicText: m[1].trim(), fragment: m[2].trim() };
+  }
+
+  var _origQuickLogDo = window.quickLogDo;
+  window.quickLogDo = function(forcedTopicId){
+    var inp = document.querySelector("[data-quicklog-input]");
+    if (!inp) return;
+    var parsed = quickLogParse(inp.value);
+    if (!parsed.topicText && !forcedTopicId) { toast("Type a topic name"); return; }
+    var split = _fragmentSplit(parsed.topicText);
+    var t = forcedTopicId ? topicById(forcedTopicId) : null;
+    if (!t) {
+      var matches = quickLogSuggest(split.topicText);
+      if (!matches.length) { toast("No topic found","Try a different name"); return; }
+      if (matches.length === 1) { t = matches[0]; }
+      else {
+        var exact = matches.find(function(m){ return m.topic.toLowerCase() === split.topicText.toLowerCase(); });
+        if (exact) { t = exact; }
+        else { quickLogRenderSuggest(split.topicText); toast("Multiple matches","Pick one from the list"); return; }
+      }
+    }
+    snapshot();
+    var now = todayISO();
+    var sessionName = split.fragment ? (t.topic + " \u00B7 " + split.fragment) : t.topic;
+    S.sessions.push({id:uid("s"),name:sessionName,topicId:t.id,logDate:now,lastReviewed:null,duration:parsed.minutes||0,interval:0,ease:2.5,nextReview:now,stage:"1st Time Study",history:[]});
+    saveLocal();
+    inp.value = "";
+    var box = document.querySelector("[data-quicklog-suggest]");
+    if (box) { box.innerHTML = ""; box.classList.remove("on"); }
+    rerender();
+    toast("\u2713 Logged", sessionName + (parsed.minutes ? " \u00B7 " + parsed.minutes + "m" : " \u00B7 no duration"));
+  };
+
+  console.log('[apex fragment persist] baked into index.html');
+})();
+
 function quickLogDo(forcedTopicId){
   const inp=document.querySelector("[data-quicklog-input]");
   if(!inp)return;
