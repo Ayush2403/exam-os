@@ -11391,7 +11391,7 @@ function exportNotesHTML(){
     +'</header>'
     +sections
     +'<footer style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e5e0;font-size:11.5px;color:#a1a1aa;text-align:center"><span style="display:inline-flex;align-items:center;gap:6px;justify-content:center"><span style="display:inline-grid;place-items:center;width:16px;height:16px;border-radius:4px;background:#18181b;color:#fff;font-size:9px;font-weight:800;font-family:-apple-system,BlinkMacSystemFont,sans-serif">A</span>Designed &amp; built by Ayush Tomar · Generated '+new Date().toLocaleString()+'</span></footer>'
-    +'<script>
+    +`<script>
 /* ---- Apex a11y: button labels + inert hidden drawers ---- */
 (function(){
   if (window._apexA11yLabels) return;
@@ -11521,7 +11521,7 @@ function exportNotesHTML(){
 })();
 </script>
 
-</body></html>';
+</body></html>`;
   const blob=new Blob([html],{type:"text/html;charset=utf-8"});
   const url=URL.createObjectURL(blob);
   const win=window.open(url,"_blank");
