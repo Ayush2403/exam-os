@@ -11391,7 +11391,137 @@ function exportNotesHTML(){
     +'</header>'
     +sections
     +'<footer style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e5e0;font-size:11.5px;color:#a1a1aa;text-align:center"><span style="display:inline-flex;align-items:center;gap:6px;justify-content:center"><span style="display:inline-grid;place-items:center;width:16px;height:16px;border-radius:4px;background:#18181b;color:#fff;font-size:9px;font-weight:800;font-family:-apple-system,BlinkMacSystemFont,sans-serif">A</span>Designed &amp; built by Ayush Tomar · Generated '+new Date().toLocaleString()+'</span></footer>'
-    +'</body></html>';
+    +'<script>
+/* ---- Apex a11y: button labels + inert hidden drawers ---- */
+(function(){
+  if (window._apexA11yLabels) return;
+  window._apexA11yLabels = true;
+
+  var LABELS = {
+    "gcal-review": "Add review to Google Calendar",
+    "gcal-task": "Add task to Google Calendar",
+    "focus-task-from-review": "Start focus session",
+    "edit-session": "Edit this session",
+    "del-session": "Delete this session",
+    "goto-topic": "Open this topic",
+    "timer-start-task": "Start focus timer for task",
+    "timer-start-topic": "Start focus timer for topic",
+    "timer-start-session": "Start focus timer for session",
+    "edit-task": "Edit this task",
+    "del-task": "Delete this task",
+    "del-link": "Delete this link",
+    "edit-error": "Edit this error",
+    "del-error": "Delete this error",
+    "edit-mock": "Edit this mock",
+    "del-mock": "Delete this mock",
+    "add-subtopic": "Add a subtopic",
+    "edit-topic": "Edit this topic",
+    "del-topic": "Archive this topic",
+    "subj-up": "Move subject up",
+    "subj-down": "Move subject down",
+    "del-subject": "Delete this subject",
+    "radar-breakdown": "Show friction breakdown",
+    "mock-tag-topic": "Tag as a weak topic",
+    "edit-exam-target": "Edit exam target",
+    "del-exam-target": "Delete exam target",
+    "edit-section-set": "Edit section set",
+    "del-section-set": "Delete section set",
+    "scratch-close": "Close scratch pad",
+    "scratch-add": "Add scratch note",
+    "scratch-toggle": "Toggle scratch item",
+    "scratch-del": "Delete scratch item",
+    "focus-panel-close": "Close focus panel",
+    "focus-history": "View focus history",
+    "focus-zen": "Enter zen mode",
+    "focus-zen-exit": "Exit zen mode",
+    "focus-music-open": "Open focus music",
+    "open-more": "Show more navigation",
+    "undo": "Undo last change",
+    "add-link": "Add quick link",
+    "open-add-task": "Add task",
+    "open-add-error": "Log an error",
+    "open-add-session": "Log a study session",
+    "open-add-topic": "Add a topic",
+    "open-add-mock": "Log a mock test",
+    "edit-notes-inline": "Edit topic notes",
+    "toggle-topic": "Expand or collapse topic",
+    "topic-detail": "Open topic detail"
+  };
+
+  function apply(){
+    var buttons = document.querySelectorAll('button:not([aria-label]):not([title])');
+    for (var i = 0; i < buttons.length; i++) {
+      var b = buttons[i];
+      if (!b.offsetParent) continue;
+      var action = b.dataset && b.dataset.action;
+      var label = null;
+      if (action && LABELS[action]) {
+        label = LABELS[action];
+      } else if (b.classList.contains("danger")) {
+        label = "Delete";
+      } else if (b.classList.contains("accent")) {
+        label = "Start";
+      } else if (action) {
+        label = action.replace(/-/g, " ").replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      } else {
+        label = "Action";
+      }
+      b.setAttribute("aria-label", label);
+    }
+  }
+
+  var raf = null;
+  function schedule(){
+    if (raf) return;
+    raf = requestAnimationFrame(function(){ raf = null; apply(); });
+  }
+
+  var view = document.getElementById("view");
+  if (view) new MutationObserver(schedule).observe(view, {childList:true, subtree:true});
+
+  setTimeout(apply, 300);
+  setTimeout(apply, 1200);
+  window.addEventListener("hashchange", function(){ setTimeout(apply, 100); });
+
+  console.log("[apex a11y labels] installed");
+})();
+
+/* ---- Apex a11y: inert on hidden aria-hidden containers ---- */
+(function(){
+  if (window._apexA11yInert) return;
+  window._apexA11yInert = true;
+
+  function syncInert(){
+    var hidden = document.querySelectorAll('[aria-hidden="true"]');
+    for (var i = 0; i < hidden.length; i++) {
+      var el = hidden[i];
+      if (el.tagName === "HTML" || el.tagName === "BODY") continue;
+      el.setAttribute("inert", "");
+    }
+    var visible = document.querySelectorAll('[aria-hidden="false"]');
+    for (var j = 0; j < visible.length; j++) {
+      visible[j].removeAttribute("inert");
+    }
+    // Also toggle based on .open class (scratch-drawer uses this pattern)
+    var drawer = document.getElementById("scratch-drawer");
+    if (drawer) {
+      if (drawer.classList.contains("open")) drawer.removeAttribute("inert");
+      else drawer.setAttribute("inert", "");
+    }
+    var focusScr = document.getElementById("focus-screen");
+    if (focusScr) {
+      if (focusScr.classList.contains("open")) focusScr.removeAttribute("inert");
+      else focusScr.setAttribute("inert", "");
+    }
+  }
+
+  setTimeout(syncInert, 300);
+  setInterval(syncInert, 400);
+  console.log("[apex a11y inert] installed");
+})();
+</script>
+
+</body></html>';
   const blob=new Blob([html],{type:"text/html;charset=utf-8"});
   const url=URL.createObjectURL(blob);
   const win=window.open(url,"_blank");
