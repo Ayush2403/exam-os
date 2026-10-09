@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="description" content="Apex — a study system for competitive exams. Tells you what to work on today, schedules revision automatically, and ranks weak topics by what actually costs you marks.">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=optional" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=optional"></noscript>
 
 <meta name="theme-color" content="#05070D">
 <meta name="mobile-web-app-capable" content="yes">
@@ -22,7 +23,8 @@
 <title>Apex — The Exam OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous"></noscript>
 <link rel="stylesheet" href="./apex-layout-fix.css?v=1">
 <style>
 :root{--font-display:"Plus Jakarta Sans",sans-serif;--r:14px;--r-sm:8px;--r-lg:20px;--r-pill:999px;--sidebar-w:260px;--ease:cubic-bezier(.2,.7,.3,1);--ease-out:cubic-bezier(.16,1,.3,1)}
@@ -50,7 +52,7 @@
   border:1px solid rgba(134,239,172,.3);
   color:#86efac;
 }
-[data-theme="obsidian"]{--bg:#0C0C0E;--surface:#161619;--surface-2:#1C1C20;--surface-3:#242429;--border:#242427;--border-2:#313135;--text:#F4F4F5;--text-2:#A1A1AA;--text-3:#71717A;--accent:#E5E5E7;--accent-2:#FFFFFF;--accent-glow:rgba(255,255,255,.12);--accent-contrast:#0C0C0E;--overlay:rgba(8,8,10,.78);--shadow:0 1px 2px rgba(0,0,0,.05);--btn-primary-fg:#0C0C0E;--font-display:"Playfair Display",Georgia,serif;--pri-critical-bg:rgba(239,68,68,.1);--pri-critical-fg:#fca5a5;--pri-critical-bd:rgba(239,68,68,.25);--pri-high-bg:rgba(236,72,153,.1);--pri-high-fg:#f9a8d4;--pri-high-bd:rgba(236,72,153,.25);--pri-medium-bg:rgba(234,179,8,.1);--pri-medium-fg:#fde047;--pri-medium-bd:rgba(234,179,8,.25);--pri-low-bg:rgba(34,197,94,.1);--pri-low-fg:#86efac;--pri-low-bd:rgba(34,197,94,.25)}
+[data-theme="obsidian"]{--bg:#0C0C0E;--surface:#161619;--surface-2:#1C1C20;--surface-3:#242429;--border:#242427;--border-2:#313135;--text:#F4F4F5;--text-2:#A1A1AA;--text-3:#9CA3AF;--accent:#E5E5E7;--accent-2:#FFFFFF;--accent-glow:rgba(255,255,255,.12);--accent-contrast:#0C0C0E;--overlay:rgba(8,8,10,.78);--shadow:0 1px 2px rgba(0,0,0,.05);--btn-primary-fg:#0C0C0E;--font-display:"Playfair Display",Georgia,serif;--pri-critical-bg:rgba(239,68,68,.1);--pri-critical-fg:#fca5a5;--pri-critical-bd:rgba(239,68,68,.25);--pri-high-bg:rgba(236,72,153,.1);--pri-high-fg:#f9a8d4;--pri-high-bd:rgba(236,72,153,.25);--pri-medium-bg:rgba(234,179,8,.1);--pri-medium-fg:#fde047;--pri-medium-bd:rgba(234,179,8,.25);--pri-low-bg:rgba(34,197,94,.1);--pri-low-fg:#86efac;--pri-low-bd:rgba(34,197,94,.25)}
 [data-theme="editorial"]{--bg:#F5F5F3;--surface:#FFFFFF;--surface-2:#FAFAF8;--surface-3:#F0EFEA;--border:#E5E5E0;--border-2:#D4D3CB;--text:#18181B;--text-2:#52525B;--text-3:#A1A1AA;--accent:#0F0F11;--accent-2:#2F2F33;--accent-glow:rgba(15,15,17,.1);--accent-contrast:#FFFFFF;--overlay:rgba(41,37,36,.4);--shadow:0 1px 2px rgba(0,0,0,.05);--btn-primary-fg:#FFFFFF;--font-display:"Playfair Display",Georgia,serif;--pri-critical-bg:rgba(220,38,38,.08);--pri-critical-fg:#991b1b;--pri-critical-bd:rgba(220,38,38,.2);--pri-high-bg:rgba(190,24,93,.08);--pri-high-fg:#9d174d;--pri-high-bd:rgba(190,24,93,.2);--pri-medium-bg:rgba(161,98,7,.1);--pri-medium-fg:#78350f;--pri-medium-bd:rgba(161,98,7,.2);--pri-low-bg:rgba(21,128,61,.08);--pri-low-fg:#14532d;--pri-low-bd:rgba(21,128,61,.2)}
 [data-theme="editorial"] input[type="date"],[data-theme="editorial"] input[type="time"]{color-scheme:light}
 /* ============================================================

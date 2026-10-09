@@ -138,11 +138,19 @@
   }
 
   function decorateButtons(){
-    document.querySelectorAll('button:not([aria-label])').forEach(function(b){
-      if (!b.offsetParent) return;
+    /* Batch: query once, compute all labels in memory, then write.
+       The previous version called b.offsetParent inside the loop,
+       forcing a re-layout per button (see Lighthouse forced-reflow). */
+    var list = document.querySelectorAll('button:not([aria-label])');
+    var pending = [];
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i];
       var label = labelFor(b);
-      if (label) b.setAttribute('aria-label', label);
-    });
+      if (label) pending.push([b, label]);
+    }
+    for (var j = 0; j < pending.length; j++) {
+      pending[j][0].setAttribute('aria-label', pending[j][1]);
+    }
   }
 
   /* --- 4. Inert hidden containers --- */
@@ -221,9 +229,14 @@
       }
     });
   }
-  setTimeout(stripMismatchedLabels, 600);
-  setTimeout(stripMismatchedLabels, 2000);
-  window.addEventListener('hashchange', function(){ setTimeout(stripMismatchedLabels, 200); });
+  stripMismatchedLabels();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', stripMismatchedLabels);
+  }
+  setTimeout(stripMismatchedLabels, 50);
+  setTimeout(stripMismatchedLabels, 400);
+  setTimeout(stripMismatchedLabels, 1500);
+  window.addEventListener('hashchange', function(){ setTimeout(stripMismatchedLabels, 100); });
 
   console.log('[apex-a11y] v2 installed — labelled buttons + inert hidden containers');
 })();
