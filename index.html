@@ -14437,7 +14437,287 @@ try{
 <script src="./apex-exam-sync.js?v=1"></script>
 <script src="./apex-focus-notes-edit.js?v=2"></script>
 <script src="./apex-scroll-preserve.js?v=1"></script>
-<script src="./apex-focus-history-edit.js?v=2"></script>
+<script src="./apex-focus-history-edit.js?v=2">
+<script>
+/* ---- Apex Trail Strip ---- */
+(function(){
+  if (window._apexTrailStrip) return;
+  window._apexTrailStrip = true;
+
+  function buildTrail(topicId, currentId){
+    if (!topicId) return "";
+    const t = topicById(topicId);
+    if (!t) return "";
+    const siblings = S.sessions.filter(function(s){
+      return s.topicId === topicId && s.id !== currentId;
+    });
+    if (siblings.length < 1) return "";
+
+    siblings.sort(function(a, b){
+      const ad = a.lastReviewed || a.logDate || "";
+      const bd = b.lastReviewed || b.logDate || "";
+      return ad < bd ? 1 : -1;
+    });
+    const recent = siblings.slice(0, 5);
+    const prefix = t.topic + " \u00B7 ";
+
+    const rows = recent.map(function(s){
+      let label = s.name;
+      if (label.indexOf(prefix) === 0) label = label.slice(prefix.length);
+      else if (label === t.topic) label = "(whole topic)";
+      const date = s.lastReviewed || s.logDate || "";
+      const rel = date ? relD(date) : "no date";
+      return '<li style="padding:3px 0;font-size:12px;color:var(--text-2)">'
+        + esc(label)
+        + ' <span style="color:var(--text-3);font-family:JetBrains Mono,monospace;font-size:10.5px;margin-left:4px">'
+        + esc(rel)
+        + '</span></li>';
+    }).join("");
+
+    return '<details class="apex-trail" style="margin:4px 0 2px;padding:8px 12px;border-radius:8px;background:color-mix(in srgb, var(--accent) 3%, transparent);border:1px solid var(--border)">'
+      + '<summary style="cursor:pointer;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);list-style:none;display:flex;align-items:center;gap:6px">'
+      + '<span style="opacity:.6">\u25B6</span> Recently studied \u00B7 ' + recent.length + ' session' + (recent.length === 1 ? '' : 's')
+      + '</summary>'
+      + '<ul style="list-style:none;padding:6px 0 0;margin:0">' + rows + '</ul>'
+      + '</details>';
+  }
+
+  function inject(){
+    const cards = document.querySelectorAll('.sess-card[data-id]');
+    for (let i = 0; i < cards.length; i++){
+      const card = cards[i];
+      if (card.dataset.trailDone === '1') continue;
+      card.dataset.trailDone = '1';
+      const id = card.dataset.id;
+      const s = S.sessions.find(function(x){ return x.id === id; });
+      if (!s || !s.topicId) continue;
+      const trail = buildTrail(s.topicId, s.id);
+      if (!trail) continue;
+
+      const gate = card.querySelector('.apex-start-review');
+      const grade = card.querySelector('.grade-row');
+      const target = gate || grade;
+      if (!target) continue;
+
+      const holder = document.createElement('div');
+      holder.innerHTML = trail;
+      target.parentNode.insertBefore(holder.firstElementChild, target);
+    }
+  }
+
+  const view = document.getElementById('view');
+  if (view) {
+    let raf = null;
+    new MutationObserver(function(){
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(inject);
+    }).observe(view, { childList: true, subtree: true });
+  }
+  setTimeout(inject, 400);
+  setTimeout(inject, 1200);
+  window.addEventListener('hashchange', function(){ setTimeout(inject, 120); });
+
+  console.log('[apex trail strip] installed');
+})();
+</script>
+
+
+<script>
+/* ---- Apex Fragment Picker ---- */
+(function(){
+  if (window._apexFragPicker) return;
+  window._apexFragPicker = true;
+
+  function splitInput(text){
+    const s = String(text || '');
+    const m = s.match(/^(.+?)\s*[:\u2014\u2013]\s*(.*)$/);
+    if (!m) return null;
+    return { topicPart: m[1].trim(), fragPart: m[2].trim() };
+  }
+
+  function recentFragments(topicId, fragPrefix){
+    const t = topicById(topicId);
+    if (!t) return [];
+    const prefix = t.topic + " \u00B7 ";
+    const seen = new Set();
+    const out = [];
+    const lowerPrefix = fragPrefix.toLowerCase();
+    S.sessions.forEach(function(s){
+      if (s.topicId !== topicId) return;
+      if (s.name.indexOf(prefix) !== 0) return;
+      const frag = s.name.slice(prefix.length);
+      const key = frag.toLowerCase();
+      if (seen.has(key)) return;
+      if (lowerPrefix && key.indexOf(lowerPrefix) !== 0) return;
+      seen.add(key);
+      const date = s.lastReviewed || s.logDate || "";
+      out.push({ frag: frag, date: date });
+    });
+    out.sort(function(a, b){ return a.date < b.date ? 1 : -1; });
+    return out.slice(0, 6);
+  }
+
+  function enhance(){
+    const inp = document.querySelector("[data-quicklog-input]");
+    const box = document.querySelector("[data-quicklog-suggest]");
+    if (!inp || !box) return;
+
+    const split = splitInput(inp.value);
+    if (!split || !split.fragPart) return;
+
+    const matches = quickLogSuggest(split.topicPart);
+    if (!matches.length) return;
+    const best = matches[0];
+
+    const frags = recentFragments(best.id, split.fragPart);
+    if (!frags.length) return;
+
+    if (box.dataset.apexFragMarker === inp.value) return;
+    box.dataset.apexFragMarker = inp.value;
+
+    box.querySelectorAll(".apex-frag-item").forEach(function(el){ el.remove(); });
+
+    const fragHTML = frags.map(function(f){
+      const rel = f.date ? relD(f.date) : "new";
+      return '<div class="ql-sug-item apex-frag-item" data-apex-frag="' + esc(f.frag) + '" data-apex-topic="' + esc(best.id) + '" style="border-top:1px solid var(--border)">'
+        + '<i class="ql-sug-dot" style="background:var(--accent-2)"></i>'
+        + '<span class="ql-sug-name">' + esc(f.frag) + '</span>'
+        + '<span class="ql-sug-sub">' + esc(rel) + '</span>'
+        + '</div>';
+    }).join("");
+
+    box.insertAdjacentHTML("beforeend", fragHTML);
+    box.classList.add("on");
+  }
+
+  document.addEventListener("input", function(e){
+    if (!e.target.matches("[data-quicklog-input]")) return;
+    setTimeout(enhance, 30);
+  });
+
+  document.addEventListener("click", function(e){
+    const item = e.target.closest("[data-apex-frag]");
+    if (!item) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const inp = document.querySelector("[data-quicklog-input]");
+    if (!inp) return;
+
+    const frag = item.getAttribute("data-apex-frag");
+    const split = splitInput(inp.value);
+    if (!split) return;
+
+    const minMatch = inp.value.match(/(\d+)\s*(m|min|mins|minutes?|h|hr|hrs|hour|hours)?\s*$/i);
+    const minSuffix = minMatch ? " " + minMatch[0].trim() : "";
+
+    inp.value = split.topicPart + ": " + frag + minSuffix;
+    inp.focus();
+
+    const box = document.querySelector("[data-quicklog-suggest]");
+    if (box) {
+      box.innerHTML = "";
+      box.classList.remove("on");
+      delete box.dataset.apexFragMarker;
+    }
+  }, true);
+
+  console.log('[apex fragment picker] installed');
+})();
+</script>
+
+
+<script>
+/* ---- Apex Grouped Agenda ---- */
+(function(){
+  if (window._apexGroupedAgenda) return;
+  window._apexGroupedAgenda = true;
+
+  function findDueSessionsBlock(){
+    const agenda = document.querySelector('[data-tour="agenda"]');
+    if (!agenda) return;
+    if (agenda.dataset.apexGrouped === '1') return;
+
+    const rows = agenda.querySelectorAll('.row-item[data-action="goto-reviews-today"]');
+    if (rows.length < 2) return;
+
+    const byTopic = new Map();
+
+    rows.forEach(function(row){
+      const title = row.querySelector('.t');
+      if (!title) return;
+      if (row.querySelector('.err-detail') || title.textContent.indexOf('\u26A0') === 0) return;
+      const name = title.textContent.trim();
+      const s = S.sessions.find(function(x){ return x.name === name; });
+      if (!s || !s.topicId) return;
+      if (!byTopic.has(s.topicId)) byTopic.set(s.topicId, []);
+      byTopic.get(s.topicId).push({ row: row, s: s });
+    });
+
+    let anyGrouped = false;
+    byTopic.forEach(function(list){ if (list.length > 1) anyGrouped = true; });
+    if (!anyGrouped) return;
+
+    agenda.dataset.apexGrouped = '1';
+
+    byTopic.forEach(function(list, topicId){
+      if (list.length < 2) return;
+      const t = topicById(topicId);
+      if (!t) return;
+
+      const prefix = t.topic + " \u00B7 ";
+      const fragRows = list.map(function(entry){
+        let label = entry.s.name;
+        if (label.indexOf(prefix) === 0) label = label.slice(prefix.length);
+        else if (label === t.topic) label = "(whole topic)";
+        const dt = dueTag(entry.s);
+        return '<div style="padding:4px 0 4px 16px;font-size:12.5px;color:var(--text-2);display:flex;align-items:baseline;gap:8px">'
+          + '<i style="width:5px;height:5px;border-radius:50%;background:var(--accent-2);flex-shrink:0;align-self:center"></i>'
+          + '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(label) + '</span>'
+          + '<span class="tiny" style="flex-shrink:0">' + esc(dt.replace(/<[^>]*>/g, '')) + '</span>'
+          + '</div>';
+      }).join("");
+
+      const grouped = document.createElement('div');
+      grouped.className = 'row-item';
+      grouped.setAttribute('data-action', 'goto-reviews-today');
+      grouped.style.cssText = 'flex-wrap:wrap;cursor:pointer;padding:10px 12px';
+      grouped.innerHTML =
+          '<div class="grow" style="min-width:100%">'
+        +   '<div class="t" style="display:flex;align-items:baseline;gap:8px">'
+        +     '<span style="flex:1;min-width:0">' + esc(t.topic) + '</span>'
+        +     '<span class="pill" style="font-size:9.5px;padding:1px 7px;background:color-mix(in srgb,var(--accent) 12%,transparent);border-color:transparent;color:var(--accent-2)">'
+        +       list.length + ' due'
+        +     '</span>'
+        +   '</div>'
+        +   '<div style="margin-top:4px">' + fragRows + '</div>'
+        + '</div>';
+
+      const firstRow = list[0].row;
+      firstRow.parentNode.insertBefore(grouped, firstRow);
+      list.forEach(function(entry){ entry.row.remove(); });
+    });
+  }
+
+  const view = document.getElementById('view');
+  if (view) {
+    let raf = null;
+    new MutationObserver(function(){
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(function(){
+        const agenda = document.querySelector('[data-tour="agenda"]');
+        if (agenda) delete agenda.dataset.apexGrouped;
+        findDueSessionsBlock();
+      });
+    }).observe(view, { childList: true, subtree: true });
+  }
+  setTimeout(findDueSessionsBlock, 500);
+  setTimeout(findDueSessionsBlock, 1500);
+
+  console.log('[apex grouped agenda] installed');
+})();
+</script>
+
+</script>
 </body>
 </html>
 </body>
