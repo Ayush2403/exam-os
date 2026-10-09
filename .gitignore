@@ -1,31 +1,26 @@
-# Local editor + OS
-.DS_Store
-*.swp
-*~
 
+!apex-katex-fix.js
+# Apex local artifacts
 # Debug artifacts from one-off fixes
+# Keep the KaTeX fix
+# Local editor + OS
+# Wrangler local cache
 *.bak
 *.bak.*
 *.broken
-fix-*.sh
-restore.sh
-patch-*.js
-
-# Keep the KaTeX fix
-!apex-katex-fix.js
-
-# Wrangler local cache
-.wrangler/
-
-# Apex local artifacts
-*.bak
-*.bak.*
 *.full
+*.swp
+*~
+.DS_Store
 .cleanup-archive-*/
 .wrangler/
-node_modules/
-.DS_Store
 APEX-AUDIT-BUNDLE.txt
-apex-bundle.sh
-psi-*.json
 apex-audit.*
+apex-audit.py
+apex-audit.sh
+apex-bundle.sh
+fix-*.sh
+node_modules/
+patch-*.js
+psi-*.json
+restore.sh
