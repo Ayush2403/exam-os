@@ -10455,7 +10455,7 @@ function quickLogDo(forcedTopicId){
     else{
       const exact=matches.find(m=>m.topic.toLowerCase()===parsed.topicText.toLowerCase());
       if(exact)t=exact;
-      else{quickLogRenderSuggest(parsed.topicText);toast("Multiple matches","Pick one from the list");return;}
+      else{quickLogRenderSuggest(split.topicText);toast("Multiple matches","Pick one from the list");return;}
     }
   }
   snapshot();
