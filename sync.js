@@ -30,8 +30,7 @@
     const r = await fetch(base + "/api/sync/" + encodeURIComponent(roomId), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ salt: salt, blob: blob }),
-      keepalive: true
+      body: JSON.stringify({ salt: salt, blob: blob })
     });
     if (!r.ok) {
       let m = "HTTP " + r.status;
