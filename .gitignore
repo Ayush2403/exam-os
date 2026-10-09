@@ -27,3 +27,5 @@ node_modules/
 .DS_Store
 APEX-AUDIT-BUNDLE.txt
 apex-bundle.sh
+psi-*.json
+apex-audit.*
