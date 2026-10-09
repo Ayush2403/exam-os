@@ -14717,6 +14717,94 @@ try{
 })();
 </script>
 
+
+<script>
+/* ---- Apex Fragment Attach ----
+   Quick-log minute entries attach to an existing fragment's session
+   instead of creating a duplicate. Same topic + same fragment string
+   = same review target. No fuzzy matching. */
+(function(){
+  if (window._apexFragmentAttach) return;
+  window._apexFragmentAttach = true;
+
+  window.quickLogDo = function(forcedTopicId){
+    var inp = document.querySelector("[data-quicklog-input]");
+    if (!inp) return;
+    var parsed = quickLogParse(inp.value);
+    if (!parsed.topicText && !forcedTopicId) { toast("Type a topic name"); return; }
+    var split = _fragmentSplit(parsed.topicText);
+    var t = forcedTopicId ? topicById(forcedTopicId) : null;
+    if (!t) {
+      var matches = quickLogSuggest(split.topicText);
+      if (!matches.length) { toast("No topic found","Try a different name"); return; }
+      if (matches.length === 1) { t = matches[0]; }
+      else {
+        var exact = matches.find(function(m){ return m.topic.toLowerCase() === split.topicText.toLowerCase(); });
+        if (exact) { t = exact; }
+        else { quickLogRenderSuggest(split.topicText); toast("Multiple matches","Pick one from the list"); return; }
+      }
+    }
+    snapshot();
+    var now = todayISO();
+    var sessionName = split.fragment ? (t.topic + " \u00B7 " + split.fragment) : t.topic;
+    var examTag = (typeof getActiveExamTag === "function") ? getActiveExamTag() : "";
+
+    // Exact-name match for the same topic
+    var existing = null;
+    if (split.fragment) {
+      for (var i = S.sessions.length - 1; i >= 0; i--) {
+        var s = S.sessions[i];
+        if (s.topicId === t.id && s.name === sessionName) { existing = s; break; }
+      }
+    }
+
+    if (existing) {
+      // Attach minutes
+      existing.duration = (existing.duration || 0) + (parsed.minutes || 0);
+
+      // Pull next review forward if it's more than a day out
+      var tomorrow = addDays(now, 1);
+      if (!existing.lastReviewed) {
+        // Never reviewed — keep it due today so it shows in the agenda now
+        existing.nextReview = now;
+      } else if (existing.nextReview && existing.nextReview > tomorrow) {
+        existing.nextReview = tomorrow;
+      }
+
+      saveLocal();
+      inp.value = "";
+      var box = document.querySelector("[data-quicklog-suggest]");
+      if (box) { box.innerHTML = ""; box.classList.remove("on"); }
+      rerender();
+      toast("\u2713 Attached", sessionName + " + " + (parsed.minutes || 0) + "m");
+    } else {
+      S.sessions.push({
+        id: uid("s"),
+        name: sessionName,
+        topicId: t.id,
+        logDate: now,
+        lastReviewed: null,
+        duration: parsed.minutes || 0,
+        examTag: examTag,
+        interval: 0,
+        ease: 2.5,
+        nextReview: now,
+        stage: "1st Time Study",
+        history: []
+      });
+      saveLocal();
+      inp.value = "";
+      var box = document.querySelector("[data-quicklog-suggest]");
+      if (box) { box.innerHTML = ""; box.classList.remove("on"); }
+      rerender();
+      toast("\u2713 Logged", sessionName + (parsed.minutes ? " \u00B7 " + parsed.minutes + "m" : " \u00B7 no duration"));
+    }
+  };
+
+  console.log('[apex fragment attach] installed');
+})();
+</script>
+
 </script>
 </body>
 </html>
