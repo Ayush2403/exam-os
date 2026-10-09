@@ -485,7 +485,7 @@
     const t = topicId ? topicById(topicId) : null;
     if (!t) return 99999;
     const targets = (S.settings && Array.isArray(S.settings.exams))
-      ? S.settings.exams.filter(function(x){ return x.date; })
+      ? S.settings.exams.filter(function(x){ return x.date && x.affectsCap !== false; })
       : [];
     if (!targets.length) return 99999;
 
@@ -536,7 +536,7 @@
   /* 2. readinessProjection — hero matches active scope */
   window.readinessProjection = function(){
     const targets = (S.settings && Array.isArray(S.settings.exams))
-      ? S.settings.exams.filter(function(x){ return x.date; })
+      ? S.settings.exams.filter(function(x){ return x.date && x.affectsCap !== false; })
       : [];
     if (!targets.length) return null;
 
