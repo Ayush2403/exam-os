@@ -12,7 +12,13 @@
   /* ---- renderMath ---- */
   window.renderMath = function(str){
     if (!str) return "";
-    if (!window.katex) return esc(str);
+    if (!/\$\$|\\\(/.test(str)) return esc(str);
+    if (!window.katex) {
+      if (typeof ensureKatex === 'function') {
+        ensureKatex(function(){ if (typeof renderRoute === 'function') renderRoute(); });
+      }
+      return esc(str);
+    }
     var src = String(str);
     var cacheKey = "katex::" + src;
     if (!window._katexCache) window._katexCache = new Map();

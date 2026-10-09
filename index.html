@@ -14421,15 +14421,13 @@ try{
   // Wrap whatever ACTIONS['focus-history'] exists — call load() first
   function wrap(){
     if (!window.ACTIONS || !ACTIONS['focus-history']) { setTimeout(wrap, 200); return; }
-    var orig = ACTIONS['focus-history'];
     ACTIONS['focus-history'] = function(){
-      var args = arguments;
-      if (loaded) { return orig.apply(this, args); }
+      if (loaded) {
+        if (typeof focusHistoryModal === 'function') return focusHistoryModal();
+        return;
+      }
       pending.push(function(){
-        var fn = ACTIONS['focus-history'];
-        // If apex-focus-history-edit replaced our wrapped fn, call it
-        if (fn && fn !== arguments.callee) return fn.apply(null, args);
-        return orig.apply(null, args);
+        if (typeof focusHistoryModal === 'function') focusHistoryModal();
       });
       load();
     };
