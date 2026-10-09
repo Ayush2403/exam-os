@@ -78,27 +78,53 @@
       if (typeof wirePicker === 'function') wirePicker(el);
     });
   }
+function confirmDelete(id){
+  var f = findEntry(id);
+  if (!f) return;
+  var label = f.label || 'Focus entry';
+  var mins  = f.minutes || 0;
+  var when  = f.startedAt ? f.startedAt.slice(0,10) : 'unknown date';
 
-  function confirmDelete(id){
-    var f = findEntry(id);
-    if (!f) return;
-    var label = f.label || 'Focus entry';
-    var mins  = f.minutes || 0;
-    var when  = f.startedAt ? f.startedAt.slice(0,10) : 'unknown date';
+  openConfirm(
+    'Delete "' + label + '" (' + mins + 'm on ' + when + ')? This changes your streak and focus stats for that day.',
+    function(){
+      snapshot();
 
-    openConfirm(
-      'Delete "' + label + '" (' + mins + 'm on ' + when + ')? This changes your streak and focus stats for that day.',
-      function(){
-        snapshot();
-        S.focusLog = (S.focusLog || []).filter(function(x){ return x.id !== id; });
-        saveLocal();
-        rerender();
-        toast('Focus entry deleted', mins + 'm removed');
-        refreshModal();
+      // 1. Write the tombstone BEFORE removing the record.
+      //    mergeForSync drops any record whose _ts <= its tombstone time.
+      if (!S.tombstones) S.tombstones = {};
+      if (!S.tombstones.focusLog) S.tombstones.focusLog = {};
+      S.tombstones.focusLog[id] = Date.now();
+
+      // 2. Remove from the local array
+      S.focusLog = (S.focusLog || []).filter(function(x){ return x.id !== id; });
+
+      // 3. Strip the same minutes from the linked session so focus totals
+      //    and session duration stay in sync (the edit file didn't do this).
+      if (f.topicId && f.minutes) {
+        for (var i = S.sessions.length - 1; i >= 0; i--) {
+          if (S.sessions[i].topicId === f.topicId) {
+            S.sessions[i].duration = Math.max(0, (S.sessions[i].duration || 0) - f.minutes);
+            break;
+          }
+        }
       }
-    );
-  }
 
+      S._lastLocalEdit = new Date().toISOString();
+      saveLocal();
+
+      // 4. Push immediately instead of waiting for the 500ms debounce,
+      //    so a pull can't race in and resurrect the record first.
+      if (typeof pushNow === 'function' && typeof syncKey !== 'undefined' && syncKey) {
+        pushNow(true);
+      }
+
+      rerender();
+      toast('Focus entry deleted', mins + 'm removed');
+      refreshModal();
+    }
+  );
+}
   // ---------- full replacement of focusHistoryModal ----------
   window.focusHistoryModal = function(){
     var logs = (S.focusLog || []).slice().sort(function(a,b){
