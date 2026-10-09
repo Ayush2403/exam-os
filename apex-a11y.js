@@ -115,16 +115,20 @@
   }
 
   function labelFor(btn){
+    /* WCAG 2.5.3 — if the button already has visible text, do not add
+       an aria-label that would replace it. The visible text IS the name. */
     if (btn.getAttribute('aria-label') && btn.getAttribute('aria-label').trim()) return null;
+    var text = (btn.textContent || '').replace(/\s+/g, ' ').trim();
+    var visibleReal = text.length >= 3 && !/^[\s×✕✓+−—·]{1,3}$/.test(text);
+    if (visibleReal) return null;
+
+    /* Icon-only from here on */
     var fromAction = actionLabel(btn.dataset && btn.dataset.action);
     if (fromAction) return fromAction;
     var title = btn.getAttribute('title');
     if (title && title.trim()) return title.trim().split('—')[0].trim();
-    var text = (btn.textContent || '').replace(/\s+/g, ' ').trim();
-    if (text.length > 1 && text.length < 60 && !/^[\s×✕✓+−—·]{1,3}$/.test(text)) return text;
     if (btn.classList.contains('danger')) return 'Delete';
     if (btn.classList.contains('accent')) return 'Start';
-    if (btn.classList.contains('icon-btn') && !btn.querySelector('svg')) return 'Action';
     var ctx = contextName(btn);
     if (ctx) {
       if (/pencil/i.test(btn.innerHTML || '')) return 'Edit ' + ctx;
@@ -198,6 +202,28 @@
   setTimeout(pass, 400);
   setTimeout(pass, 1500);
   window.addEventListener('hashchange', function(){ setTimeout(pass, 100); });
+
+
+  /* WCAG 2.5.3 cleanup: any aria-label set on a button with visible text
+     that doesn't CONTAIN that text is invalid. Remove it and let the
+     visible text be the name. */
+  function stripMismatchedLabels(){
+    document.querySelectorAll('button[aria-label]').forEach(function(b){
+      var visible = (b.textContent || '').replace(/\s+/g, ' ').trim();
+      if (visible.length < 3) return;  /* icon-only — keep the aria-label */
+      if (/^[\s×✕✓+−—·]{1,3}$/.test(visible)) return;
+      var label = (b.getAttribute('aria-label') || '').trim();
+      /* Normalize both to compare */
+      var v = visible.toLowerCase();
+      var l = label.toLowerCase();
+      if (l && v.indexOf(l) === -1 && l.indexOf(v) === -1) {
+        b.removeAttribute('aria-label');
+      }
+    });
+  }
+  setTimeout(stripMismatchedLabels, 600);
+  setTimeout(stripMismatchedLabels, 2000);
+  window.addEventListener('hashchange', function(){ setTimeout(stripMismatchedLabels, 200); });
 
   console.log('[apex-a11y] v2 installed — labelled buttons + inert hidden containers');
 })();
