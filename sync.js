@@ -48,6 +48,7 @@
     } catch(e) { return false; }
   }
 
+  window._apexToMs = _apexToMs;
   window.apiGet = apiGet;
   window.apiPut = apiPut;
   window.apiDelete = apiDelete;
@@ -147,9 +148,9 @@
         if (!silent) toast("Push aborted", "Could not reach cloud to check for conflicts");
         return;
       }
-      // Compare numerically: remote.updatedAt is epoch seconds.
-      // S._lastSync is stored as ISO; convert before comparing.
-      var lastSyncEpoch = S._lastSync ? Math.floor(new Date(S._lastSync).getTime() / 1000) : 0;
+      // _apexToMs normalizes any shape (ISO string, epoch seconds, epoch ms)
+      // to epoch milliseconds. Floor to epoch seconds to match remote.updatedAt.
+      var lastSyncEpoch = Math.floor(_apexToMs(S._lastSync) / 1000);
       if (remote && remote.updatedAt && remote.updatedAt > lastSyncEpoch
           && S._lastLocalEdit && new Date(S._lastLocalEdit).getTime() / 1000 > lastSyncEpoch) {
         needMerge = true;

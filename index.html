@@ -9956,7 +9956,10 @@ async function startSync(){
       if(!d||!d.enc||!d.updatedAt)return;
       if(S._lastSync && d.updatedAt <= S._lastSync)return;
       decryptState(d.enc).then(remote=>{
-        const localDirty=S._lastLocalEdit&&S._lastSync&&S._lastLocalEdit>S._lastSync;
+        const localDirty=(function(){
+    var toSec=function(v){if(v==null)return 0;if(typeof v==='number')return v<1e12?v:Math.floor(v/1000);var t=new Date(v).getTime();return isNaN(t)?0:Math.floor(t/1000);};
+    return toSec(S._lastLocalEdit)>toSec(S._lastSync);
+  })();
         _applyingRemote=true;
         if(localDirty){
           S=mergeForSync(S,remote);
