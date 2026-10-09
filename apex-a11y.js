@@ -156,8 +156,12 @@
   /* --- 4. Inert hidden containers --- */
   function toggleInert(el, shouldBeHidden){
     if (!el || el === document.body || el === document.documentElement) return;
-    if (shouldBeHidden) el.setAttribute('inert', '');
-    else el.removeAttribute('inert');
+    if (shouldBeHidden && !el.hasAttribute('inert')) {
+      el.setAttribute('inert', '');
+    } else if (!shouldBeHidden && el.hasAttribute('inert')) {
+      el.removeAttribute('inert');
+    }
+    /* Skip if no change — otherwise the observer fires and loops forever. */
   }
 
   function applyInert(){
@@ -198,13 +202,20 @@
   /* --- wiring --- */
   function pass(){ decorateButtons(); applyInert(); }
   var raf = null;
+  var lastPass = 0;
   function schedule(){
     if (raf) return;
-    raf = requestAnimationFrame(function(){ raf = null; pass(); });
+    raf = requestAnimationFrame(function(){
+      raf = null;
+      var now = Date.now();
+      if (now - lastPass < 120) return; /* throttle to ~8Hz */
+      lastPass = now;
+      pass();
+    });
   }
   new MutationObserver(schedule).observe(document.documentElement, {
     childList: true, subtree: true,
-    attributes: true, attributeFilter: ['aria-hidden', 'class', 'inert']
+    attributes: true, attributeFilter: ['aria-hidden', 'class']
   });
   pass();
   setTimeout(pass, 400);
