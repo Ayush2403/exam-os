@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="description" content="Apex — a study system for competitive exams. Tells you what to work on today, schedules revision automatically, and ranks weak topics by what actually costs you marks.">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=JetBrains+Mono:wght@400;500&display=optional" rel="stylesheet">
 
 <meta name="theme-color" content="#05070D">
 <meta name="mobile-web-app-capable" content="yes">
@@ -16,6 +16,8 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="msapplication-TileColor" content="#08080C">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-192.png">
 <title>Apex — The Exam OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7798,7 +7800,11 @@ body.route-welcome #apex-cosmos{display:none}
   window.apexMeasureSticky = sync;
 })();
 </script>
-<style id="apex-noscrolljump">.topic-row{content-visibility:visible !important;contain-intrinsic-size:auto !important}#syl-list{overflow-anchor:none}</style><script>
+<style id="apex-noscrolljump">.topic-row{content-visibility:visible !important;contain-intrinsic-size:auto !important}#syl-list{overflow-anchor:none}
+/* Closed containers must not be in the accessibility tree */
+#scratch-drawer:not(.open){ display: none; }
+#focus-screen:not(.open){ display: none; }
+</style><script>
 /* ---- Apex lazy KaTeX ---- */
 (function(){
   if (window._apexLazyKatex) return;
