@@ -10596,79 +10596,7 @@ function quickLogRenderSuggest(q){
   box.innerHTML=matches.map(t=>'<div class="ql-sug-item" data-quicklog-pick="'+t.id+'"><i class="ql-sug-dot" style="background:'+subjColor(t.subject)+'"></i><span class="ql-sug-name">'+esc(t.topic)+'</span><span class="ql-sug-sub">'+esc(t.subject)+'</span></div>').join("");
   box.classList.add("on");
 }
-/* ---- Apex fragment split — persistent override ---- */
-(function(){
-  if (window._apexFragmentPersist) return;
-  window._apexFragmentPersist = true;
 
-  function _fragmentSplit(text){
-    var s = String(text || '').trim();
-    var m = s.match(/^(.+?)\s*[:\u2014\u2013]\s*(.+?)\s*$/) ||
-            s.match(/^(.+?)\s+\/\s+(.+?)\s*$/);
-    if (!m) return { topicText: s, fragment: '' };
-    return { topicText: m[1].trim(), fragment: m[2].trim() };
-  }
-
-  var _origQuickLogDo = window.quickLogDo;
-  window.quickLogDo = function(forcedTopicId){
-    var inp = document.querySelector("[data-quicklog-input]");
-    if (!inp) return;
-    var parsed = quickLogParse(inp.value);
-    if (!parsed.topicText && !forcedTopicId) { toast("Type a topic name"); return; }
-    var split = _fragmentSplit(parsed.topicText);
-    var t = forcedTopicId ? topicById(forcedTopicId) : null;
-    if (!t) {
-      var matches = quickLogSuggest(split.topicText);
-      if (!matches.length) { toast("No topic found","Try a different name"); return; }
-      if (matches.length === 1) { t = matches[0]; }
-      else {
-        var exact = matches.find(function(m){ return m.topic.toLowerCase() === split.topicText.toLowerCase(); });
-        if (exact) { t = exact; }
-        else { quickLogRenderSuggest(split.topicText); toast("Multiple matches","Pick one from the list"); return; }
-      }
-    }
-    snapshot();
-    var now = todayISO();
-    var sessionName = split.fragment ? (t.topic + " \u00B7 " + split.fragment) : t.topic;
-    S.sessions.push({id:uid("s"),name:sessionName,topicId:t.id,logDate:now,lastReviewed:null,duration:parsed.minutes||0,interval:0,ease:2.5,nextReview:now,stage:"1st Time Study",history:[]});
-    saveLocal();
-    inp.value = "";
-    var box = document.querySelector("[data-quicklog-suggest]");
-    if (box) { box.innerHTML = ""; box.classList.remove("on"); }
-    rerender();
-    toast("\u2713 Logged", sessionName + (parsed.minutes ? " \u00B7 " + parsed.minutes + "m" : " \u00B7 no duration"));
-  };
-
-  console.log('[apex fragment persist] baked into index.html');
-})();
-
-function quickLogDo(forcedTopicId){
-  const inp=document.querySelector("[data-quicklog-input]");
-  if(!inp)return;
-  const parsed=quickLogParse(inp.value);
-  const split=_fragmentSplit(parsed.topicText);
-  if(!parsed.topicText&&!forcedTopicId){toast("Type a topic name");return;}
-  let t=forcedTopicId?topicById(forcedTopicId):null;
-  if(!t){
-    const matches=quickLogSuggest(split.topicText);
-    if(!matches.length){toast("No topic found","Try a different name");return;}
-    if(matches.length===1){t=matches[0];}
-    else{
-      const exact=matches.find(m=>m.topic.toLowerCase()===split.topicText.toLowerCase());
-      if(exact)t=exact;
-      else{quickLogRenderSuggest(split.topicText);toast("Multiple matches","Pick one from the list");return;}
-    }
-  }
-  snapshot();
-  const now=todayISO();
-  S.sessions.push({id:uid("s"),name:t.topic,topicId:t.id,logDate:now,lastReviewed:null,duration:parsed.minutes||0,examTag:(typeof getActiveExamTag==="function"?getActiveExamTag():""),interval:0,ease:2.5,nextReview:now,stage:"1st Time Study",history:[]});
-  saveLocal();
-  inp.value="";
-  const box=document.querySelector("[data-quicklog-suggest]");
-  if(box){box.innerHTML="";box.classList.remove("on");}
-  rerender();
-  toast("✓ Logged",t.topic+(parsed.minutes?" · "+parsed.minutes+"m":" · no duration"));
-}
 function readinessScope(){
   const targets=(S.settings&&Array.isArray(S.settings.exams))?S.settings.exams.filter(x=>x.date):[];
   const tags=[];
@@ -13229,39 +13157,6 @@ async function pushNow(silent){
   }
 }
 function getDeviceId(){if(!S._deviceId){S._deviceId="dev-"+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);}return S._deviceId;}
-function mergeForSync(local,remote){
-  const mergeById=(a,b)=>{
-    if(!Array.isArray(a)&&!Array.isArray(b))return a||b||[];
-    if(!Array.isArray(a))return b||[];
-    if(!Array.isArray(b))return a||[];
-    const map=new Map();
-    b.forEach(x=>{if(x&&x.id)map.set(x.id,x);});
-    a.forEach(x=>{if(x&&x.id)map.set(x.id,x);});
-    return [...map.values()];
-  };
-  const out=Object.assign({},remote,local);
-  out._deviceId=local._deviceId||remote._deviceId;
-  out._lastLocalEdit=local._lastLocalEdit||remote._lastLocalEdit;
-  out._lastSync=new Date().toISOString();
-  ["syllabus","sessions","errors","mocks","tasks","links","focusLog","scratch","resources"].forEach(k=>{
-    out[k]=mergeById(local[k],remote[k]);
-  });
-  out.habits=Object.assign({},remote.habits||{});
-  Object.keys(local.habits||{}).forEach(date=>{
-    if(!out.habits[date])out.habits[date]=local.habits[date];
-    else out.habits[date]=Object.assign({},out.habits[date],local.habits[date]);
-  });
-  out.tax=Object.assign({},remote.tax||{});
-  Object.keys(local.tax||{}).forEach(k=>{
-    const set=new Set([...(out.tax[k]||[]),...(local.tax[k]||[])]);
-    out.tax[k]=[...set];
-  });
-  // Timestamp-based habitDefs merge (see Sync Integrity v1 for full version)
-  out.habitDefs=local.habitDefs&&local.habitDefs.length?local.habitDefs:(remote.habitDefs||[]);
-  out.settings=Object.assign({},remote.settings||{},local.settings||{});
-  out.sync=local.sync||remote.sync;
-  return out;
-}
 
 </script>
 <script>
