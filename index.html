@@ -12745,6 +12745,7 @@ document.addEventListener('click', function(e){
 })();
 
 const POST={dashboard:postDashboard,syllabus:postSyllabus,reviews:postReviews,errors:postErrors,tasks:postTasks};
+document.addEventListener("DOMContentLoaded", function(){
 try{
   applyTheme(S.settings.theme||"obsidian");
   buildNav();
@@ -12786,7 +12787,7 @@ if(S.sync.enabled && S.sync.room){
     showFirstSyncDialog();
     return;
   }
-  const localDirty=S._lastLocalEdit&&S._lastSync&&S._lastLocalEdit>S._lastSync;
+  const localDirty=(function(){var s=function(v){if(v==null)return 0;if(typeof v==='number')return v<1e12?v:Math.floor(v/1000);var t=new Date(v).getTime();return isNaN(t)?0:Math.floor(t/1000);};return s(S._lastLocalEdit)>s(S._lastSync);})();
   if(!localDirty){
     await pullNow(true);
   }else{
@@ -12799,6 +12800,7 @@ if(S.sync.enabled && S.sync.room){
   }
 }
 }catch(err){fatal("Startup: "+err.message);}
+});
 (function neoMinimalGlow(){
   let mx=window.innerWidth/2,my=window.innerHeight/2,rx=mx,ry=my,raf=null;
   const root=document.documentElement;
@@ -13030,7 +13032,7 @@ async function pushNow(silent){
       const snap=await ref.get();
       if(snap.exists){
         const data=snap.data();
-        if(data&&data.updatedAt&&S._lastSync&&data.updatedAt>S._lastSync&&S._lastLocalEdit&&S._lastLocalEdit>S._lastSync){
+        if(data&&data.updatedAt&&S._lastSync&&(function(){var s=function(v){if(v==null)return 0;if(typeof v==='number')return v<1e12?v:Math.floor(v/1000);var t=new Date(v).getTime();return isNaN(t)?0:Math.floor(t/1000);};return s(data.updatedAt)>s(S._lastSync)&&s(S._lastLocalEdit)>s(S._lastSync);})()){
           needMerge=true;
           let remote=null;
           try{remote=await decryptState(data.enc);}catch(e){}
@@ -14355,7 +14357,7 @@ try{
 </script>
 
 <script src="./apex-mobile.js" defer></script>
-<script src="./sync.js?v=6"></script>
+<script defer src="./sync.js?v=6"></script>
 <script>
 /* APEX SYNC — AUTO-UNLOCK ON PAGE LOAD */
 (function(){
