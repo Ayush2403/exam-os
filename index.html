@@ -9418,7 +9418,7 @@ const TOUR_STEPS=[
   {route:"dashboard",target:"#side-nav",title:"Your command rail",text:"Every page lives here. The i-icon next to each item tells you what that page does. Learn / Assess / Track / Help - four sections, eight pages."},
   {route:"dashboard",target:"#topbar",title:"Always-visible actions",text:"Focus timer, undo, help, notes export, settings - all one click away in the top bar."},
   {route:"dashboard",target:"[data-tour='hero']",title:"Your next action",text:"One thing to do right now - chosen by weighing overdue reviews, weak topics, exam urgency, time of day, and repeated fails. Do this first, every single day."},
-  {route:"dashboard",target:"[data-action='quicklog-go']",title:"Quick-log - one line",text:"Type 'Percentage 45' and hit Enter. Fuzzy-matches across all your topics with live suggestions. Fastest way to log a session."},
+  {route:"dashboard",target:"[data-action='quicklog-go']",title:"Quick-log - one line",text:"Type 'Percentage 45' and hit Enter — or use 'Percentage: successive 45' to tag the fragment you actually studied. Fuzzy-matches across all your topics with live suggestions."},
   {route:"dashboard",target:"[data-tour='agenda']",title:"Today's Agenda",text:"Errors first (red left bar), sessions second. Rate each card and the SRS reschedules it automatically. Click any topic pill to jump to the syllabus."},
   {route:"dashboard",target:"#timer-pill",title:"Focus mode",text:"Pomodoro and Stopwatch in one panel. Zen mode hides everything else. Every block auto-logs minutes to the linked topic. Press F to toggle."},
   {route:"dashboard",target:"#streak-chip",title:"Study streak",text:"Consecutive days with any study activity. Log a session, rate a review, or check a habit - any of them count."},
@@ -10388,7 +10388,7 @@ function recommendSmart(){
 function recommend(){return recommendSmart();}
 const priRank=t=>{const i=taxList("priorities").indexOf(t.priority);return i<0?9:i;};
 function quickLogHTML(){
-  return '<div class="quicklog"><span class="ql-icon">⚡</span><div class="ql-input-wrap"><input class="ql-input" data-quicklog-input placeholder="Quick log — e.g. Percentage 45" autocomplete="off" spellcheck="false"><div class="ql-suggest" data-quicklog-suggest></div></div><span class="ql-hint">↵ to log</span><button class="btn primary sm" data-action="quicklog-go">Log</button></div>';
+  return '<div class="quicklog"><span class="ql-icon">⚡</span><div class="ql-input-wrap"><input class="ql-input" data-quicklog-input placeholder="Quick log — Percentage 45  or  Percentage: successive 45" autocomplete="off" spellcheck="false"><div class="ql-suggest" data-quicklog-suggest></div></div><span class="ql-hint">↵ to log</span><button class="btn primary sm" data-action="quicklog-go">Log</button></div>';
 }
 function quickLogParse(text){
   text=String(text||"").trim();
@@ -11360,7 +11360,7 @@ function viewGuide(){
 
     +'<div class="card section-gap"><div class="card-h"><h2>The daily loop</h2><span class="sub">do this every day</span></div>'
       +step(1,"Open Home. Read the hero card.","That single line is your highest-leverage action right now — computed from overdue reviews, weak topics, exam urgency, time of day, and consecutive fails. Do it. Don\'t shop around.")
-      +step(2,"Log every session.","Use the quick-log bar at the top of Home: type 'Percentage 45' → Enter. Or click Log Session for a modal with topic picker, dates, and duration chips.")
+      +step(2,"Log every session.","Use the quick-log bar at the top of Home: type 'Percentage 45' → Enter. To tag a specific fragment inside a topic, use 'Percentage: successive 45' — the fragment shows on the review card so you know what you're actually recalling.")
       +step(3,"Rate every review honestly.","Again / Hard / Good / Easy. If you had to think more than 3 seconds, it\'s Hard, not Good. Optimistic ratings sabotage the schedule.")
       +step(4,"Log every mistake.","Mocks, PYQs, Discord doubts. Fill all three fields — the middle one ('My answer') is the one that actually helps you remember. Link every error to a topic.")
       +step(5,"Log study hours at night.","Habits tab. Milestones at 4/8/12h auto-check. Study credit is graded — 8h gets you 67% toward the 12h goal. Track honestly.")
