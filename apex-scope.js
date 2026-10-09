@@ -325,15 +325,23 @@
     openModal(s ? "Edit Session" : "Log Study Session",
       '<div class="frow"><label>Session name</label><input class="inp" name="name" value="' + esc(s ? s.name : "") + '" placeholder="e.g. Percentage PYQs — Kiran"></div>'
       + '<div class="frow"><label>Linked topic</label>' + pickerHTML("topicIds", s && s.topicId ? [s.topicId] : (prefillTopicId ? [prefillTopicId] : []), false) + '</div>'
+      + '<div class="frow apex-fragment-field"><label>Fragment <span style="color:var(--text-3);font-weight:500">(optional)</span></label><input class="inp" name="fragment" value="" placeholder="e.g. successive  ·  election  ·  discount" autocomplete="off"><div class="hint">Short label for the slice you worked on. Fills the session name as <b>Topic · fragment</b>.</div></div>'
       + '<div class="frow"><label>Exam context <span style="color:var(--text-3);font-weight:500">(optional)</span></label><select class="inp" name="examTag">' + examOpts + '</select><div class="hint">Optional. Leave blank to count for every exam. Set it only if you studied this specifically for one exam.</div></div>'
       + '<div class="f2"><div class="frow"><label>Log date</label>' + dateFieldHTML("logDate", (s && s.logDate) || todayISO()) + '</div><div class="frow"><label>Last reviewed</label>' + dateFieldHTML("lastReviewed", (s && s.lastReviewed) || "") + '</div></div>'
       + '<div class="frow"><label>Duration (optional)</label><input class="inp" type="number" min="0" max="1440" step="5" name="duration" value="' + ((s && s.duration) || "") + '" placeholder="minutes" data-noclear><div class="chips" style="margin-top:8px" id="dur-chips">' + [15,30,45,60,90,120].map(function(m){ return '<button type="button" class="chip' + (s && s.duration === m ? " on" : "") + '" data-dur="' + m + '" style="padding:6px 12px;min-height:32px;font-size:12px">' + m + 'm</button>'; }).join("") + '</div><div id="focus-dur-hint" style="display:none;margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--pri-medium-bg);border:1px solid var(--pri-medium-bd);color:var(--pri-medium-fg);font-size:11.5px;line-height:1.5"></div><div class="hint">Skip if you don\'t track time.</div></div>',
       function(v){
-        if (!v.name) { toast("⚠️ Name required"); return false; }
         const ids = pickVals(v.topicIds);
         const dur = Math.max(0, Math.min(1440, parseInt(v.duration, 10) || 0));
+        const frag = (v.fragment || "").trim();
+        const topicObj = ids[0] ? topicById(ids[0]) : null;
+        let finalName = frag && topicObj
+          ? (topicObj.topic + " · " + frag)
+          : (v.name && v.name.trim())
+            ? v.name.trim()
+            : (topicObj ? topicObj.topic : "");
+        if (!finalName) { toast("⚠️ Name or topic required"); return false; }
         const base = {
-          name: v.name,
+          name: finalName,
           topicId: ids[0] || null,
           examTag: v.examTag || '',
           logDate: v.logDate || null,
@@ -381,6 +389,18 @@
       }
     };
     if (picker) picker.addEventListener("pick-change", updateHint);
+    var _fragFld = document.querySelector('.modal .apex-fragment-field');
+    var _fragInp = _fragFld ? _fragFld.querySelector('input[name="fragment"]') : null;
+    if (picker && _fragInp) {
+      var syncFrag = function(){
+        var ids = [];
+        try { ids = JSON.parse(picker.querySelector('input[type=hidden]').value || "[]"); } catch(e){}
+        if (ids[0]) { _fragFld.style.display = ""; }
+        else { _fragFld.style.display = "none"; _fragInp.value = ""; }
+      };
+      picker.addEventListener("pick-change", syncFrag);
+      syncFrag();
+    }
     updateHint();
   };
 
