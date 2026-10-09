@@ -10446,14 +10446,15 @@ function quickLogDo(forcedTopicId){
   const inp=document.querySelector("[data-quicklog-input]");
   if(!inp)return;
   const parsed=quickLogParse(inp.value);
+  const split=_fragmentSplit(parsed.topicText);
   if(!parsed.topicText&&!forcedTopicId){toast("Type a topic name");return;}
   let t=forcedTopicId?topicById(forcedTopicId):null;
   if(!t){
-    const matches=quickLogSuggest(parsed.topicText);
+    const matches=quickLogSuggest(split.topicText);
     if(!matches.length){toast("No topic found","Try a different name");return;}
     if(matches.length===1){t=matches[0];}
     else{
-      const exact=matches.find(m=>m.topic.toLowerCase()===parsed.topicText.toLowerCase());
+      const exact=matches.find(m=>m.topic.toLowerCase()===split.topicText.toLowerCase());
       if(exact)t=exact;
       else{quickLogRenderSuggest(split.topicText);toast("Multiple matches","Pick one from the list");return;}
     }
