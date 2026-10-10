@@ -1998,7 +1998,7 @@ textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
 .err-detail{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--pri-critical-bd);display:flex;flex-direction:column;gap:10px;transition:border-color .18s var(--ease),background .18s var(--ease)}
 .err-detail:hover{border-color:var(--border-2);border-left-color:var(--pri-critical-fg)}
 /* Collapse long answers — tap to expand */
-.err-detail{position:relative;max-height:180px;overflow:hidden;transition:max-height .3s var(--ease-out)}
+.err-detail{position:relative;max-height:180px;overflow:hidden;transition:max-height .3s var(--ease-out),border-color .18s var(--ease),background .18s var(--ease)}
 .err-detail:not(.expanded)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:44px;background:linear-gradient(to bottom,transparent,var(--surface) 90%);pointer-events:none;border-radius:0 0 10px 10px}
 .err-detail.expanded{max-height:none;overflow:visible}
 .err-detail.expanded::after{display:none}
