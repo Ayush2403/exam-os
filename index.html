@@ -2002,6 +2002,9 @@ textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
 .err-detail:not(.expanded)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:44px;background:linear-gradient(to bottom,transparent,var(--surface) 90%);pointer-events:none;border-radius:0 0 10px 10px}
 .err-detail.expanded{max-height:none;overflow:visible}
 .err-detail.expanded::after{display:none}
+/* Same treatment for review card notes — mask fades content to transparent */
+.sess-notes:not(.expanded){max-height:200px;overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 40px),transparent)}
+.sess-notes.expanded{max-height:none;-webkit-mask-image:none;mask-image:none}
 .err-detail>div>div:first-child{font-family:"Inter",sans-serif;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
 .err-detail>div:nth-child(1)>div:first-child{color:var(--pri-critical-fg)}
 .err-detail>div:nth-child(2)>div:first-child{color:#10B981}
@@ -12786,7 +12789,7 @@ document.addEventListener("click",e=>{
 const _bd=$("#scratch-backdrop");if(_bd)_bd.addEventListener("click",()=>closeScratch());
 /* Tap a collapsed err-detail block to expand it */
 document.addEventListener("click",function(e){
-  var d=e.target.closest(".err-detail");
+  var d=e.target.closest(".err-detail,.sess-notes");
   if(!d)return;
   if(e.target.closest("button,a,input,textarea,select,[data-action]"))return;
   if(d.classList.contains("expanded")){d.classList.remove("expanded");return;}
