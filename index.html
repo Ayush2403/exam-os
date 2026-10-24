@@ -10480,7 +10480,7 @@ function contactCardHTML(){
   console.log('[apex family] installed — fragment view above grade row');
 })();
 function gradeRowHTML(id,action){action=action||"grade-review";return'<div class="grade-row"><button class="grade-btn again" data-action="'+action+'" data-id="'+id+'" data-grade="again">Again</button><button class="grade-btn hard" data-action="'+action+'" data-id="'+id+'" data-grade="hard">Hard</button><button class="grade-btn good" data-action="'+action+'" data-id="'+id+'" data-grade="good">Good</button><button class="grade-btn easy" data-action="'+action+'" data-id="'+id+'" data-grade="easy">Easy</button></div>';}
-function errorAgendaRow(e){const rel=e.topicId?relPill(e.topicId):"";return'<div class="row-item" data-action="goto-reviews-today" style="flex-wrap:wrap;border-left:2px solid var(--pri-critical-bd);cursor:pointer"><div class="grow" style="min-width:100%"><div class="t">⚠️ '+esc(e.title)+'</div><div class="m">'+(e.type?'<span class="pill" style="font-size:10.5px"><i class="dot" style="background:'+errColor(e.type)+'"></i>'+esc(e.type)+'</span>':"")+' '+rel+' '+dueTag(e)+'</div></div><div style="display:flex;gap:6px;align-items:center;margin-top:8px;width:100%;flex-wrap:wrap"><span class="tiny" style="flex:1;color:var(--text-3);font-family:\'JetBrains Mono\',monospace;letter-spacing:.14em;text-transform:uppercase;font-size:9.5px">Open in Reviews →</span></div></div>';}
+function errorAgendaRow(e){const rel=e.topicId?relPill(e.topicId):"";return'<div class="row-item" data-action="quick-review" data-type="error" data-id="'+e.id+'" style="flex-wrap:wrap;border-left:2px solid var(--pri-critical-bd);cursor:pointer"><div class="grow" style="min-width:100%"><div class="t">⚠️ '+esc(e.title)+'</div><div class="m">'+(e.type?'<span class="pill" style="font-size:10.5px"><i class="dot" style="background:'+errColor(e.type)+'"></i>'+esc(e.type)+'</span>':"")+' '+rel+' '+dueTag(e)+'</div></div><div style="display:flex;gap:6px;align-items:center;margin-top:8px;width:100%;flex-wrap:wrap"><span class="tiny" style="flex:1;color:var(--text-3);font-family:\'JetBrains Mono\',monospace;letter-spacing:.14em;text-transform:uppercase;font-size:9.5px">Open in Reviews →</span></div></div>';}
 function errorCard(e){
   const r=reviewState(e);
   const intervalTxt=typeof e.interval==="number"&&e.interval>0?e.interval+"d":"";
@@ -10500,7 +10500,7 @@ function errorCard(e){
     +gradeRowHTML(e.id,"grade-error")
   +'</div>';
 }
-function agendaRow(s){const rel=s.topicId?relPill(s.topicId):"";return'<div class="row-item" data-action="goto-reviews-today" style="flex-wrap:wrap;cursor:pointer"><div class="grow" style="min-width:100%"><div class="t">'+esc(s.name)+'</div><div class="m">'+stagePill(s.stage)+' '+rel+' '+dueTag(s)+'</div></div><div style="display:flex;gap:6px;align-items:center;margin-top:8px;width:100%;flex-wrap:wrap"><span class="tiny" style="flex:1;color:var(--text-3);font-family:\'JetBrains Mono\',monospace;letter-spacing:.14em;text-transform:uppercase;font-size:9.5px">Open in Reviews →</span><button class="mini-icon" data-action="gcal-review" data-id="'+s.id+'">'+ICONS.cal+'</button><button class="mini-icon accent" data-action="focus-task-from-review" data-id="'+s.id+'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button></div></div>';}
+function agendaRow(s){const rel=s.topicId?relPill(s.topicId):"";return'<div class="row-item" data-action="quick-review" data-type="session" data-id="'+s.id+'" style="flex-wrap:wrap;cursor:pointer"><div class="grow" style="min-width:100%"><div class="t">'+esc(s.name)+'</div><div class="m">'+stagePill(s.stage)+' '+rel+' '+dueTag(s)+'</div></div><div style="display:flex;gap:6px;align-items:center;margin-top:8px;width:100%;flex-wrap:wrap"><span class="tiny" style="flex:1;color:var(--text-3);font-family:\'JetBrains Mono\',monospace;letter-spacing:.14em;text-transform:uppercase;font-size:9.5px">Open in Reviews →</span><button class="mini-icon" data-action="gcal-review" data-id="'+s.id+'">'+ICONS.cal+'</button><button class="mini-icon accent" data-action="focus-task-from-review" data-id="'+s.id+'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button></div></div>';}
 function hourBucket(){const h=new Date().getHours();if(h<5)return"night";if(h<12)return"morning";if(h<17)return"afternoon";if(h<22)return"evening";return"night";}
 function recentSubjectWork(){
   let latest=null;
@@ -12424,6 +12424,44 @@ const ACTIONS={
   "toggle-sidebar":()=>toggleSidebar(),
   "start-tour":()=>{closeModal();dismissWelcome();setTimeout(startTour,160);},
   "complete-review":id=>completeReview(id),
+  "quick-review":(id,el)=>{
+    const type = el.dataset.type || 'session';
+    const item = type === 'error' ? S.errors.find(x => x.id === id) : S.sessions.find(x => x.id === id);
+    if (!item) return;
+
+    const topic = item.topicId ? topicById(item.topicId) : null;
+    let body = "";
+
+    if (type === "error") {
+      body = `
+        <div class="sub-h" style="font-size:15px;color:var(--text);margin-bottom:14px">${esc(item.title)}</div>
+        ${item.myAnswer ? `<div class="detail-block" style="border-left:3px solid var(--pri-critical-fg);margin-bottom:12px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-critical-fg);margin-bottom:4px">My answer</div><div style="font-size:13px">${esc(item.myAnswer)}</div></div>` : ''}
+        ${item.whyWrong ? `<div class="detail-block" style="border-left:3px solid var(--pri-low-fg);margin-bottom:16px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-low-fg);margin-bottom:4px">Correct approach</div><div style="font-size:13px">${esc(item.whyWrong)}</div></div>` : ''}
+        <div style="margin-top:20px">${gradeRowHTML(id, "grade-error")}</div>
+      `;
+    } else {
+      body = `
+        <div class="sub-h" style="font-size:15px;color:var(--text);margin-bottom:14px">${esc(item.name)}</div>
+        ${topic && topic.notes ? `<div class="sess-notes" style="margin-bottom:16px"><div class="sess-notes-h">Notes</div><div class="sess-notes-body">${renderMath(topic.notes).replace(/\n/g, "<br>")}</div></div>` : ''}
+        <div style="margin-top:20px">${gradeRowHTML(id, "grade-review")}</div>
+      `;
+    }
+
+    openModal("Focus Review", body, () => {}, "Close");
+    const sv = document.querySelector("[data-msave]");
+    if (sv) sv.style.display = "none";
+
+    // Wire the grade buttons so they close the modal after grading
+    const modal = document.querySelector("#modal-root");
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        const btn = e.target.closest(".grade-btn");
+        if (btn) {
+          setTimeout(closeModal, 150); // let gradeReview/gradeError finish first
+        }
+      });
+    }
+  },
   "grade-error":(id,el)=>gradeError(id,el.dataset.grade),
   "grade-review":(id,el)=>gradeReview(id,el.dataset.grade),
   "focus-start-topic":id=>{const t=topicById(id);if(!t)return;focusOpen({label:t.topic,topicId:id,autostart:true});toast("⚡ Focus started");},
