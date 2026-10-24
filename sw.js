@@ -5,7 +5,7 @@
    - Cache-first for CDN assets, stale-while-revalidate for app
    ============================================================ */
 
-const CACHE = 'apex-v85';
+const CACHE = 'apex-v86';
 
 const ASSETS = [
   './',
@@ -18,36 +18,15 @@ const ASSETS = [
   './icons/icon-512.png',
   './icons/icon-192-maskable.png',
   './icons/icon-512-maskable.png',
-  './apex-a11y.js',
-  './apex-exam-sync.js',
-  './apex-final-batch.js',
-  './apex-focus-notes-edit.js',
   './apex-focus-history-edit.js',
-  './apex-scroll-preserve.js',
   './apex-desktop-polish.css',
-  './apex-final.js',
-  './apex-katex-fix.js',
-  './apex-keys.js',
   './apex-layout-fix.css',
-  './apex-leech-topic.js',
   './apex-mobile-ux.css',
-  './apex-mobile.js',
-  './apex-new-exam.js',
   '',
-  './apex-obsidian-link.js',
-  './apex-polish.js',
-  './apex-scope.js',
   '',
-  './apex-syl-focus.js',
-  './apex-syl-scroll.js',
-  './apex-tag-fix.js',
-  './apex-tags-final.js',
-  './apex-task-rollover.js',
-  './apex-theme-fix.js',
-  './exam-config.js',
-  './exam-weightage.js',
   './sw.js',
-  './sync.js'
+  './sync.js',
+  './apex-bundle.js'
 ];
 
 /* ---- install: precache everything ---- */
