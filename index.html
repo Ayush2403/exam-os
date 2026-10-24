@@ -9458,72 +9458,90 @@ function focusComplete(){
   focusZen(false);
   focusPanelClose();
   if(mins<1){ toast("Nothing to save yet"); focusUI(); return; }
-  // Reset AFTER capturing the values — the capture modal needs them
+  
+  // 1. Instantly save the log
+  snapshot();
+  const entry = {
+    id: uid("f"),
+    label: FS.label || "Focus session",
+    taskId: FS.taskId,
+    topicId: FS.topicId,
+    examTag: (FS.examTag||(typeof getActiveExamTag==="function"?getActiveExamTag():"")),
+    startedAt: new Date(FS.startedAt || Date.now()).toISOString(),
+    endedAt: new Date().toISOString(),
+    minutes: mins,
+    quality: focusQuality(mins, _savedDistractions)
+  };
+  S.focusLog.push(entry);
+  if(FS.topicId) attachFocusToSession(mins, FS.topicId);
+  saveLocal();
+
+  // 2. Reset timer state
   _focusDistractions=0;
   _focusAwayMs=0;
   _warnChimed=false;
-  focusShowCapture(mins, _savedDistractions, _savedAwayMs);
+  FS.elapsed = 0;
+  FS.remaining = focusTotal();
+  FS.startedAt = null;
+  if(typeof focusClearResume === "function") focusClearResume();
+  focusUI();
+  if(route()==="dashboard")rerender();
+
+  // 3. Show a quiet toast with an optional "Add notes" button
+  const toastRoot = document.querySelector("#toast-root");
+  if(!toastRoot) return;
+  
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerHTML = `<span>✓ Logged ${mins}m</span><button class="btn ghost sm" style="margin-left:8px;padding:2px 8px;min-height:24px;font-size:11px" id="apex-add-notes-btn">+ Add notes</button>`;
+  toastRoot.appendChild(t);
+  
+  setTimeout(()=>{t.classList.add("out"); setTimeout(()=>t.remove(),400);}, 8000);
+
+  const addBtn = document.getElementById("apex-add-notes-btn");
+  if(addBtn) {
+    addBtn.onclick = (e) => {
+      e.preventDefault();
+      t.remove();
+      focusShowCaptureNotes(entry.id);
+    };
+  }
 }
-function focusShowCapture(mins, savedDistractions, savedAwayMs){
-  focusZen(false);
-  const capTopicId = FS.topicId;
-  const capTaskId = FS.taskId;
-  const capLabel = FS.label || "Focus session";
-  const capStartedAt = FS.startedAt;
-  const capDistractions = savedDistractions!==undefined ? savedDistractions : _focusDistractions;
-  const capAwayMs = savedAwayMs!==undefined ? savedAwayMs : _focusAwayMs;
-  const body = '<div class="sub-h">' + mins + ' min on ' + esc(capLabel) + '</div>'
-    + '<div class="frow"><label>What clicked? (optional)</label><input class="inp" name="win" placeholder="One line - what finally made sense" autofocus></div>'
-    + '<div class="frow"><label>What is still fuzzy? (optional)</label><input class="inp" name="gap" placeholder="Becomes a linked error card"></div>'
+function focusShowCaptureNotes(entryId){
+  const entry = S.focusLog.find(f => f.id === entryId);
+  if(!entry) return;
+  
+  const body = '<div class="sub-h">' + entry.minutes + ' min on ' + esc(entry.label) + '</div>'
+    + '<div class="frow"><label>What clicked? (optional)</label><input class="inp" name="win" placeholder="One line - what finally made sense" value="' + esc(entry.win || '') + '" autofocus></div>'
+    + '<div class="frow"><label>What is still fuzzy? (optional)</label><input class="inp" name="gap" placeholder="Becomes a linked error card" value="' + esc(entry.gap || '') + '"></div>'
     + '<div class="hint" style="margin-top:6px;line-height:1.5">The fuzzy line is added to your Error Log and picked up by the Weak Radar.</div>';
-  openModal("Session capture", body, function(v){
+    
+  openModal("Session notes", body, function(v){
     const win = (v.win || "").trim();
     const gap = (v.gap || "").trim();
     snapshot();
-    const entry = {
-      id: uid("f"),
-      label: capLabel,
-      taskId: capTaskId,
-      topicId: capTopicId,
-      examTag: (FS.examTag||(typeof getActiveExamTag==="function"?getActiveExamTag():"")),
-      startedAt: new Date(capStartedAt || Date.now()).toISOString(),
-      endedAt: new Date().toISOString(),
-      minutes: mins,
-      quality: focusQuality(mins, capDistractions)
-    };
-    if(win) entry.win = win;
-    if(gap) entry.gap = gap;
-    S.focusLog.push(entry);
-    if(gap && capTopicId){
-      S.errors.push({
-        id: uid("e"),
-        title: gap,
-        myAnswer: "",
-        whyWrong: "",
-        type: "",
-        source: "Focus session",
-        date: todayISO(),
-        link: "",
-        topicId: capTopicId,
-        examTag: FS.examTag || (typeof getActiveExamTag === 'function' ? getActiveExamTag() : ''),
-        interval: 0, ease: 2.5, nextReview: todayISO(),
-        stage: "1st Time Study", history: []
-      });
+    entry.win = win;
+    entry.gap = gap;
+    
+    if (gap && entry.topicId && !S.errors.some(e => e.title === gap && e.topicId === entry.topicId)) {
+       S.errors.push({
+         id: uid("e"),
+         title: gap,
+         myAnswer: "",
+         whyWrong: "",
+         type: "",
+         source: "Focus session",
+         date: todayISO(),
+         link: "",
+         topicId: entry.topicId,
+         examTag: entry.examTag || (typeof getActiveExamTag === 'function' ? getActiveExamTag() : ''),
+         interval: 0, ease: 2.5, nextReview: todayISO(),
+         stage: "1st Time Study", history: []
+       });
     }
-    if(capTopicId) attachFocusToSession(mins, capTopicId);
     saveLocal();
-    updateBadges();
-    if(typeof focusClearResume === "function") focusClearResume();
-    FS.elapsed = 0;
-    FS.remaining = focusTotal();
-    FS.startedAt = null;
-    focusUI();
     if(route() === "dashboard") rerender();
-    if(gap && capTopicId){
-      toast("Logged " + mins + " min", "Error card added to Error Log");
-    } else {
-      toast("Logged " + mins + " min", "Session saved");
-    }
+    toast("Notes saved", "Session updated");
   }, "Save");
 }
 function focusZen(on){FS.zen=!!on;if(FS.zen)focusPanelClose();focusUI();}
@@ -13040,9 +13058,17 @@ try{
   }
 });
 
+  // Request persistent storage
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().then(granted => {
+      if (granted) console.log("[apex] Storage persistence granted — data is safe from auto-clear.");
+      else console.warn("[apex] Storage persistence denied — export a backup regularly.");
+    });
+  }
+
   if(!location.hash){
   try{history.replaceState(null,"","#/dashboard");}catch(err){}
-}
+  }
   renderRoute();
   updateTimerUI();updateSyncPill();updateUndoBtn();
   setTimeout(focusCheckResume, 500);
