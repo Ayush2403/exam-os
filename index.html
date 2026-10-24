@@ -12388,7 +12388,11 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     +'<div class="sett-pane on" data-sett-pane="personal">'
       +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>You</h4><div class="frow"><label>Your name</label><input class="inp" name="userName" value="'+esc(S.settings.userName||"")+'" placeholder="e.g. Ayush"></div></div>'
       +'<div class="sett-section"><h4>Exam targets</h4><div class="hint" style="margin-bottom:10px;line-height:1.55">Add every exam you\'re preparing for. The D-Day banner shows your Primary target; the smart engine uses the nearest relevant exam for each topic.</div>'+examTargetsSummaryHTML()+'<button class="btn" data-action="open-exams-manager" style="margin-top:8px">'+ICONS.pencil+' Manage exams</button><button class="btn" data-action="open-sections-manager" style="margin-top:8px;margin-left:6px">'+ICONS.pencil+' Section sets</button></div>'
-      +''
+      +'<details style="margin-top:20px;border-top:1px solid var(--border);padding-top:14px"><summary style="cursor:pointer;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);outline:none">Advanced Settings</summary>'
+        +'<div style="margin-top:14px"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-2)"><input type="checkbox" name="showAllThemes" value="on" '+(S.settings.showAllThemes?'checked':'')+' style="accent-color:var(--accent);width:16px;height:16px"> Show all themes in Appearance</label></div>'
+        +'<div style="margin-top:10px"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-2)"><input type="checkbox" name="flashcardMode" value="on" '+(S.settings.flashcardMode?'checked':'')+' style="accent-color:var(--accent);width:16px;height:16px"> Flashcard mode (hide notes until revealed)</label></div>'
+        +'<div style="margin-top:10px"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-2)"><input type="checkbox" name="autoExport" value="on" '+(S.settings.autoExportEvery===20?'checked':'')+' style="accent-color:var(--accent);width:16px;height:16px"> Prompt for backup every 20 sessions</label></div>'
+      +'</details>'
     +'</div>'
     +'<div class="sett-pane" data-sett-pane="appearance">'
       +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>Theme</h4>'+_renderThemeGridHTML()+'</div>'
@@ -12408,6 +12412,9 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     +'</div>';
   openModal("Settings",body,async v=>{
     S.settings.userName=v.userName||"";S.settings.notifTime=v.notifTime||"08:00";
+    S.settings.showAllThemes = Array.isArray(v.showAllThemes);
+    S.settings.flashcardMode = Array.isArray(v.flashcardMode);
+    S.settings.autoExportEvery = Array.isArray(v.autoExport) ? 20 : 0;
     
     const rawFb=(v.fbcfg||"").trim();
     if(rawFb){try{let clean=rawFb.replace(/^\s*\/\/.*$/gm,"").replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");FBCFG=JSON.parse(clean);saveFBCFG();}catch(e){toast("⚠️ Invalid Firebase config");return false;}}else if(!FBCFG.apiKey){FBCFG={};saveFBCFG();}
@@ -12471,15 +12478,21 @@ const ACTIONS={
     if (type === "error") {
       body = `
         <div class="sub-h" style="font-size:15px;color:var(--text);margin-bottom:14px">${esc(item.title)}</div>
-        ${item.myAnswer ? `<div class="detail-block" style="border-left:3px solid var(--pri-critical-fg);margin-bottom:12px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-critical-fg);margin-bottom:4px">My answer</div><div style="font-size:13px">${esc(item.myAnswer)}</div></div>` : ''}
-        ${item.whyWrong ? `<div class="detail-block" style="border-left:3px solid var(--pri-low-fg);margin-bottom:16px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-low-fg);margin-bottom:4px">Correct approach</div><div style="font-size:13px">${esc(item.whyWrong)}</div></div>` : ''}
-        <div style="margin-top:20px">${gradeRowHTML(id, "grade-error")}</div>
+        <button class="btn primary" style="width:100%;margin-bottom:16px" data-action="reveal-quick-review">Reveal Answer</button>
+        <div class="quick-review-reveal" style="display:none">
+          ${item.myAnswer ? `<div class="detail-block" style="border-left:3px solid var(--pri-critical-fg);margin-bottom:12px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-critical-fg);margin-bottom:4px">My answer</div><div style="font-size:13px">${esc(item.myAnswer)}</div></div>` : ''}
+          ${item.whyWrong ? `<div class="detail-block" style="border-left:3px solid var(--pri-low-fg);margin-bottom:16px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-low-fg);margin-bottom:4px">Correct approach</div><div style="font-size:13px">${esc(item.whyWrong)}</div></div>` : ''}
+          <div style="margin-top:20px">${gradeRowHTML(id, "grade-error")}</div>
+        </div>
       `;
     } else {
       body = `
         <div class="sub-h" style="font-size:15px;color:var(--text);margin-bottom:14px">${esc(item.name)}</div>
-        ${topic && topic.notes ? `<div class="sess-notes" style="margin-bottom:16px"><div class="sess-notes-h">Notes</div><div class="sess-notes-body">${renderMath(topic.notes).replace(/\n/g, "<br>")}</div></div>` : ''}
-        <div style="margin-top:20px">${gradeRowHTML(id, "grade-review")}</div>
+        <button class="btn primary" style="width:100%;margin-bottom:16px" data-action="reveal-quick-review">Reveal Notes & Rate</button>
+        <div class="quick-review-reveal" style="display:none">
+          ${topic && topic.notes ? `<div class="sess-notes" style="margin-bottom:16px"><div class="sess-notes-h">Notes</div><div class="sess-notes-body">${renderMath(topic.notes).replace(/\n/g, "<br>")}</div></div>` : '<div class="tiny" style="margin-bottom:16px">No notes for this topic.</div>'}
+          <div style="margin-top:20px">${gradeRowHTML(id, "grade-review")}</div>
+        </div>
       `;
     }
 
@@ -12487,13 +12500,19 @@ const ACTIONS={
     const sv = document.querySelector("[data-msave]");
     if (sv) sv.style.display = "none";
 
-    // Wire the grade buttons so they close the modal after grading
     const modal = document.querySelector("#modal-root");
     if (modal) {
       modal.addEventListener("click", (e) => {
+        if (e.target.closest('[data-action="reveal-quick-review"]')) {
+           const btn = e.target.closest('button');
+           const revealDiv = modal.querySelector('.quick-review-reveal');
+           if (btn) btn.remove();
+           if (revealDiv) revealDiv.style.display = 'block';
+           return;
+        }
         const btn = e.target.closest(".grade-btn");
         if (btn) {
-          setTimeout(closeModal, 150); // let gradeReview/gradeError finish first
+          setTimeout(closeModal, 150);
         }
       });
     }
