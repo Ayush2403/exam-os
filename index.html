@@ -14470,7 +14470,8 @@ try{
   }
   // Wrap whatever ACTIONS['focus-history'] exists — call load() first
   function wrap(){
-    if (!window.ACTIONS || !ACTIONS['focus-history']) { setTimeout(wrap, 200); return; }
+    if (typeof ACTIONS === 'undefined' || !ACTIONS || !ACTIONS['focus-history']) { setTimeout(wrap, 200); return; }
+    console.log('[apex] lazy focus-history-edit wrapper installed');
     ACTIONS['focus-history'] = function(){
       if (loaded) {
         if (typeof focusHistoryModal === 'function') return focusHistoryModal();
