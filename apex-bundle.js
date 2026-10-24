@@ -5655,3 +5655,57 @@ console.log('[apex-final-batch] error cards render math');
   setTimeout(cleanDashboard, 500);
   console.log("[apex-dashboard-clean] installed");
 })();
+
+
+// ── FILE: apex-stats-tab.js ──────────────────────────────────────────
+(function(){
+  if (window._apexStatsTab) return;
+  window._apexStatsTab = true;
+
+  // 1. Add to NAV and rebuild sidebar
+  if (typeof NAV !== "undefined") {
+    const newNav = {id:"stats",label:"Stats",icon:"chart",title:"Analytics & Insights"};
+    if (!NAV.find(n => n.id === "stats")) {
+      NAV.splice(4, 0, newNav); // Insert after Tasks
+      if (typeof MOBILE_MORE !== "undefined") MOBILE_MORE.unshift("stats");
+      if (typeof buildNav === "function") buildNav();
+    }
+  }
+
+  // 2. Define the view
+  window.VIEWS.stats = function() {
+    const due = dueSessions();
+    const mastered = S.syllabus.filter(t => !t.archived && !hasKids(t.id) && isTopicMastered(t)).length;
+    const leafCount = S.syllabus.filter(t => !t.archived && !hasKids(t.id)).length;
+    const mpct = leafCount ? Math.round(mastered / leafCount * 100) : 0;
+    const avgP = S.mocks.length ? Math.round(S.mocks.reduce((a,m)=>a+(+m.percentile||0),0)/S.mocks.length) : 0;
+    const avgA = S.mocks.length ? Math.round(S.mocks.reduce((a,m)=>a+(+m.accuracy||0),0)/S.mocks.length) : 0;
+    const wk = weekStats(0);
+    const fs = focusStats();
+    
+    const topSubs = Object.keys(fs.bySub).sort((a,b) => fs.bySub[b] - fs.bySub[a]).slice(0, 4);
+    const focusHTML = topSubs.length ? '<div style="display:grid;gap:10px">' + topSubs.map(k => {
+      const m = fs.bySub[k];
+      const pct = Math.round(m / Math.max(1, fs.totalMin) * 100);
+      return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span>'+esc(k)+'</span><b>'+fmtMin(m)+'</b></div>'+pbar(pct, subjColor(k))+'</div>';
+    }).join("") + '</div>' : '<div class="tiny">Start the focus timer to see time per subject.</div>';
+
+    return '<div class="hero-head"><div><h2>Analytics <span style="font-style:italic">& Insights</span></h2><div class="sub">Your entire preparation, in numbers.</div></div></div>'
+      + '<div class="stat-grid stagger">'
+      + '<div class="stat"><div class="k">Due today</div><div class="v" style="color:'+(due.length?"#F59E0B":"#10B981")+'">'+due.length+'</div><div class="f">reviews waiting</div></div>'
+      + '<div class="stat"><div class="k">Mastered</div><div class="v">'+mpct+'%</div><div class="f">'+mastered+' of '+leafCount+'</div></div>'
+      + '<div class="stat"><div class="k">Streak</div><div class="v" style="color:#F59E0B">'+studyStreak()+'d</div><div class="f">consecutive days</div></div>'
+      + '<div class="stat"><div class="k">Mocks</div><div class="v">'+S.mocks.length+'</div><div class="f">avg '+(avgP||"—")+'</div></div>'
+      + '<div class="stat"><div class="k">Accuracy</div><div class="v">'+(avgA?avgA+"%":"—")+'</div><div class="f">across mocks</div></div>'
+      + '<div class="stat"><div class="k">This Week</div><div class="v" style="color:'+(wk.pct>=50?"#10B981":"var(--text)")+'">'+wk.pct+'%</div><div class="f">habit goal</div></div>'
+      + '<div class="stat"><div class="k">Review velocity</div><div class="v">'+reviewVelocity()+'</div><div class="f">reviews/day (30d)</div></div>'
+      + '<div class="stat"><div class="k">Errors logged</div><div class="v">'+S.errors.length+'</div><div class="f">lifetime</div></div>'
+      + '</div>'
+      + '<div class="card section-gap"><div class="card-h"><h2>Grade distribution</h2><span class="sub">last 30 days</span></div>'+gradeDistHTML(30)+'</div>'
+      + '<div class="card section-gap"><div class="card-h"><h2>Focus This Week</h2><span class="sub">'+fmtMin(fs.totalMin)+'</span></div>'+focusHTML+'</div>'
+      + '<div class="card section-gap"><div class="card-h"><h2>This Week</h2><span class="sub">'+wk.pct+'%</span></div>'+weeklyStripHTML()+'<div class="tiny" style="margin-top:10px">'+fmtMin(wk.studyMins)+' studied · goal '+fmtMin(wk.goalMins)+'</div></div>'
+      + contactCardHTML();
+  };
+
+  console.log("[apex-stats-tab] installed");
+})();
