@@ -12328,7 +12328,7 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
       +'<div class="sett-section" style="border-top:none;padding-top:0;margin-top:0"><h4>Notifications</h4><div class="frow"><label>Reminder time</label><input class="inp" type="time" name="notifTime" value="'+esc(S.settings.notifTime||"08:00")+'"></div><div class="chips"><button class="btn" data-action="notif-enable">'+(S.settings.notifEnabled?"✓ Enabled":"Enable")+'</button><button class="btn ghost" data-action="notif-test">Test</button></div></div>'
       +'<div class="sett-section"><h4>Cloud Sync (advanced)</h4><div style="background:var(--pri-medium-bg);border:1px solid var(--pri-medium-bd);color:var(--pri-medium-fg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.55"><b>⚠️ Beta — no server-side authentication.</b><br>Data is encrypted with your passphrase before upload, but anyone with your Firebase config + room code + passphrase can access it. If you don\'t need cross-device sync, skip this. <b>Forget the passphrase → cloud copy is permanently unrecoverable.</b></div><p class="hint" style="line-height:1.6;margin-bottom:12px"><b>Apex works perfectly offline.</b> Cloud sync is only for keeping 2+ of your <i>own</i> devices in step. Each person who uses Apex needs their own free Firebase project. Data is AES-GCM encrypted with your passphrase.</p>'
         +'<div class="frow"><label>Firebase config</label><textarea class="inp" name="fbcfg" rows="5" placeholder=\'{"apiKey":"...","projectId":"..."}\'>'+esc(FBCFG.apiKey?JSON.stringify(FBCFG,null,2):"")+'</textarea></div>'
-        +'<div class="frow"><label>Room code</label><div style="display:flex;gap:8px"><input class="inp" name="roomCode" value="'+esc(S.sync.room||"")+'" placeholder="e.g. ABC-123-XYZ"><button class="btn" data-action="gen-room">New</button></div></div>'
+        +'<div class="frow"><label>Room code</label><div style="display:flex;gap:8px"><input class="inp" name="roomCode" value="'+esc(S.sync.room||"")+'" placeholder="e.g. AB3-K9M-2XQ"><button class="btn" data-action="gen-room">New</button></div><div class="hint">Generate a code on one device, then type it on the other.</div></div>'
         +'<div class="frow"><label>Passphrase</label><input class="inp" type="password" name="syncPass" id="sync-pass-field" placeholder="'+(enabled?'Leave blank to keep current':'At least 6 characters')+'" autocomplete="new-password"></div>'
         +'<div class="chips"><button class="btn" data-action="sync-push">⬆ Push</button><button class="btn" data-action="sync-pull">⬇ Pull</button>'+(syncKey?'<button class="btn ghost" data-action="sync-lock">🔒 Lock</button>':'')+(enabled?'<button class="btn danger" data-action="sync-disable">Disconnect</button>':'')+'</div>'
         +'<div class="hint" style="margin-top:10px">Status: <b>'+esc(syncStatus)+(syncKey?" · unlocked":" · locked")+'</b><br>'+syncHint+'</div></div>'
@@ -12354,7 +12354,22 @@ S.sync.enabled = !!S.sync.room;
 
     S.sync.enabled=!!S.sync.room;store.set(KEY,JSON.stringify(S));
     const pass=(v.syncPass||"").trim();
-    if(pass){if(pass.length<6){toast("⚠️ Passphrase must be at least 6 characters");return false;}try{await setPassphrase(pass);sessionStorage.setItem("apex-sync-pass",pass);if(!localStorage.getItem("apex-sync-warned")){alert("⚠️ IMPORTANT\n\nYour passphrase is not stored permanently. While this browser session is unlocked, Apex temporarily retains it in sessionStorage so you do not have to retype it every time. It is cleared when you close the tab.\n\nIf you forget it, the cloud copy is permanently unreadable.");localStorage.setItem("apex-sync-warned","1");}toast("🔓 Sync unlocked");}catch(e){toast("⚠️ Could not set passphrase",e.message);return false;}}
+    if(pass){
+      if(pass.length<6){toast("⚠️ Passphrase must be at least 6 characters");return false;}
+      try{
+        await setPassphrase(pass);
+        // Store in sessionStorage for this tab
+        sessionStorage.setItem("apex-sync-pass",pass);
+        // Also securely store in IndexedDB for next time
+        if(window.idb) {
+          await window.idb.set("apex-sync-key-backup", pass);
+        }
+        toast("🔓 Sync unlocked");
+      }catch(e){
+        toast("⚠️ Could not set passphrase",e.message);
+        return false;
+      }
+    }
     if(S.sync.enabled){if(syncKey)startSync();else setSyncStatus("locked");}else{stopSync();}
     updateSyncPill();toast("✓ Saved");
   },"Save");
@@ -14572,7 +14587,14 @@ try{
       if (!S.sync.enabled || !S.sync.room) return;
       if (typeof syncKey !== "undefined" && syncKey) return;
       if (typeof setPassphrase !== "function") return;
-      var cached = getCached();
+
+      // Try sessionStorage first, then IndexedDB
+      var cached = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(LOCAL_KEY);
+      if (!cached && window.idb) {
+        cached = await window.idb.get("apex-sync-key-backup");
+        if(cached) sessionStorage.setItem(SESSION_KEY, cached); // restore to session
+      }
+      
       if (!cached) return;
       await setPassphrase(cached);
       sessionStorage.setItem(SESSION_KEY, cached);

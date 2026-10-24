@@ -350,13 +350,16 @@
         catch(e) { toast("Pull failed", e.message); }
       };
       ACTIONS["gen-room"] = function() {
-        const b = new Uint8Array(40);
+        const b = new Uint8Array(9);
         crypto.getRandomValues(b);
         const alpha = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         let s = "";
-        for (let i = 0; i < 40; i++) s += alpha[b[i] % alpha.length];
+        for (let i = 0; i < 9; i++) {
+          s += alpha[b[i] % alpha.length];
+          if (i === 2 || i === 5) s += "-";
+        }
         document.querySelectorAll('.modal [name="roomCode"]').forEach(function(el){ el.value = s; });
-        toast("New room code", "40 chars — much stronger than the old 22");
+        toast("New room code", "Save this on your other device");
       };
     }
   } catch(e) { console.log("[apex-sync-d1] ACTIONS override skipped:", e.message); }
