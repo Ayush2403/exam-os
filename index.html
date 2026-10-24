@@ -8517,7 +8517,15 @@ const bootPromise = (async function() {
         console.log('[apex] migrated localStorage → IndexedDB');
       }
     }
-    S = raw ? JSON.parse(raw) : seedState();
+    let parsed = null;
+    try {
+      if (raw && typeof raw === 'string' && raw !== "undefined" && raw !== "null") {
+        parsed = JSON.parse(raw);
+      }
+    } catch(e) {
+      console.warn("[apex] failed to parse saved state, starting fresh:", e.message);
+    }
+    S = parsed || seedState();
     S = migrateState(S);
     if(!S||!S.syllabus)S=seedState();
     const def=seedState();Object.keys(def).forEach(k=>{if(S[k]===undefined)S[k]=def[k];});
@@ -13191,6 +13199,10 @@ function warnStorageIfNeeded(){
   anchor.parentNode.insertBefore(b,anchor.nextSibling);
 }
 function saveLocal(){
+  if (!S || typeof S !== 'object') {
+    console.warn('[apex] saveLocal aborted: S is not initialized');
+    return;
+  }
   S._lastLocalEdit=new Date().toISOString();
   getDeviceId();
   const json = JSON.stringify(S);
