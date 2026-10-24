@@ -65,12 +65,12 @@
   // ---- Sync status tracking ----
   function recordSyncSuccess() {
     S._lastSyncAt = Date.now();
-    try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+    try { window.idb.set(KEY, JSON.stringify(S)); } catch(e) {}
     setSyncStatus("synced");
   }
   function recordSyncError() {
     S._lastSyncError = Date.now();
-    try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+    try { window.idb.set(KEY, JSON.stringify(S)); } catch(e) {}
     setSyncStatus("error");
   }
 
@@ -218,7 +218,7 @@
       S._lastSync = row.updatedAt; // epoch seconds
       _applyingRemote = false;
       applyTheme(S.settings.theme || "apex");
-      try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+      try { window.idb.set(KEY, JSON.stringify(S)); } catch(e) {}
       rerender();
       recordSyncSuccess();
       if (!silent) toast("Pulled (decrypted)");
@@ -261,7 +261,7 @@
         S._lastSync = remoteUpdated; /* epoch seconds — consistent with pushNow */
         _applyingRemote = false;
         applyTheme(S.settings.theme || "apex");
-        try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+        try { window.idb.set(KEY, JSON.stringify(S)); } catch(e) {}
         rerender();
         recordSyncSuccess();
       } catch(e) {
@@ -329,7 +329,7 @@
             S.schemaVersion = SCHEMA_VERSION;
             S.sync = { enabled: true, room: S.sync.room };
             _applyingRemote = false;
-            try { store.set(KEY, JSON.stringify(S)); } catch(e) {}
+            try { window.idb.set(KEY, JSON.stringify(S)); } catch(e) {}
             applyTheme(S.settings.theme || "apex");
             rerender();
           }

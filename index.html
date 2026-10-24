@@ -8468,50 +8468,100 @@ async function decryptState(payload){if(!syncKey)throw new Error("Locked");const
 function clearSyncKey(){syncKey=null;syncSalt=null;}
 
 let S;
-try{
-  let raw=store.get(KEY);
-  if(!raw){for(const k of OLD_KEYS){const v=store.get(k);if(v){raw=v;break;}}}
-  S=raw?JSON.parse(raw):seedState();
-  S=migrateState(S);
-  if(!S||!S.syllabus)S=seedState();
-  const def=seedState();Object.keys(def).forEach(k=>{if(S[k]===undefined)S[k]=def[k];});
-  if(!S.tax)S.tax=JSON.parse(JSON.stringify(DEFAULT_TAX));
-  else Object.keys(DEFAULT_TAX).forEach(k=>{if(!Array.isArray(S.tax[k]))S.tax[k]=DEFAULT_TAX[k].slice();});
-  const subSet=new Set((S.tax.subjects||[]).concat(DEFAULT_TAX.subjects));
-  S.syllabus.forEach(t=>{if(t.subject)subSet.add(t.subject);});
-  S.tax.subjects=[...subSet];
-  const usedSubs=[...new Set(S.syllabus.map(t=>t.subject))];
-  const curated=SUBJECT_HIERARCHY.filter(s=>usedSubs.indexOf(s)>-1);
-  const extras=usedSubs.filter(s=>curated.indexOf(s)<0).sort();
-  S.subjectOrder=curated.concat(extras);
-  if(!S.habitDefs||!S.habitDefs.length)S.habitDefs=JSON.parse(JSON.stringify(DEFAULT_HABIT_DEFS));
-  if(!Array.isArray(S.scratch))S.scratch=[];
-  if(typeof S.scratchNote!=="string")S.scratchNote="";
-  if(!S.settings)S.settings={userName:"",notifEnabled:false,notifTime:"08:00",lastNotif:"",theme:"apex",welcomeDone:false,tourDone:false,contactName:"",contactEmail:"",contactTelegram:"",contactNote:"",sbCollapsed:false};
-  if(!S.settings.theme)S.settings.theme="apex";
-if(S.settings.theme==="Apex")S.settings.theme="apex";
-if(!THEMES.some(function(t){return t.id===S.settings.theme;}))S.settings.theme="apex";
-  if(S.settings.contactName===undefined)S.settings.contactName="";
-  if(S.settings.contactEmail===undefined)S.settings.contactEmail="";
-  if(S.settings.contactTelegram===undefined)S.settings.contactTelegram="";
-  if(S.settings.contactNote===undefined)S.settings.contactNote="";
-  if(S.settings.tourDone===undefined)S.settings.tourDone=false;
-  if(S.settings.sbCollapsed===undefined)S.settings.sbCollapsed=false;
-  if(S.settings.examDate===undefined)S.settings.examDate="";
-  if(S.settings.examLabel===undefined)S.settings.examLabel="";
-  if(S.settings.focusMusicSource===undefined)S.settings.focusMusicSource="";
-  if(S.settings.urgentExam===undefined)S.settings.urgentExam="CGL";
-  if(S.settings.urgentPriority===undefined)S.settings.urgentPriority="Critical";
-  if(S.settings.urgentWeightage===undefined)S.settings.urgentWeightage="";
-  if(typeof S.settings.showAllThemes!=="boolean")S.settings.showAllThemes=false;
-if(typeof S.settings.flashcardMode!=="boolean")S.settings.flashcardMode=false;
-  if(!Array.isArray(S.settings.exams))S.settings.exams=[];
-  if(!S.sync)S.sync={enabled:false,room:""};
-  if(!S.focusLog)S.focusLog=[];
-if(!Array.isArray(S.activity))S.activity=[];
-if(!Array.isArray(S.pyqLog))S.pyqLog=[];
-if(!Array.isArray(S.questions))S.questions=[];
-}catch(e){S=seedState();}
+
+// ── IndexedDB wrapper ──────────────────────────────────────
+const idb = {
+  _db: null,
+  open() {
+    if (this._db) return Promise.resolve(this._db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('apex-db', 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore('kv'); };
+      req.onsuccess = () => { this._db = req.result; resolve(this._db); };
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async get(key) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readonly');
+      const req = tx.objectStore('kv').get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async set(key, value) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+};
+window.idb = idb;
+
+// ── Async boot promise ────────────────────────────────────
+const bootPromise = (async function() {
+  try {
+    let raw = await idb.get(KEY);
+    if (!raw) {
+      // Migrate from localStorage on first run
+      raw = store.get(KEY);
+      if (!raw) {
+        for (const k of OLD_KEYS) { const v = store.get(k); if (v) { raw = v; break; } }
+      }
+      if (raw) {
+        await idb.set(KEY, raw);
+        console.log('[apex] migrated localStorage → IndexedDB');
+      }
+    }
+    S = raw ? JSON.parse(raw) : seedState();
+    S = migrateState(S);
+    if(!S||!S.syllabus)S=seedState();
+    const def=seedState();Object.keys(def).forEach(k=>{if(S[k]===undefined)S[k]=def[k];});
+    if(!S.tax)S.tax=JSON.parse(JSON.stringify(DEFAULT_TAX));
+    else Object.keys(DEFAULT_TAX).forEach(k=>{if(!Array.isArray(S.tax[k]))S.tax[k]=DEFAULT_TAX[k].slice();});
+    const subSet=new Set((S.tax.subjects||[]).concat(DEFAULT_TAX.subjects));
+    S.syllabus.forEach(t=>{if(t.subject)subSet.add(t.subject);});
+    S.tax.subjects=[...subSet];
+    const usedSubs=[...new Set(S.syllabus.map(t=>t.subject))];
+    const curated=SUBJECT_HIERARCHY.filter(s=>usedSubs.indexOf(s)>-1);
+    const extras=usedSubs.filter(s=>curated.indexOf(s)<0).sort();
+    S.subjectOrder=curated.concat(extras);
+    if(!S.habitDefs||!S.habitDefs.length)S.habitDefs=JSON.parse(JSON.stringify(DEFAULT_HABIT_DEFS));
+    if(!Array.isArray(S.scratch))S.scratch=[];
+    if(typeof S.scratchNote!=="string")S.scratchNote="";
+    if(!S.settings)S.settings={userName:"",notifEnabled:false,notifTime:"08:00",lastNotif:"",theme:"apex",welcomeDone:false,tourDone:false,contactName:"",contactEmail:"",contactTelegram:"",contactNote:"",sbCollapsed:false};
+    if(!S.settings.theme)S.settings.theme="apex";
+    if(S.settings.theme==="Apex")S.settings.theme="apex";
+    if(!THEMES.some(function(t){return t.id===S.settings.theme;}))S.settings.theme="apex";
+    if(S.settings.contactName===undefined)S.settings.contactName="";
+    if(S.settings.contactEmail===undefined)S.settings.contactEmail="";
+    if(S.settings.contactTelegram===undefined)S.settings.contactTelegram="";
+    if(S.settings.contactNote===undefined)S.settings.contactNote="";
+    if(S.settings.tourDone===undefined)S.settings.tourDone=false;
+    if(S.settings.sbCollapsed===undefined)S.settings.sbCollapsed=false;
+    if(S.settings.examDate===undefined)S.settings.examDate="";
+    if(S.settings.examLabel===undefined)S.settings.examLabel="";
+    if(S.settings.focusMusicSource===undefined)S.settings.focusMusicSource="";
+    if(S.settings.urgentExam===undefined)S.settings.urgentExam="CGL";
+    if(S.settings.urgentPriority===undefined)S.settings.urgentPriority="Critical";
+    if(S.settings.urgentWeightage===undefined)S.settings.urgentWeightage="";
+    if(typeof S.settings.showAllThemes!=="boolean")S.settings.showAllThemes=false;
+    if(typeof S.settings.flashcardMode!=="boolean")S.settings.flashcardMode=false;
+    if(!Array.isArray(S.settings.exams))S.settings.exams=[];
+    if(!S.sync)S.sync={enabled:false,room:""};
+    if(!S.focusLog)S.focusLog=[];
+    if(!Array.isArray(S.activity))S.activity=[];
+    if(!Array.isArray(S.pyqLog))S.pyqLog=[];
+    if(!Array.isArray(S.questions))S.questions=[];
+  } catch(e) {
+    console.error('[apex] boot error', e);
+    S = seedState();
+  }
+})();
 
 /* Apex sync timestamp normaliser — one-time cleanup of legacy _lastSync
    values that were written as epoch numbers instead of ISO strings. */
@@ -12859,7 +12909,7 @@ document.addEventListener('click', function(e){
 })();
 
 const POST={dashboard:postDashboard,syllabus:postSyllabus,reviews:postReviews,errors:postErrors,tasks:postTasks};
-document.addEventListener("DOMContentLoaded", function(){
+bootPromise.then(function(){
 try{
   applyTheme(S.settings.theme||"obsidian");
   buildNav();
@@ -13128,17 +13178,20 @@ function warnStorageIfNeeded(){
 function saveLocal(){
   S._lastLocalEdit=new Date().toISOString();
   getDeviceId();
-  const ok=store.set(KEY,JSON.stringify(S));
-  const bar=document.getElementById("savebar");
-  if(!ok){
-    if(bar){
-      bar.style.display="block";
-      bar.textContent="⚠️ SAVE FAILED — recent changes are NOT on disk. Free up browser storage or export a backup now.";
+  const json = JSON.stringify(S);
+  const bar = document.getElementById("savebar");
+  idb.set(KEY, json).then(() => {
+    if (bar && bar.style.display === "block") {
+      bar.style.display = "none";
+      bar.textContent = "";
     }
-  } else if(bar && bar.style.display==="block"){
-    bar.style.display="none";
-    bar.textContent="";
-  }
+  }).catch(e => {
+    console.error('[apex] save failed', e);
+    if (bar) {
+      bar.style.display = "block";
+      bar.textContent = "⚠️ SAVE FAILED — recent changes may not be persisted. Export a backup now.";
+    }
+  });
   updateBadges();
   queueSync();
 }
