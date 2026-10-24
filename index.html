@@ -10570,7 +10570,16 @@ function recommendSmart(){
     const t=s.topicId?topicById(s.topicId):null;const days=reviewState(s).days;const cf=consecutiveFails(s.id);
     let score=100+Math.min(days,14)*3;
     if(t){score*=1+examUrgencyForTopic(t)*0.5;score*=1-interleavePenalty(t.subject);if(cf>=2)score*=1.3;if(bucket==="evening"||bucket==="night")score*=1.15;}
-    candidates.push({kind:"overdue",score,title:s.name,subtitle:(t?t.topic+" · ":"")+days+"d overdue",reason:"Overdue "+days+"d"+(cf>=2?" · repeated fails":"")+(t&&examUrgencyForTopic(t)>=0.7?" · exam-near":""),sessionId:s.id,topicId:s.topicId||null,primaryAction:{a:"focus-task-from-review",id:s.id,label:"⚡ Start Focus"},secondaryAction:{a:"grade-review",id:s.id,grade:"good",label:"Mark Good"}});
+    candidates.push({kind:"overdue",score,title:s.name,subtitle:(t?t.topic+" · ":"")+days+"d overdue",reason:(function(){
+      let r = "Overdue " + days + "d";
+      if (cf >= 2) r += " · repeated fails";
+      if (t && examUrgencyForTopic(t) >= 0.7) r += " · exam-near";
+      if (t && typeof computeTopicPriority === "function") {
+        const p = computeTopicPriority(t, getActiveExamTag());
+        if (p >= 20) r += " · ⚠️ " + Math.round(p/20) + " marks at risk";
+      }
+      return r;
+    })(),sessionId:s.id,topicId:s.topicId||null,primaryAction:{a:"focus-task-from-review",id:s.id,label:"⚡ Start Focus"},secondaryAction:{a:"grade-review",id:s.id,grade:"good",label:"Mark Good"}});
   });
   due.filter(s=>["today","new"].indexOf(reviewState(s).st)>-1).forEach(s=>{
     const t=s.topicId?topicById(s.topicId):null;let score=70;
@@ -10581,7 +10590,16 @@ function recommendSmart(){
   weakTopics(5).forEach(w=>{
     const t=w.t;let score=w.score*0.6;score*=1+examUrgencyForTopic(t)*0.6;score*=1-interleavePenalty(t.subject);
     if(bucket==="morning"||bucket==="afternoon")score*=1.15;
-    candidates.push({kind:"weak",score,title:t.topic,subtitle:"Friction "+w.score+" · "+t.subject,reason:"Friction "+w.score+(t.priority?" · "+t.priority:"")+(t.weightage==="High"?" · Wt High":""),topicId:t.id,sessionId:null,primaryAction:{a:"focus-start-topic",id:t.id,label:"⚡ Focus 25 min"},secondaryAction:{a:"goto-topic",id:t.id,label:"Open Topic"}});
+    candidates.push({kind:"weak",score,title:t.topic,subtitle:"Friction "+w.score+" · "+t.subject,reason:(function(){
+      let r = "Friction " + w.score;
+      if (t.priority) r += " · " + t.priority;
+      if (t.weightage === "High") r += " · Wt High";
+      if (typeof computeTopicPriority === "function") {
+        const p = computeTopicPriority(t, getActiveExamTag());
+        if (p >= 30) r += " · ⚠️ " + Math.round(p/20) + " marks at risk";
+      }
+      return r;
+    })(),topicId:t.id,sessionId:null,primaryAction:{a:"focus-start-topic",id:t.id,label:"⚡ Focus 25 min"},secondaryAction:{a:"goto-topic",id:t.id,label:"Open Topic"}});
   });
   S.syllabus.filter(t=>["Learning","Practicing"].indexOf(t.status)>-1).sort((a,b)=>priRank(a)-priRank(b)).slice(0,3).forEach(t=>{
     let score=40;score*=1+examUrgencyForTopic(t)*0.5;score*=1-interleavePenalty(t.subject);
