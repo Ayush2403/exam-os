@@ -12344,10 +12344,10 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     if(rawFb){try{let clean=rawFb.replace(/^\s*\/\/.*$/gm,"").replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");FBCFG=JSON.parse(clean);saveFBCFG();}catch(e){toast("⚠️ Invalid Firebase config");return false;}}else if(!FBCFG.apiKey){FBCFG={};saveFBCFG();}
    const newRoom=(v.roomCode||"").trim();
 if(newRoom){
-  if(!/^[A-HJ-NP-Z2-9]{22,40}$/.test(newRoom)){
-    toast("Invalid room code","22–40 chars · A–Z (no I/O) · digits 2–9 (no 0/1)");
-    return false;
-  }
+  if(!/^(?:[A-HJ-NP-Z2-9]{22,40}|[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3})$/.test(newRoom)){
+            toast("Invalid room code","Format: XXX-XXX-XXX");
+            return false;
+          }
   S.sync.room=newRoom;
 }
 S.sync.enabled = !!S.sync.room;
