@@ -12473,13 +12473,14 @@ const ACTIONS={
     if (!item) return;
 
     const topic = item.topicId ? topicById(item.topicId) : null;
+    const isFlashcard = _fcEnabled() && _fcLocked(id);
     let body = "";
 
     if (type === "error") {
       body = `
         <div class="sub-h" style="font-size:15px;color:var(--text);margin-bottom:14px">${esc(item.title)}</div>
-        <button class="btn primary" style="width:100%;margin-bottom:16px" data-action="reveal-quick-review">Reveal Answer</button>
-        <div class="quick-review-reveal" style="display:none">
+        ${isFlashcard ? '<button class="btn primary" style="width:100%;margin-bottom:16px" data-action="reveal-quick-review">Reveal Answer</button>' : ''}
+        <div class="${isFlashcard ? 'quick-review-reveal" style="display:none' : ''}">
           ${item.myAnswer ? `<div class="detail-block" style="border-left:3px solid var(--pri-critical-fg);margin-bottom:12px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-critical-fg);margin-bottom:4px">My answer</div><div style="font-size:13px">${esc(item.myAnswer)}</div></div>` : ''}
           ${item.whyWrong ? `<div class="detail-block" style="border-left:3px solid var(--pri-low-fg);margin-bottom:16px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-low-fg);margin-bottom:4px">Correct approach</div><div style="font-size:13px">${esc(item.whyWrong)}</div></div>` : ''}
           <div style="margin-top:20px">${gradeRowHTML(id, "grade-error")}</div>
@@ -12488,8 +12489,8 @@ const ACTIONS={
     } else {
       body = `
         <div class="sub-h" style="font-size:15px;color:var(--text);margin-bottom:14px">${esc(item.name)}</div>
-        <button class="btn primary" style="width:100%;margin-bottom:16px" data-action="reveal-quick-review">Reveal Notes & Rate</button>
-        <div class="quick-review-reveal" style="display:none">
+        ${isFlashcard ? '<button class="btn primary" style="width:100%;margin-bottom:16px" data-action="reveal-quick-review">Reveal Notes & Rate</button>' : ''}
+        <div class="${isFlashcard ? 'quick-review-reveal" style="display:none' : ''}">
           ${topic && topic.notes ? `<div class="sess-notes" style="margin-bottom:16px"><div class="sess-notes-h">Notes</div><div class="sess-notes-body">${renderMath(topic.notes).replace(/\n/g, "<br>")}</div></div>` : '<div class="tiny" style="margin-bottom:16px">No notes for this topic.</div>'}
           <div style="margin-top:20px">${gradeRowHTML(id, "grade-review")}</div>
         </div>

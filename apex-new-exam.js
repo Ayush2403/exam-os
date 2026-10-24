@@ -24,30 +24,29 @@
     sel.parentElement.appendChild(btn);
 
     btn.addEventListener('click', function(){
-      var name = prompt('New exam tag — e.g. "SSC MTS", "RRB NTPC", "IBPS SO":');
-      if (!name) return;
-      name = name.trim().toUpperCase();
-      if (!name) return;
-      if (!Array.isArray(S.tax.exams)) S.tax.exams = [];
-
-      if (S.tax.exams.indexOf(name) === -1) {
-        S.tax.exams.push(name);
-        try { store.set(KEY, JSON.stringify(S)); } catch(e){}
-        toast('Added', '"' + name + '" is now available everywhere');
-      } else {
-        toast('Already exists', 'Selecting "' + name + '"');
-      }
-
-      /* Rebuild the select options */
-      sel.innerHTML = '<option value="">— None (generic) —</option>';
-      S.tax.exams.forEach(function(e){
-        var o = document.createElement('option');
-        o.value = e;
-        o.textContent = e;
-        sel.appendChild(o);
-      });
-      sel.value = name;
-      sel.dispatchEvent(new Event('change', {bubbles:true}));
+      var body = '<div class="frow"><label>New exam tag</label><input class="inp" name="newExamName" placeholder="e.g. SSC MTS, RRB NTPC" autofocus></div>'
+               + '<div class="hint">This will be available in the dropdown for all topics.</div>';
+      openModal("Add exam tag", body, function(v) {
+        var name = (v.newExamName || "").trim().toUpperCase();
+        if (!name) { toast("Name required"); return false; }
+        if (!Array.isArray(S.tax.exams)) S.tax.exams = [];
+        
+        if (S.tax.exams.indexOf(name) === -1) {
+          S.tax.exams.push(name);
+          saveLocal();
+          toast('Added', '"' + name + '" is now available everywhere');
+        }
+        
+        sel.innerHTML = '<option value="">— None (generic) —</option>';
+        S.tax.exams.forEach(function(e){
+          var o = document.createElement('option');
+          o.value = e;
+          o.textContent = e;
+          sel.appendChild(o);
+        });
+        sel.value = name;
+        sel.dispatchEvent(new Event('change', {bubbles:true}));
+      }, "Add");
     });
   }
 
