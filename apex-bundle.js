@@ -5597,3 +5597,61 @@ console.log('[apex-final-batch] error cards render math');
   wrap();
 })();
 
+
+
+// ── FILE: apex-dashboard-clean.js ─────────────────────────
+(function(){
+  if (window._apexDashClean) return;
+  window._apexDashClean = true;
+
+  function cleanDashboard() {
+    const route = (location.hash || '').replace(/^#\/?/, '');
+    if (route !== 'dashboard' && route !== '') return;
+
+    const view = document.getElementById('view');
+    if (!view) return;
+
+    // 1. Hide noisy bento cards
+    view.querySelectorAll('.bento .card').forEach(card => {
+      const text = card.innerText;
+      if (text.includes("Today's Plan") || text.includes("Scratch Pad") || text.includes("Quick Links") || text.includes("Momentum") || text.includes("This Week") || text.includes("Focus This Week")) {
+         card.style.display = 'none';
+      }
+    });
+
+    // 2. Hide Evidence and Stats sections
+    view.querySelectorAll('.home-section-label').forEach(label => {
+      if (label.innerText === 'Evidence' || label.innerText === 'Stats') {
+         label.style.display = 'none';
+         let next = label.nextElementSibling;
+         while (next && !next.classList.contains('home-section-label') && !next.classList.contains('footer-cta') && !next.classList.contains('contact-card-dash')) {
+           next.style.display = 'none';
+           next = next.nextElementSibling;
+         }
+      }
+    });
+
+    // 3. Hide Contact card and Footer
+    const contact = view.querySelector('.contact-card-dash');
+    if (contact) contact.style.display = 'none';
+    const footer = view.querySelector('.footer-cta');
+    if (footer) footer.style.display = 'none';
+  }
+
+  // Hook into renderRoute
+  if (typeof window.renderRoute === 'function' && !window._apexDashCleanHooked) {
+    window._apexDashCleanHooked = true;
+    const _orig = window.renderRoute;
+    window.renderRoute = function() {
+      const res = _orig.apply(this, arguments);
+      setTimeout(cleanDashboard, 10);
+      return res;
+    };
+    try { renderRoute = window.renderRoute; } catch(e){}
+  }
+
+  // Run just in case we are already on the dashboard
+  setTimeout(cleanDashboard, 100);
+  setTimeout(cleanDashboard, 500);
+  console.log("[apex-dashboard-clean] installed");
+})();
