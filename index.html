@@ -12061,176 +12061,88 @@ function postErrors(){renderErrList();const t=$("#err-type");if(t)t.addEventList
 function debriefModal(mockId){
   const m=S.mocks.find(x=>x.id===mockId);
   if(!m)return;
-  const r=$("#modal-root");
-  if(!r)return;
   const set=getMockSectionSet(m);
   const sec=m.sections||{};
   const filled=set.sections.filter(s=>typeof sec[s.key]==="number");
   const weakest=filled.length?filled.slice().sort((a,b)=>sec[a.key]-sec[b.key])[0]:null;
   const sug=mockSuggestedTopics(m);
-  const subh=weakest?'<div class="sub-h">'+esc(m.title)+' · weakest section: <b style="color:var(--pri-critical-fg)">'+esc(weakest.label)+'</b> ('+sec[weakest.key]+'%)</div>':'<div class="sub-h">'+esc(m.title)+'</div>';
-  const weakList=()=>{const live=S.mocks.find(x=>x.id===mockId);return live&&Array.isArray(live.weak)?live.weak:[];};
-  const tagRowHTML=()=>{
-    const tagged=new Set(weakList());
-    return sug.map(t=>{
-      const on=tagged.has(t.id);
-      return '<button type="button" class="chip'+(on?' on':'')+'" data-debrief-tag="'+t.id+'" style="padding:6px 11px;min-height:32px;font-size:12px">'+(on?'✓ ':'+ ')+esc(t.topic)+'</button>';
-    }).join("");
-  };
-  const body=subh
-    +'<div style="padding:12px 14px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:16px"><div style="font:700 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px">Step 1 · Tag weak topics <span style="font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-3)">— one tap each</span></div><div class="chips" data-debrief-tags style="gap:6px">'+(sug.length?tagRowHTML():'<span class="tiny">No suggestions</span>')+'</div><input class="inp" data-debrief-search placeholder="Search any topic to add…" autocomplete="off" style="margin-top:8px;min-height:34px;font-size:12.5px"><div data-debrief-searchlist style="margin-top:6px;max-height:180px;overflow-y:auto"></div><div class="tiny" style="margin-top:10px;color:var(--text-3)">Tagged topics feed the Weak Radar. <span data-debrief-tagcount style="color:var(--accent-2);font-weight:700">'+weakList().length+'</span> tagged on this mock.</div></div>'
-    +'<div style="padding:12px 14px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:16px"><div style="font:700 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px">Step 2 · Log the 2–3 mistakes worth remembering</div>'
-    +'<div class="frow" style="margin-bottom:10px"><input class="inp" name="title" placeholder="Question — e.g. CI vs SI difference on ₹5000" autofocus></div>'
-    +'<div class="frow" style="margin-bottom:10px"><input class="inp" name="myAnswer" placeholder="My answer — what I did wrong"></div>'
-    +'<div class="frow" style="margin-bottom:10px"><textarea class="inp" name="whyWrong" rows="2" placeholder="Correct approach — the fix"></textarea></div>'
-    +'<div class="frow" style="margin-bottom:10px"><label style="font-size:11px">Linked topic</label><div class="chips" data-debrief-qtopics style="gap:6px;min-height:34px"></div><div class="tiny" data-debrief-qtopics-empty style="color:var(--text-3)">Tag one of the suggestions above to link this mistake.</div><span style="display:none"></span></div>'
-    +'<div class="frow" style="margin-bottom:0;display:none" data-debrief-pickerwrap>'+pickerHTML("topicIds",[],false)+'</div>'
-    +'</div>'
-    +'<div style="padding:10px 14px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12.5px"><span style="font-weight:600">Mistakes logged this session</span><b data-debrief-count style="color:var(--accent-2);font-size:14px">'+S.errors.filter(e=>e.mockRef===mockId).length+'</b></div>';
-  r.innerHTML='<div class="overlay"><div class="modal" role="dialog" style="max-width:600px"><h3>Debrief — '+esc(m.title)+'</h3><div class="mbody">'+body+'</div><div class="modal-acts"><button class="btn ghost" data-debrief-done>Done</button><button class="btn primary" data-debrief-save>Save &amp; next</button></div></div></div>';
-  $$(".tpick",r).forEach(wirePicker);
-  const tagBox=r.querySelector("[data-debrief-tags]");
-  const tagCount=r.querySelector("[data-debrief-tagcount]");
-  const qChips=r.querySelector("[data-debrief-qtopics]");
-  const qChipsEmpty=r.querySelector("[data-debrief-qtopics-empty]");
-  const pickWrap=r.querySelector("[data-debrief-pickerwrap]");
-  const pickBtn=r.querySelector("[data-debrief-pick]");
-  const countEl=r.querySelector("[data-debrief-count]");
-  const titleInput=r.querySelector('input[name="title"]');
-  const ansInput=r.querySelector('input[name="myAnswer"]');
-  const whyInput=r.querySelector('textarea[name="whyWrong"]');
-  const pickerEl=r.querySelector(".tpick");
-  const doneBtn=r.querySelector("[data-debrief-done]");
-  const saveBtn=r.querySelector("[data-debrief-save]");
-  const backdrop=r.firstElementChild;
-  let selectedTopicId=null;
-  const renderQTopics=()=>{
-    if(!qChips)return;
-    const tagged=weakList();
-    if(!tagged.length){
-      qChips.innerHTML="";
-      if(qChipsEmpty)qChipsEmpty.style.display="";
-      return;
-    }
-    if(qChipsEmpty)qChipsEmpty.style.display="none";
-    qChips.innerHTML=tagged.map(id=>{
-      const t=topicById(id);
-      if(!t)return"";
-      const on=selectedTopicId===id;
-      return '<button type="button" class="chip'+(on?' on':'')+'" data-debrief-qpick="'+id+'" style="padding:6px 11px;min-height:32px;font-size:12px">'+esc(t.topic)+'</button>';
-    }).join("");
-  };
-  const syncPicker=()=>{
-    if(!pickerEl)return;
-    const hidden=pickerEl.querySelector('input[type="hidden"]');
-    if(hidden)hidden.value=JSON.stringify(selectedTopicId?[selectedTopicId]:[]);
-    const chips=pickerEl.querySelector(".pick-chips");
-    if(chips){
-      if(selectedTopicId){
-        const t=topicById(selectedTopicId);
-        chips.innerHTML=t?'<span class="pill"><i class="dot" style="background:'+subjColor(t.subject)+'"></i><span>'+esc(t.topic)+'</span></span>':"";
-      }else chips.innerHTML="";
-    }
-  };
-  const clearPicker=()=>{
-    if(!pickerEl)return;
-    const hidden=pickerEl.querySelector('input[type="hidden"]');
-    if(hidden)hidden.value="[]";
-    const chips=pickerEl.querySelector(".pick-chips");
-    if(chips)chips.innerHTML="";
-    const search=pickerEl.querySelector(".pick-search");
-    if(search){search.value="";try{search.dispatchEvent(new Event("input",{bubbles:true}));}catch(e){}}
-  };
-  const clearForm=()=>{
-    if(titleInput)titleInput.value="";
-    if(ansInput)ansInput.value="";
-    if(whyInput)whyInput.value="";
-    selectedTopicId=null;
-    clearPicker();
-    renderQTopics();
-    if(titleInput)titleInput.focus();
-  };
-  if(tagBox){
-    tagBox.addEventListener("click",e=>{
-      const btn=e.target.closest("[data-debrief-tag]");
-      if(!btn)return;
-      e.preventDefault();
-      e.stopPropagation();
-      const id=btn.dataset.debriefTag;
-      const live=S.mocks.find(x=>x.id===mockId);
-      if(!live)return;
-      if(!Array.isArray(live.weak))live.weak=[];
-      snapshot();
-      if(live.weak.indexOf(id)>-1)live.weak=live.weak.filter(x=>x!==id);
-      else live.weak.push(id);
-      saveLocal();
-      const fresh=weakList();
-      tagBox.querySelectorAll("[data-debrief-tag]").forEach(el=>{
-        const tid=el.dataset.debriefTag;
-        const on=fresh.indexOf(tid)>-1;
-        el.classList.toggle("on",on);
-        const t=topicById(tid);
-        el.innerHTML=(on?"✓ ":"+ ")+esc(t?t.topic:tid);
-      });
-      if(tagCount)tagCount.textContent=fresh.length;
-      if(selectedTopicId&&fresh.indexOf(selectedTopicId)<0){selectedTopicId=null;syncPicker();}
-      renderQTopics();
+  
+  const subh=weakest?'<div class="sub-h">'+esc(m.title)+' · Weakest: <b style="color:var(--pri-critical-fg)">'+esc(weakest.label)+'</b> ('+sec[weakest.key]+'%)</div>':'<div class="sub-h">'+esc(m.title)+'</div>';
+  
+  const weakList = (typeof S.mocks.find(x=>x.id===mockId).weak !== 'undefined') ? S.mocks.find(x=>x.id===mockId).weak : [];
+  const tagged = new Set(weakList);
+  
+  const tagHtml = sug.map(t => {
+    const on = tagged.has(t.id);
+    return '<button class="chip'+(on?' on':'')+'" data-debrief-tag="'+t.id+'" style="padding:6px 11px;min-height:32px;font-size:12px">'+(on?'✓ ':'+ ')+esc(t.topic)+'</button>';
+  }).join('');
+
+  const body = subh
+    + '<div class="detail-block" style="margin-bottom:16px;background:var(--surface-2)">'
+    +   '<div class="tiny" style="font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Suggested Weak Topics</div>'
+    +   '<div style="display:flex;gap:6px;flex-wrap:wrap" data-debrief-tags>' + (tagHtml||'<span class="tiny">No suggestions</span>') + '</div>'
+    + '</div>'
+    + '<div class="detail-block" style="background:var(--surface-2)">'
+    +   '<div class="tiny" style="font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Log a mistake</div>'
+    +   '<div class="frow" style="margin-bottom:8px"><input class="inp" name="dTitle" placeholder="Question — e.g. CI vs SI" autofocus></div>'
+    +   '<div class="frow" style="margin-bottom:8px"><input class="inp" name="dMyAns" placeholder="My wrong answer"></div>'
+    +   '<div class="frow" style="margin-bottom:12px"><textarea class="inp" name="dWhy" rows="2" placeholder="Correct approach"></textarea></div>'
+    +   '<button class="btn primary" style="width:100%" data-debrief-save>Save Mistake</button>'
+    + '</div>';
+
+  openModal("Debrief — "+esc(m.title), body, () => {}, "Close");
+  const sv = document.querySelector("[data-msave]");
+  if (sv) sv.style.display = "none";
+
+  const modal = document.querySelector("#modal-root");
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      const tagBtn = e.target.closest("[data-debrief-tag]");
+      if (tagBtn) {
+        const id = tagBtn.dataset.debriefTag;
+        if (!Array.isArray(m.weak)) m.weak = [];
+        if (m.weak.includes(id)) {
+          m.weak = m.weak.filter(x => x !== id);
+        } else {
+          m.weak.push(id);
+        }
+        saveLocal();
+        tagBtn.classList.toggle('on');
+        return;
+      }
+      
+      const saveBtn = e.target.closest("[data-debrief-save]");
+      if (saveBtn) {
+        const title = modal.querySelector('[name="dTitle"]').value.trim();
+        const myAnswer = modal.querySelector('[name="dMyAns"]').value.trim();
+        const whyWrong = modal.querySelector('[name="dWhy"]').value.trim();
+        
+        if (!title) { toast("Question required"); return; }
+        
+        snapshot();
+        S.errors.push({
+          id: uid("e"),
+          title: title,
+          myAnswer: myAnswer,
+          whyWrong: whyWrong,
+          type: "",
+          source: m.title,
+          mockRef: m.id,
+          date: todayISO(),
+          link: "",
+          topicId: m.weak.length > 0 ? m.weak[0] : null,
+          examTag: typeof getActiveExamTag === 'function' ? getActiveExamTag() : '',
+          interval: 0, ease: 2.5, nextReview: todayISO(), stage: "1st Time Study", history: []
+        });
+        saveLocal();
+        toast("Mistake logged");
+        closeModal();
+        rerender();
+      }
     });
   }
-  const searchEl=r.querySelector("[data-debrief-search]");const searchList=r.querySelector("[data-debrief-searchlist]");if(searchEl&&searchList){let _sTmr=null;const renderSearch=function(){const q=searchEl.value.toLowerCase().trim();if(!q){searchList.innerHTML="";return;}const tagged=new Set(weakList());const hits=S.syllabus.filter(function(t){return tagged.has(t.id)?false:(t.topic.toLowerCase().indexOf(q)>-1||t.subject.toLowerCase().indexOf(q)>-1);}).slice(0,8);if(!hits.length){searchList.innerHTML='<div class="tiny" style="padding:8px 10px;color:var(--text-3)">No match</div>';return;}searchList.innerHTML=hits.map(function(t){return '<div data-debrief-add="'+t.id+'" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12.5px;background:var(--surface-2);margin-bottom:4px"><i class="sdot" style="width:7px;height:7px;border-radius:2px;background:'+subjColor(t.subject)+';flex-shrink:0"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.topic)+'</span><span class="tiny">'+esc(t.subject)+'</span></div>';}).join("");};searchEl.addEventListener("input",function(){clearTimeout(_sTmr);_sTmr=setTimeout(renderSearch,120);});searchEl.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();const first=searchList.querySelector("[data-debrief-add]");if(first)first.click();}});searchList.addEventListener("click",function(e){const row=e.target.closest("[data-debrief-add]");if(!row)return;const id=row.getAttribute("data-debrief-add");const live=S.mocks.find(function(x){return x.id===mockId;});if(!live)return;if(!Array.isArray(live.weak))live.weak=[];if(live.weak.indexOf(id)>-1)return;snapshot();live.weak.push(id);saveLocal();const fresh=weakList();if(tagBox){tagBox.querySelectorAll("[data-debrief-tag]").forEach(function(el){const tid=el.getAttribute("data-debrief-tag");if(!tid)return;});}if(typeof tagCount!=="undefined"&&tagCount)tagCount.textContent=fresh.length;const t=topicById(id);const newChip=document.createElement("button");newChip.type="button";newChip.className="chip on";newChip.setAttribute("data-debrief-tag",id);newChip.style.cssText="padding:6px 11px;min-height:32px;font-size:12px";newChip.innerHTML="✓ "+esc(t?t.topic:id);if(tagBox)tagBox.appendChild(newChip);searchEl.value="";searchList.innerHTML="";renderQTopics();});}
-  if(qChips){
-    qChips.addEventListener("click",e=>{
-      const btn=e.target.closest("[data-debrief-qpick]");
-      if(!btn)return;
-      const id=btn.dataset.debriefQpick;
-      selectedTopicId=selectedTopicId===id?null:id;
-      renderQTopics();
-      syncPicker();
-    });
-  }
-  if(pickBtn){
-    pickBtn.addEventListener("click",()=>{
-      if(!pickWrap)return;
-      const open=pickWrap.style.display!=="none";
-      pickWrap.style.display=open?"none":"block";
-      pickBtn.textContent=open?"Open topic picker":"Hide picker";
-    });
-  }
-  renderQTopics();
-  syncPicker();
-  const save=()=>{
-    const title=titleInput?titleInput.value.trim():"";
-    if(!title){toast("⚠️ Question required");return;}
-    let ids=[];
-    if(selectedTopicId)ids=[selectedTopicId];
-    else{try{ids=JSON.parse(pickerEl.querySelector('input[type="hidden"]').value||"[]");}catch(e){}}
-    const newErr={
-      id:uid("e"),
-      title:title,
-      myAnswer:(ansInput?ansInput.value:"").trim(),
-      whyWrong:(whyInput?whyInput.value:"").trim(),
-      type:"",
-      source:m.title,
-      mockRef:mockId,
-      date:todayISO(),
-      link:"",
-      topicId:ids[0]||null,
-      examTag:(typeof getActiveExamTag==="function"?getActiveExamTag():""),
-      interval:0,ease:2.5,nextReview:todayISO(),stage:"1st Time Study",history:[]
-    };
-    snapshot();
-    S.errors.push(newErr);
-    saveLocal();
-    const n=S.errors.filter(e=>e.mockRef===mockId).length;
-    if(countEl)countEl.textContent=n;
-    toast("✓ Logged · "+n+" total","Tag more topics or hit Done");
-    clearForm();
-  };
-  if(saveBtn)saveBtn.addEventListener("click",save);
-  if(doneBtn)doneBtn.addEventListener("click",()=>{closeModal();rerender();});
-  if(backdrop)backdrop.addEventListener("mousedown",e=>{if(e.target===backdrop)closeModal();});
-  if(titleInput)setTimeout(()=>titleInput.focus(),80);
 }
+
 function bulkErrorModal(prefillTopicId){const t=prefillTopicId?topicById(prefillTopicId):null;const body='<div class="frow"><label>Topic <span style="color:var(--text-3);font-weight:500">(applied to every line)</span></label>'+(t?'<div style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);font-size:13.5px">'+esc(t.topic)+'</div><input type="hidden" name="topicIds" value=\''+JSON.stringify([t.id])+'\'>':pickerHTML("topicIds",[],false))+'</div>'+'<div class="f2"><div class="frow"><label>Source (optional)</label>'+selPlus("source",taxList("errSources"),"","errSources","Source")+'</div><div class="frow"><label>Date</label>'+dateFieldHTML("date",todayISO())+'</div></div>'+'<div class="frow"><label>Mistakes — one per line</label><textarea class="inp" name="bulk" rows="10" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.7" placeholder="question | my answer | correct approach&#10;&#10;Only the question is required.&#10;&#10;Example:&#10;CI vs SI on 5000 | Used SI formula | Compound — yr 2 on P+I&#10;Percentage Q4 | Divided by 40 | Base always 100&#10;Train opposite direction | Subtracted speeds | Opposite dirs add speeds"></textarea><div class="hint">Pipe-separated. <b>question</b> (required) | my answer | correct approach. Blank lines skipped.</div></div>'+'<div class="frow"><label>Type <span style="color:var(--text-3);font-weight:500">(applied to every line)</span></label>'+selPlus("type",taxList("errTypes"),"","errTypes","Type")+'</div>';openModal("Bulk log errors",body,function(v){const ids=pickVals(v.topicIds);const lines=String(v.bulk||"").split("\n").map(l=>l.trim()).filter(Boolean);if(!lines.length){toast("Nothing to log");return false;}const parsed=lines.map(l=>{const parts=l.split("|").map(s=>s.trim());return{title:parts[0]||"",myAnswer:parts[1]||"",whyWrong:parts[2]||""};}).filter(x=>x.title);if(!parsed.length){toast("No valid lines — question required");return false;}snapshot();const now=todayISO();const date=v.date||now;const topicId=ids[0]||null;parsed.forEach(p=>{var errTomorrow=new Date(date); errTomorrow.setDate(errTomorrow.getDate()+1); var errNextDate=toISODate(errTomorrow); S.errors.push({id:uid("e"),title:p.title,myAnswer:p.myAnswer,whyWrong:p.whyWrong,type:v.type||"",source:v.source||"",date:date,link:"",topicId:topicId,examTag:typeof getActiveExamTag==="function"?getActiveExamTag():"",interval:1,ease:2.5,nextReview:errNextDate,stage:"1st Time Study",history:[]});});logActivity("errors.bulk_logged",topicId,{count:parsed.length});saveLocal();rerender();toast("Logged "+parsed.length+" error"+(parsed.length===1?"":"s"),topicId?topicById(topicId).topic:"");},"Log all");}
 function errorModal(er,prefillTopicId){openModal(er?"Edit Error":"Log an Error",'<div class="frow"><label>Question — what was asked?</label><input class="inp" name="title" value="'+esc(er?er.title:"")+'" placeholder="e.g. CI vs SI difference on ₹5000 at 8% for 2 years"></div><div class="frow"><label>My answer — what did I actually do?</label><input class="inp" name="myAnswer" value="'+esc(er&&er.myAnswer||"")+'" placeholder="e.g. Used SI formula — multiplied principal × rate × time"></div><div class="frow"><label>Correct approach — why it was wrong</label><textarea class="inp" name="whyWrong" rows="2" placeholder="e.g. Should compound — year 2 interest applies to P+I, not P">'+esc(er&&er.whyWrong||"")+'</textarea></div><div class="f2"><div class="frow"><label>Type</label>'+selPlus("type",taxList("errTypes"),er?er.type:"","errTypes","Error type")+'</div><div class="frow"><label>Source</label>'+selPlus("source",taxList("errSources"),er?er.source:"","errSources","Error source")+'</div></div><div class="f2"><div class="frow"><label>Date</label>'+dateFieldHTML("date",(er&&er.date)||todayISO())+'</div><div class="frow"><label>Link</label><input class="inp" name="link" value="'+esc(er?er.link:"")+'" placeholder="Optional"></div></div><div class="frow"><label>Linked topic</label>'+pickerHTML("topicIds",er&&er.topicId?[er.topicId]:(prefillTopicId?[prefillTopicId]:[]),false)+'</div>',v=>{if(!v.title){toast("⚠️ Question required");return false;}const ids=pickVals(v.topicIds);const data={title:v.title,myAnswer:(v.myAnswer||"").trim(),whyWrong:(v.whyWrong||"").trim(),type:v.type,source:v.source,examTag:(typeof getActiveExamTag==="function"?getActiveExamTag():(S.settings&&S.settings.activeExam||"")),date:v.date||"",link:v.link||"",topicId:ids[0]||null};edit(()=>{if(er)Object.assign(er,data);else S.errors.push(Object.assign({id:uid("e")},data));logActivity("error.logged",er?er.id:S.errors[S.errors.length-1].id,{type:data.type,topicId:data.topicId});});toast(er?"Error updated":"Error logged");},er?"Save":"Log");}
 function mockSectionsHTML(m){
