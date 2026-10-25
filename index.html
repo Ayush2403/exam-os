@@ -11956,6 +11956,8 @@ function renderSessList(){
   }
   el.innerHTML=html;
 }
+function postReviews(){renderTabs();renderSessList();const el=$("#rtabs");if(el)el.addEventListener("click",e=>{const b=e.target.closest("[data-rtab]");if(!b)return;rtab=b.dataset.rtab;renderTabs();renderSessList();});}
+
 function pyqModal(prefillTopicId){
   const defaultExam=S.settings.readinessExam||"";
   openModal("Log practice session",
