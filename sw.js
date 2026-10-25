@@ -5,7 +5,7 @@
    - Cache-first for CDN assets, stale-while-revalidate for app
    ============================================================ */
 
-const CACHE = 'apex-v115';
+const CACHE = 'apex-v116';
 
 const ASSETS = [
   './',
@@ -59,6 +59,7 @@ self.addEventListener('activate', function(e){
 
 /* ---- fetch ---- */
 self.addEventListener('fetch', function(e){
+  if (e.request.url.includes('/landing')) return; // Bypass landing page
   if (e.request.url.includes('/landing')) return;
   if (e.request.method !== 'GET') return;
 
