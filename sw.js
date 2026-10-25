@@ -5,7 +5,7 @@
    - Cache-first for CDN assets, stale-while-revalidate for app
    ============================================================ */
 
-const CACHE = 'apex-v100';
+const CACHE = 'apex-v101';
 
 const ASSETS = [
   './',
@@ -62,6 +62,12 @@ self.addEventListener('fetch', function(e){
   if (e.request.method !== 'GET') return;
 
   var url = new URL(e.request.url);
+
+  
+  /* --- Bypass landing.html completely --- */
+  if (url.pathname === '/landing.html' || url.pathname === '/landing') {
+    return;
+  }
 
   /* 1. API calls — network only, never cached */
   if (url.pathname.indexOf('/api/') === 0) {
