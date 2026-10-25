@@ -1,10 +1,10 @@
 {
-  "id": "./index.html",
-  "name": "Apex \u2014 The Exam OS",
+  "id": "/",
+  "name": "Apex — The Exam OS",
   "short_name": "Apex",
   "description": "A study system for competitive exams. Free, offline, no account.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "display_override": [
     "standalone",
