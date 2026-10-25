@@ -12414,7 +12414,11 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     S.settings.userName=v.userName||"";S.settings.notifTime=v.notifTime||"08:00";
     S.settings.showAllThemes = Array.isArray(v.showAllThemes);
     S.settings.flashcardMode = Array.isArray(v.flashcardMode);
-    S.settings.autoExportEvery = Array.isArray(v.autoExport) ? 20 : 0;
+    S.settings.autoExportEvery = Array.isArray(v.autoExport) ? 20 : 999999;
+    
+    // Force a UI refresh so toggles take effect immediately
+    if (typeof rerender === "function") rerender();
+    if (typeof _rerenderThemeGrid === "function") _rerenderThemeGrid();
     
     const rawFb=(v.fbcfg||"").trim();
     if(rawFb){try{let clean=rawFb.replace(/^\s*\/\/.*$/gm,"").replace(/^\s*(const|var|let)\s+\w+\s*=\s*/,"").replace(/;?\s*$/,"");FBCFG=JSON.parse(clean);saveFBCFG();}catch(e){toast("⚠️ Invalid Firebase config");return false;}}else if(!FBCFG.apiKey){FBCFG={};saveFBCFG();}
@@ -13447,7 +13451,7 @@ try{
     if(!hasData())return false;
     var d=daysSince(S.settings.lastExport);
     var since=S.sessions.length-(S.settings.lastExportCount||0);
-    var every=S.settings.autoExportEvery||20;
+    var every=(typeof S.settings.autoExportEvery === "number") ? S.settings.autoExportEvery : 20;
     if(d===null)return true;
     return d>=7||since>=every;
   }
@@ -13465,7 +13469,7 @@ try{
     if(!anchor)return;
     var d=daysSince(S.settings.lastExport);
     var since=S.sessions.length-(S.settings.lastExportCount||0);
-    var every=S.settings.autoExportEvery||20;
+    var every=(typeof S.settings.autoExportEvery === "number") ? S.settings.autoExportEvery : 20;
     var title,msg;
     if(d===null){title="No backup yet";msg="You have data. Export once and you are safe from accidental browser clears.";}
     else if(d>=30){title="Last export was "+d+" days ago";msg="Long gap. One click protects everything.";}
