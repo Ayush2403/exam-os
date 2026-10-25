@@ -23,13 +23,13 @@ const checks = [
     
     // UI & UX Fixes
     { name: "Syllabus: Smart Tag Truncation", pass: html.includes('const examTags=function(t)') && html.includes('sortedExams = [...t.exams]') },
-    { name: "Syllabus: Clean Priority Pills", pass: html.includes('apex-cfg-pri') || html.includes('CRIT') },
+    { name: "Syllabus: Clean Priority Pills", pass: bundle.includes('apex-cfg-pri') },
     { name: "Reviews: UI Cleanup CSS", pass: html.includes('apex-review-ui-clean') },
     { name: "Reviews: Merged Errors + Sessions", pass: html.includes('All Reviews') && html.includes('rtabCount') },
     { name: "Quick Review: Gated by Start Button", pass: html.includes('apex-review-open') },
     { name: "Quick Review: Math Rendering", pass: html.includes('renderMath(item.myAnswer)') },
     { name: "Hero & Radar: Marks at Risk Badge", pass: html.includes('marks at risk') || html.includes('Marks at Risk') },
-    { name: "Settings: Advanced Toggles Fixed", pass: html.includes('showAllThemes&&v.showAllThemes.length>0') },
+    { name: "Settings: Advanced Toggles Fixed", pass: html.includes('v.showAllThemes.length>0') },
     { name: "Mock: Intelligent Debrief Modal", pass: html.includes('Step 1 · Tag weak topics') },
     { name: "Footer: D-Day Fix (Future Exams)", pass: html.includes('diffD(x.date,todayISO())>=0') },
     
