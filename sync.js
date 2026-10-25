@@ -480,3 +480,55 @@
 
   console.log("[apex-sync-ui] installed — clean Settings modal");
 })();
+
+// ── APEX SYNC AUTO-UNLOCK ─────────────────────────────────────
+(function() {
+    if (window._apexAutoUnlock) return;
+    window._apexAutoUnlock = true;
+
+    // 1. Patch setPassphrase to automatically save to IndexedDB
+    if (window.setPassphrase) {
+        const _orig = window.setPassphrase;
+        window.setPassphrase = async function(pass) {
+            const res = await _orig(pass);
+            if (pass && window.idb) {
+                try { await window.idb.set("apex-sync-key-backup", pass); } catch(e){}
+            }
+            return res;
+        };
+    }
+
+    // 2. Auto-unlock on page load
+    setTimeout(async function() {
+        try {
+            if (typeof S === "undefined" || !S.sync || !S.sync.enabled || !S.sync.room) return;
+            if (typeof syncKey !== "undefined" && syncKey) return;
+
+            let cached = sessionStorage.getItem("apex-sync-pass");
+            if (!cached && window.idb) {
+                cached = await window.idb.get("apex-sync-key-backup");
+                if (cached) sessionStorage.setItem("apex-sync-pass", cached);
+            }
+            if (!cached) return;
+
+            await window.setPassphrase(cached);
+            if (typeof setSyncStatus === "function") setSyncStatus("synced");
+            
+            if (typeof apiGet === "function") {
+                const row = await apiGet(S.sync.room);
+                if (row && row.updatedAt) {
+                    const remoteTs = row.updatedAt;
+                    const localTs = (typeof window._apexToMs === 'function' ? Math.floor(window._apexToMs(S._lastSync) / 1000) : 0);
+                    if (remoteTs > localTs && typeof pullNow === "function") {
+                        await pullNow(true);
+                    }
+                }
+            }
+            if (typeof startSync === "function") startSync();
+            console.log("[apex-sync-auto] unlocked from IndexedDB");
+        } catch(e) {
+            console.warn("[apex-sync-auto] unlock failed:", e.message);
+            sessionStorage.removeItem("apex-sync-pass");
+        }
+    }, 1000);
+})();
