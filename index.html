@@ -12067,17 +12067,25 @@ function debriefModal(mockId){
   const sec=m.sections||{};
   const filled=set.sections.filter(s=>typeof sec[s.key]==="number");
   const weakest=filled.length?filled.slice().sort((a,b)=>sec[a.key]-sec[b.key])[0]:null;
-  const sug=mockSuggestedTopics(m);
   
+  // Fallback to Weak Radar if no section scores exist
+  let sug = mockSuggestedTopics(m);
+  if (!sug || !sug.length) {
+      sug = weakTopics(3).map(w => w.t); 
+  }
+
   const subh=weakest?'<div class="sub-h">'+esc(m.title)+' · Weakest: <b style="color:var(--pri-critical-fg)">'+esc(weakest.label)+'</b> ('+sec[weakest.key]+'%)</div>':'<div class="sub-h">'+esc(m.title)+'</div>';
 
   const getWeak = () => (m.weak || []);
-  
   let selectedTopicId = null;
 
   function renderQTopics() {
     const tagged = getWeak();
-    if (!tagged.length) return '<div class="tiny" data-debrief-qtopics-empty style="color:var(--text-3)">Tag one of the suggestions above to link this mistake.</div>';
+    if (!tagged.length) return '<div class="tiny" data-debrief-qtopics-empty style="color:var(--text-3)">Tag a topic above to link this mistake.</div>';
+    
+    // Auto-select the first one if none is selected
+    if (!selectedTopicId && tagged.length > 0) selectedTopicId = tagged[0];
+
     return tagged.map(id => {
       const t = topicById(id);
       if (!t) return '';
@@ -12087,23 +12095,25 @@ function debriefModal(mockId){
   }
 
   const body = subh
-    + '<div class="detail-block" style="margin-bottom:16px;background:var(--surface-2)">'
-    +   '<div class="tiny" style="font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Step 1 · Tag weak topics</div>'
-    +   '<div style="display:flex;gap:6px;flex-wrap:wrap" data-debrief-tags>' + (sug.length ? sug.map(t => '<button type="button" class="chip' + (getWeak().includes(t.id) ? ' on' : '') + '" data-debrief-tag="' + t.id + '" style="padding:6px 11px;min-height:32px;font-size:12px">' + (getWeak().includes(t.id) ? '✓ ' : '+ ') + esc(t.topic) + '</button>').join('') : '<span class="tiny">No suggestions</span>') + '</div>'
-    +   '<input class="inp" data-debrief-search placeholder="Search any topic to add…" autocomplete="off" style="margin-top:8px;min-height:34px;font-size:12.5px">'
-    +   '<div data-debrief-searchlist style="margin-top:6px;max-height:180px;overflow-y:auto"></div>'
-    + '</div>'
-    + '<div class="detail-block" style="background:var(--surface-2)">'
-    +   '<div class="tiny" style="font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Step 2 · Log a mistake</div>'
-    +   '<div class="frow" style="margin-bottom:8px"><input class="inp" name="dTitle" placeholder="Question — e.g. CI vs SI" autofocus></div>'
-    +   '<div class="frow" style="margin-bottom:8px"><input class="inp" name="dMyAns" placeholder="My wrong answer"></div>'
-    +   '<div class="frow" style="margin-bottom:12px"><textarea class="inp" name="dWhy" rows="2" placeholder="Correct approach"></textarea></div>'
-    +   '<div class="frow" style="margin-bottom:12px"><label style="font-size:11px;color:var(--text-3)">Linked topic (tap to select)</label>'
-    +     '<div class="chips" data-debrief-qtopics style="margin-top:6px;min-height:34px">' + renderQTopics() + '</div>'
+    + '<div style="margin-bottom:16px">'
+    +   '<div class="tiny" style="font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;color:var(--accent-2)">Step 1 · Tag weak topics</div>'
+    +   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" data-debrief-tags>' 
+    +     sug.map(t => '<button type="button" class="chip' + (getWeak().includes(t.id) ? ' on' : '') + '" data-debrief-tag="' + t.id + '" style="padding:6px 11px;min-height:32px;font-size:12px">' + (getWeak().includes(t.id) ? '✓ ' : '+ ') + esc(t.topic) + '</button>').join('') 
     +   '</div>'
-    +   '<button class="btn primary" style="width:100%" data-debrief-save>Save & next</button>'
+    +   '<input class="inp" data-debrief-search placeholder="Search any topic to add…" autocomplete="off" style="min-height:38px;font-size:13px;background:var(--surface-2);border-color:var(--border)">'
+    +   '<div data-debrief-searchlist style="margin-top:4px;max-height:180px;overflow-y:auto"></div>'
     + '</div>'
-    + '<div style="padding:10px 14px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12.5px"><span style="font-weight:600">Mistakes logged this session</span><b data-debrief-count style="color:var(--accent-2);font-size:14px">' + S.errors.filter(e => e.mockRef === mockId).length + '</b></div>';
+    + '<div style="margin-bottom:16px">'
+    +   '<div class="tiny" style="font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;color:var(--accent-2)">Step 2 · Log a mistake</div>'
+    +   '<div class="frow" style="margin-bottom:10px"><input class="inp" name="dTitle" placeholder="Question — e.g. CI vs SI" autofocus></div>'
+    +   '<div class="frow" style="margin-bottom:10px"><input class="inp" name="dMyAns" placeholder="My wrong answer"></div>'
+    +   '<div class="frow" style="margin-bottom:12px"><textarea class="inp" name="dWhy" rows="2" placeholder="Correct approach"></textarea></div>'
+    +   '<div class="frow" style="margin-bottom:16px"><label style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Linked topic (tap to select)</label>'
+    +     '<div class="chips" data-debrief-qtopics style="min-height:34px">' + renderQTopics() + '</div>'
+    +   '</div>'
+    +   '<button class="btn primary" style="width:100%;justify-content:center;min-height:46px" data-debrief-save>Save & next</button>'
+    + '</div>'
+    + '<div style="padding:12px 14px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12.5px"><span style="font-weight:600;color:var(--text-2)">Mistakes logged this session</span><b data-debrief-count style="color:var(--accent-2);font-size:15px">' + S.errors.filter(e => e.mockRef === mockId).length + '</b></div>';
 
   openModal("Debrief — "+esc(m.title), body, () => {}, "Close");
   const sv = document.querySelector("[data-msave]");
@@ -12118,6 +12128,7 @@ function debriefModal(mockId){
     if (tagBtn) {
       const id = tagBtn.dataset.debriefTag;
       if (!Array.isArray(m.weak)) m.weak = [];
+      
       if (m.weak.includes(id)) {
         m.weak = m.weak.filter(x => x !== id);
         tagBtn.classList.remove('on');
@@ -12127,6 +12138,10 @@ function debriefModal(mockId){
         tagBtn.classList.add('on');
         tagBtn.innerHTML = '✓ ' + esc(topicById(id).topic);
       }
+      
+      // If we just untagged the selected topic, reset it
+      if (selectedTopicId === id && !m.weak.includes(id)) selectedTopicId = null;
+      
       saveLocal();
       modal.querySelector('[data-debrief-qtopics]').innerHTML = renderQTopics();
       return;
@@ -12135,8 +12150,7 @@ function debriefModal(mockId){
     // 2. Select linked topic
     const qpickBtn = e.target.closest("[data-debrief-qpick]");
     if (qpickBtn) {
-      const id = qpickBtn.dataset.debriefQpick;
-      selectedTopicId = selectedTopicId === id ? null : id;
+      selectedTopicId = qpickBtn.dataset.debriefQpick;
       modal.querySelector('[data-debrief-qtopics]').innerHTML = renderQTopics();
       return;
     }
@@ -12149,6 +12163,7 @@ function debriefModal(mockId){
       const whyWrong = modal.querySelector('[name="dWhy"]').value.trim();
       
       if (!title) { toast("Question required"); return; }
+      if (!selectedTopicId) { toast("Please tag and select a linked topic"); return; }
       
       snapshot();
       S.errors.push({
@@ -12187,7 +12202,7 @@ function debriefModal(mockId){
     const tagged = new Set(getWeak());
     const hits = S.syllabus.filter(t => !tagged.has(t.id) && (t.topic.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q))).slice(0, 8);
     if (!hits.length) { searchList.innerHTML = '<div class="tiny" style="padding:8px;color:var(--text-3)">No match</div>'; return; }
-    searchList.innerHTML = hits.map(t => '<div data-debrief-add="' + t.id + '" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12.5px;background:var(--surface-3);margin-bottom:4px"><span style="flex:1">' + esc(t.topic) + '</span><span class="tiny">' + esc(t.subject) + '</span></div>').join('');
+    searchList.innerHTML = hits.map(t => '<div data-debrief-add="' + t.id + '" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12.5px;background:var(--surface-3);margin-bottom:4px;border:1px solid var(--border)"><span style="flex:1">' + esc(t.topic) + '</span><span class="tiny">' + esc(t.subject) + '</span></div>').join('');
   });
   
   searchList.addEventListener("click", (e) => {
@@ -12197,11 +12212,11 @@ function debriefModal(mockId){
     if (!Array.isArray(m.weak)) m.weak = [];
     if (!m.weak.includes(id)) m.weak.push(id);
     saveLocal();
+    
     searchEl.value = "";
     searchList.innerHTML = "";
     modal.querySelector('[data-debrief-qtopics]').innerHTML = renderQTopics();
     
-    // Refresh the suggestion chips
     const t = topicById(id);
     if (t && modal.querySelector('[data-debrief-tags]')) {
        const tagsBox = modal.querySelector('[data-debrief-tags]');
