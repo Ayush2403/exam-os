@@ -5,7 +5,7 @@
    - Cache-first for CDN assets, stale-while-revalidate for app
    ============================================================ */
 
-const CACHE = 'apex-v99';
+const CACHE = 'apex-v100';
 
 const ASSETS = [
   './',
@@ -97,6 +97,7 @@ self.addEventListener('fetch', function(e){
         }).catch(function(){
           /* Offline navigation → serve index.html */
           if (e.request.mode === 'navigate') {
+            if (e.request.url.includes('landing.html')) return caches.match('./landing.html');
             return caches.match('/') || caches.match('./index.html');
           }
           return cached;
