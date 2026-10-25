@@ -9992,7 +9992,43 @@ const STAGE_COLOR={"1st Time Study":"#EC4899","Revise: Day 1":"#F59E0B","Revise:
 const stagePill=s=>'<span class="pill"><i class="dot" style="background:'+(STAGE_COLOR[s]||"var(--text-3)")+'"></i>'+esc(s)+'</span>';
 const stageDots=s=>{const i=STAGES.indexOf(s);return'<span class="stage-dots">'+STAGES.map((_,j)=>'<i class="'+(j<=i?"on":"")+'"></i>').join("")+'</span>';};
 const relPill=id=>{const t=topicById(id);if(!t)return"";return'<button class="rel-pill" data-action="goto-topic" data-id="'+id+'"><i class="sdot" style="background:'+subjColor(t.subject)+'"></i><span>'+esc(t.topic)+'</span></button>';};
-const examTags=t=>t.exams.map(e=>'<span class="exam-tag">'+esc(e==="RBI GRADE B"?"RBI":e)+'</span>').join("");
+const examTags=function(t){
+  if(!Array.isArray(t.exams) || t.exams.length === 0) return "";
+  const activeExam = (typeof getActiveExam === "function") ? getActiveExam() : null;
+  const priMap = { "Critical": 4, "High": 3, "Medium": 2, "Low": 1 };
+  const sortedExams = [...t.exams].sort((a, b) => {
+    if (a === activeExam) return -1;
+    if (b === activeExam) return 1;
+    const priA = t.examConfig && t.examConfig[a] ? t.examConfig[a].priority : null;
+    const priB = t.examConfig && t.examConfig[b] ? t.examConfig[b].priority : null;
+    const valA = priMap[priA] || 0;
+    const valB = priMap[priB] || 0;
+    if (valA !== valB) return valB - valA;
+    const getDays = (examTag) => {
+      if (!S.settings || !Array.isArray(S.settings.exams)) return 9999;
+      const target = S.settings.exams.find(x => x.examTag === examTag && x.date);
+      if (!target) return 9999;
+      const diff = diffD(target.date, todayISO());
+      return diff >= 0 ? diff : 9999;
+    };
+    const daysA = getDays(a);
+    const daysB = getDays(b);
+    if (daysA !== daysB) return daysA - daysB;
+    return t.exams.indexOf(a) - t.exams.indexOf(b);
+  });
+  const max = 4;
+  const shown = sortedExams.slice(0, max);
+  const hidden = sortedExams.length - max;
+  let html = shown.map(e=>{
+    const isActive = e === activeExam;
+    const style = isActive ? 'style="border-color:var(--accent-2);color:var(--text)"' : '';
+    return '<span class="exam-tag" '+style+'>'+esc(e==="RBI GRADE B"?"RBI":e==="NABARD GRADE A"?"NABARD":e)+'</span>';
+  }).join("");
+  if (hidden > 0) {
+    html += '<span class="exam-tag" style="opacity:.7;background:var(--surface-3);border-color:var(--border-2)" title="'+sortedExams.join(', ')+'">+' + hidden + '</span>';
+  }
+  return html;
+};
 const pbar=(pct,color)=>'<div class="pbar"><div class="pfill" style="width:'+pct+'%;background:'+color+'"></div></div>';
 const dueTag=s=>{const r=reviewState(s);if(r.st==="overdue")return'<span class="tag-overdue">'+r.days+'d overdue</span>';if(r.st==="today")return'<span class="tag-today">Due today</span>';if(r.st==="new")return'<span class="tag-new">New</span>';return'<span class="tag-future">'+relD(r.nr)+'</span>';};
 const selOpts=(arr,cur)=>arr.map(o=>'<option value="'+esc(o)+'"'+(o===cur?" selected":"")+'>'+esc(o)+'</option>').join("");
