@@ -11909,10 +11909,53 @@ function viewGuide(){
     function viewRadar(){const list=weakTopics(30);return'<div class="hero-head"><div><h2>Weak Topic <span style="font-style:italic">Radar</span></h2><div class="sub">Ranked by friction (errors, mock fails, recall) × importance. Click any topic for a full breakdown.</div></div></div><div class="stat-grid stagger"><div class="stat"><div class="k">Flagged</div><div class="v" style="color:#EF4444">'+list.length+'</div><div class="f">score &gt; 0</div></div><div class="stat"><div class="k">Errors</div><div class="v">'+S.errors.length+'</div><div class="f">logged</div></div><div class="stat"><div class="k">Mock weak tags</div><div class="v">'+S.mocks.reduce((a,m)=>a+((m.weak||[]).length),0)+'</div><div class="f">across mocks</div></div><div class="stat"><div class="k">Critical left</div><div class="v">'+S.syllabus.filter(t=>t.priority==="Critical"&&t.status!=="Mastered").length+'</div><div class="f">not mastered</div></div></div><div class="card section-gap"><div class="card-h"><h2>Ranked</h2><span class="sub">click topic to see breakdown</span></div>'+(list.length?'<div style="display:grid;gap:6px">'+list.map((x,i)=>{const t=x.t;const errs=S.errors.filter(e=>e.topicId===t.id).length;const mw=S.mocks.filter(m=>(m.weak||[]).indexOf(t.id)>-1).length;return'<div class="weak-item"><span class="weak-score">'+x.score+'</span><span class="tiny" style="min-width:22px;text-align:right">#'+(i+1)+'</span><div class="weak-t" data-action="radar-breakdown" data-id="'+t.id+'" style="cursor:pointer">'+esc(t.topic)+'<div class="tiny" style="font-weight:500">'+esc(t.subject)+(t.priority?' · <span class="'+priClass(t.priority)+'" style="padding:1px 6px;border-radius:4px">'+esc(t.priority)+'</span>':"")+(errs?' · <span style="color:#fca5a5">'+errs+' err</span>':"")+(mw?' · <span style="color:#F59E0B">'+mw+' mock</span>':"")+'</div></div><button class="mini-icon" data-action="goto-topic" data-id="'+t.id+'">'+ICONS.pencil+'</button><button class="mini-icon accent" data-action="focus-start-topic" data-id="'+t.id+'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button></div>';}).join("")+'</div>':'<div class="empty"><div class="ic">'+emptyArt("radar")+'</div><b>Nothing flagged</b><p>Log errors and mock weak areas to build your radar.</p></div>')+'</div>';}
 let rtab="all";
 function viewReviews(){return'<div class="hero-head"><div><h2>Spaced <span style="font-style:italic">Repetition</span></h2><div class="sub">Adaptive · rate Again / Hard / Good / Easy. Mastered → +90d → +180d → +365d.</div></div><button class="btn primary" style="margin-left:auto" data-action="open-add-session">'+ICONS.plus+' Log Session</button><button class="btn" style="margin-left:6px" data-action="open-pyq-log">📝 Log Practice</button></div><div class="chips" style="margin-bottom:10px"><button class="chip'+((S.settings&&S.settings.flashcardMode)?" on":"")+'" data-action="toggle-flashcard">Flashcard mode'+((S.settings&&S.settings.flashcardMode)?" ON":"")+'</button></div><div class="page-tabs" id="rtabs"></div><div id="sess-list" style="display:grid;gap:14px"></div>';}
-function rtabCount(k){if(k==="today")return dueSessions().length+dueErrors().length;if(k==="upcoming")return S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;}).length;if(k==="mastered")return S.sessions.filter(s=>s.stage==="Mastered").length;return S.sessions.length;}
-function renderTabs(){const el=$("#rtabs");if(!el)return;el.innerHTML=[["all","All Sessions"],["today","Today"],["upcoming","Upcoming 7d"],["mastered","Mastered"]].map(p=>'<button class="page-tab'+(rtab===p[0]?" on":"")+'" data-rtab="'+p[0]+'">'+p[1]+' ('+rtabCount(p[0])+')</button>').join("");}
-function renderSessList(){const el=$("#sess-list");if(!el)return;let html="";if(rtab==="today"){const due=dueSessions();const dueErr=dueErrors();const combined=[];dueErr.forEach(e=>combined.push({kind:"error",item:e,r:reviewState(e)}));due.forEach(s=>combined.push({kind:"session",item:s,r:reviewState(s)}));combined.sort((a,b)=>{const da=a.r.st==="overdue"?-a.r.days-1000:(a.r.st==="new"?-500:0);const db=b.r.st==="overdue"?-b.r.days-1000:(b.r.st==="new"?-500:0);return da-db;});html=combined.length?combined.map(u=>u.kind==="error"?errorCard(u.item):sessCard(u.item)).join(""):'<div class="empty"><div class="ic">'+emptyArt("check")+'</div><b>All clear</b><p>Nothing due today.</p></div>';}else if(rtab==="upcoming"){const up=S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;}).sort((a,b)=>{const x=reviewState(a).nr,y=reviewState(b).nr;return x<y?-1:1;});if(!up.length)html='<div class="empty"><div class="ic">'+emptyArt("cal")+'</div><b>Nothing this week</b></div>';else{let cur="";html=up.map(s=>{const nr=reviewState(s).nr;let head="";if(nr!==cur){cur=nr;head='<div class="date-grp"><div class="date-grp-h">'+fmtD(nr)+' · '+relD(nr)+'</div></div>';}return head+sessCard(s);}).join("");}}else if(rtab==="mastered"){const m=S.sessions.filter(s=>s.stage==="Mastered");html=m.length?m.map(sessCard).join(""):'<div class="empty"><div class="ic">'+emptyArt("check")+'</div><b>Nothing mastered yet</b></div>';}else{const all=S.sessions.slice().sort((a,b)=>{const ra=reviewState(a),rb=reviewState(b);if(!ra.nr)return 1;if(!rb.nr)return-1;return ra.nr<rb.nr?-1:1;});html=all.length?all.map(sessCard).join(""):'<div class="empty"><div class="ic">'+emptyArt("book")+'</div><b>No sessions yet</b><p>Log your first study session to start the repetition cycle.</p></div>';}el.innerHTML=html;}
-function postReviews(){renderTabs();renderSessList();const el=$("#rtabs");if(el)el.addEventListener("click",e=>{const b=e.target.closest("[data-rtab]");if(!b)return;rtab=b.dataset.rtab;renderTabs();renderSessList();});}
+function rtabCount(k){
+  if(k==="today")return dueSessions().length+dueErrors().length;
+  if(k==="upcoming")return S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;}).length + S.errors.filter(e=>{const r=reviewState(e);return r.st==="future"&&r.days<=7;}).length;
+  if(k==="mastered")return S.sessions.filter(s=>s.stage==="Mastered").length;
+  return S.sessions.length + S.errors.length;
+}
+function renderTabs(){
+  const el=$("#rtabs");
+  if(!el)return;
+  el.innerHTML=[["all","All Reviews"],["today","Today"],["upcoming","Upcoming 7d"],["mastered","Mastered"]].map(p=>'<button class="page-tab'+(rtab===p[0]?" on":"")+'" data-rtab="'+p[0]+'">'+p[1]+' ('+rtabCount(p[0])+')</button>').join("");
+}
+function renderSessList(){
+  const el=$("#sess-list");
+  if(!el)return;
+  let html="";
+  if(rtab==="today"){
+    const due=dueSessions();const dueErr=dueErrors();const combined=[];
+    dueErr.forEach(e=>combined.push({kind:"error",item:e,r:reviewState(e)}));
+    due.forEach(s=>combined.push({kind:"session",item:s,r:reviewState(s)}));
+    combined.sort((a,b)=>{const da=a.r.st==="overdue"?-a.r.days-1000:(a.r.st==="new"?-500:0);const db=b.r.st==="overdue"?-b.r.days-1000:(b.r.st==="new"?-500:0);return da-db;});
+    html=combined.length?combined.map(u=>u.kind==="error"?errorCard(u.item):sessCard(u.item)).join(""):'<div class="empty"><div class="ic">'+emptyArt("check")+'</div><b>All clear</b><p>Nothing due today.</p></div>';
+  }else if(rtab==="upcoming"){
+    const upSess=S.sessions.filter(s=>{const r=reviewState(s);return r.st==="future"&&r.days<=7;});
+    const upErr=S.errors.filter(e=>{const r=reviewState(e);return r.st==="future"&&r.days<=7;});
+    const up=[...upSess, ...upErr].sort((a,b)=>{const x=reviewState(a).nr,y=reviewState(b).nr;return x<y?-1:1;});
+    if(!up.length)html='<div class="empty"><div class="ic">'+emptyArt("cal")+'</div><b>Nothing this week</b></div>';
+    else{
+      let cur="";
+      html=up.map(item=>{
+        const nr=reviewState(item).nr;let head="";
+        if(nr!==cur){cur=nr;head='<div class="date-grp"><div class="date-grp-h">'+fmtD(nr)+' · '+relD(nr)+'</div></div>';}
+        return head+(item.hasOwnProperty('title')?errorCard(item):sessCard(item));
+      }).join("");
+    }
+  }else if(rtab==="mastered"){
+    const m=S.sessions.filter(s=>s.stage==="Mastered");
+    html=m.length?m.map(sessCard).join(""):'<div class="empty"><div class="ic">'+emptyArt("check")+'</div><b>Nothing mastered yet</b></div>';
+  }else{
+    const allItems=[...S.sessions, ...S.errors].sort((a,b)=>{
+      const ra=reviewState(a),rb=reviewState(b);
+      if(!ra.nr)return 1;if(!rb.nr)return-1;
+      return ra.nr<rb.nr?-1:1;
+    });
+    html=allItems.length?allItems.map(item=>item.hasOwnProperty('title')?errorCard(item):sessCard(item)).join(""):'<div class="empty"><div class="ic">'+emptyArt("book")+'</div><b>Nothing to review</b><p>Log a study session or an error to start the repetition cycle.</p></div>';
+  }
+  el.innerHTML=html;
+}
 function pyqModal(prefillTopicId){
   const defaultExam=S.settings.readinessExam||"";
   openModal("Log practice session",
