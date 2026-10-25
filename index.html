@@ -11239,7 +11239,12 @@ function todayPlanHTML(){
     +'</div>'
     +'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:space-between"><button class="btn ghost sm" data-action="open-add-task">'+ICONS.plus+' Add</button><button class="btn ghost sm" data-action="task-template">Routine</button></div>';
 }
-function weakRow(x){const t=x.t;return'<div class="weak-item"><span class="weak-score">'+x.score+'</span><div class="weak-t" data-action="radar-breakdown" data-id="'+t.id+'" style="cursor:pointer">'+esc(t.topic)+'</div><button class="mini-icon" data-action="goto-topic" data-id="'+t.id+'">'+ICONS.pencil+'</button><button class="mini-icon accent" data-action="timer-start-topic" data-id="'+t.id+'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button></div>';}
+function weakRow(x){
+  const t=x.t;
+  const marks = (typeof computeTopicPriority === 'function') ? Math.round(computeTopicPriority(t, getActiveExamTag())/20) : 0;
+  const markBadge = marks > 0 ? '<span class="pill" style="font-size:9px;padding:1px 6px;margin-left:6px;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#fca5a5;font-weight:700">⚠️ '+marks+' marks</span>' : '';
+  return '<div class="weak-item"><span class="weak-score">'+x.score+'</span><div class="weak-t" data-action="radar-breakdown" data-id="'+t.id+'" style="cursor:pointer;display:flex;align-items:center">'+esc(t.topic)+markBadge+'</div><button class="mini-icon" data-action="goto-topic" data-id="'+t.id+'">'+ICONS.pencil+'</button><button class="mini-icon accent" data-action="timer-start-topic" data-id="'+t.id+'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></button></div>';
+}
 
 const SF_KEY="apex-syl-state-v1";
 const sf=(function(){try{const raw=localStorage.getItem(SF_KEY);if(raw){const p=JSON.parse(raw);return{q:"",exam:"All",status:"All",priority:"All",archived:false,closed:p.closed||{},closedTopics:p.closedTopics||{}};}}catch(e){}return{q:"",exam:"All",status:"All",priority:"All",archived:false,closed:{},closedTopics:{}};})();
