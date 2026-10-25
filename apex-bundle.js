@@ -1,9 +1,7 @@
-/* ==========================================================
-   APEX BUNDLE v1 - Consolidated Patch Scripts
-   ========================================================== */
+/* APEX BUNDLE v3 */
 
 
-// ── FILE: apex-mobile.js ────────────────────────────────────────────
+// ── FILE: apex-mobile.js ──
 /* ============================================================
    APEX MOBILE LAYER v1
    Drop-in enhancement for premium mobile UX.
@@ -386,7 +384,7 @@
   console.log('[apex-mobile] installed · iOS:', isIOS, '· Android:', isAndroid, '· Standalone:', isStandalone);
 })();
 
-// ── FILE: sync.js ────────────────────────────────────────────
+// ── FILE: sync.js ──
 /* ============================================================
    APEX SYNC — Cloudflare D1 backend (v2)
    - 500ms debounce (was 2.5s)
@@ -871,7 +869,7 @@
 })();
 
 
-// ── FILE: exam-weightage.js ────────────────────────────────────────────
+// ── FILE: exam-weightage.js ──
 /* ============================================================
    APEX EXAM INTELLIGENCE — weightage database v2
    Sources: Oliveboard, PracticeMock, EduTap, PW, Testbook,
@@ -1326,7 +1324,7 @@
 })();
 
 
-// ── FILE: exam-config.js ────────────────────────────────────────────
+// ── FILE: exam-config.js ──
 /* ============================================================
    APEX EXAM CONFIG — per-exam priority + weightage
    
@@ -2431,7 +2429,7 @@
 })();
 
 
-// ── FILE: apex-final.js ────────────────────────────────────────────
+// ── FILE: apex-final.js ──
 /* ============================================================
    APEX FINAL v2 — consolidated
    - No click interception (native expand works again)
@@ -2519,7 +2517,7 @@
 })();
 
 
-// ── FILE: apex-a11y.js ────────────────────────────────────────────
+// ── FILE: apex-a11y.js ──
 /* ============================================================
    APEX a11y v2
    1. Enter/Space activation for role=button
@@ -2775,7 +2773,7 @@
 })();
 
 
-// ── FILE: apex-keys.js ────────────────────────────────────────────
+// ── FILE: apex-keys.js ──
 /* APEX — keyboard-first review grading */
 (function(){
   'use strict';
@@ -2850,7 +2848,7 @@
 })();
 
 
-// ── FILE: apex-final-batch.js ────────────────────────────────────────────
+// ── FILE: apex-final-batch.js ──
 /* ============================================================
    APEX FINAL BATCH — quick-log nav, leech detection, empty states
    ============================================================ */
@@ -3268,7 +3266,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-leech-topic.js ────────────────────────────────────────────
+// ── FILE: apex-leech-topic.js ──
 /* Topic-level leech flag in Radar */
 (function(){
   if (window._apexTopicLeech) return;
@@ -3316,7 +3314,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-polish.js ────────────────────────────────────────────
+// ── FILE: apex-polish.js ──
 /* ============================================================
    APEX POLISH v2 — passphrase memory, banking subjects, default-collapse
    ============================================================ */
@@ -3537,7 +3535,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-tag-fix.js ────────────────────────────────────────────
+// ── FILE: apex-tag-fix.js ──
 /* ============================================================
    APEX TAG FIX v2 — bulk-first
    - Click a subject header → select/deselect all its topics
@@ -3793,7 +3791,7 @@ console.log('[apex-final-batch] error cards render math');
   console.log('[apex-tag-fix] v2 installed — bulk subject toggles');
 })();
 
-// ── FILE: apex-new-exam.js ────────────────────────────────────────────
+// ── FILE: apex-new-exam.js ──
 /* ============================================================
    APEX NEW EXAM — add arbitrary exam tags from the UI
    ============================================================ */
@@ -3820,30 +3818,29 @@ console.log('[apex-final-batch] error cards render math');
     sel.parentElement.appendChild(btn);
 
     btn.addEventListener('click', function(){
-      var name = prompt('New exam tag — e.g. "SSC MTS", "RRB NTPC", "IBPS SO":');
-      if (!name) return;
-      name = name.trim().toUpperCase();
-      if (!name) return;
-      if (!Array.isArray(S.tax.exams)) S.tax.exams = [];
-
-      if (S.tax.exams.indexOf(name) === -1) {
-        S.tax.exams.push(name);
-        try { store.set(KEY, JSON.stringify(S)); } catch(e){}
-        toast('Added', '"' + name + '" is now available everywhere');
-      } else {
-        toast('Already exists', 'Selecting "' + name + '"');
-      }
-
-      /* Rebuild the select options */
-      sel.innerHTML = '<option value="">— None (generic) —</option>';
-      S.tax.exams.forEach(function(e){
-        var o = document.createElement('option');
-        o.value = e;
-        o.textContent = e;
-        sel.appendChild(o);
-      });
-      sel.value = name;
-      sel.dispatchEvent(new Event('change', {bubbles:true}));
+      var body = '<div class="frow"><label>New exam tag</label><input class="inp" name="newExamName" placeholder="e.g. SSC MTS, RRB NTPC" autofocus></div>'
+               + '<div class="hint">This will be available in the dropdown for all topics.</div>';
+      openModal("Add exam tag", body, function(v) {
+        var name = (v.newExamName || "").trim().toUpperCase();
+        if (!name) { toast("Name required"); return false; }
+        if (!Array.isArray(S.tax.exams)) S.tax.exams = [];
+        
+        if (S.tax.exams.indexOf(name) === -1) {
+          S.tax.exams.push(name);
+          saveLocal();
+          toast('Added', '"' + name + '" is now available everywhere');
+        }
+        
+        sel.innerHTML = '<option value="">— None (generic) —</option>';
+        S.tax.exams.forEach(function(e){
+          var o = document.createElement('option');
+          o.value = e;
+          o.textContent = e;
+          sel.appendChild(o);
+        });
+        sel.value = name;
+        sel.dispatchEvent(new Event('change', {bubbles:true}));
+      }, "Add");
     });
   }
 
@@ -3890,7 +3887,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-tags-final.js ────────────────────────────────────────────
+// ── FILE: apex-tags-final.js ──
 /* ============================================================
    APEX TAGS — comprehensive subject + topic level correction
    Based on official syllabus documents for all 13 exams.
@@ -3974,7 +3971,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-syl-focus.js ────────────────────────────────────────────
+// ── FILE: apex-syl-focus.js ──
 /* ============================================================
    APEX SYLLABUS FOCUS — priority auto-expand + exam-only filter
    ============================================================ */
@@ -4142,7 +4139,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-syl-scroll.js ────────────────────────────────────────────
+// ── FILE: apex-syl-scroll.js ──
 /* ============================================================
    APEX SYLLABUS SCROLL FIX v2
    - Disable scroll anchoring on the real scroll container
@@ -4221,7 +4218,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-scope.js ────────────────────────────────────────────
+// ── FILE: apex-scope.js ──
 /* ============================================================
    APEX SCOPE v15 — exam-tag everything
    - sessions + errors now carry examTag
@@ -4850,7 +4847,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-task-rollover.js ────────────────────────────────────────────
+// ── FILE: apex-task-rollover.js ──
 /* ============================================================
    APEX TASK ROLLOVER + BOARD CLEANUP
    1. Routine tasks (time-blocked, no due date) roll over daily
@@ -4936,7 +4933,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-obsidian-link.js ────────────────────────────────────────────
+// ── FILE: apex-obsidian-link.js ──
 /* ============================================================
    APEX OBSIDIAN LINK
    Adds "Open in Obsidian" button to every topic modal.
@@ -5005,7 +5002,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-katex-fix.js ────────────────────────────────────────────
+// ── FILE: apex-katex-fix.js ──
 /* ============================================================
    APEX KATEX FIX v3
    - Renders \(...\), \[...\], and $$...$$ as KaTeX
@@ -5238,7 +5235,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-theme-fix.js ────────────────────────────────────────────
+// ── FILE: apex-theme-fix.js ──
 /* ============================================================
    APEX COSMOS THEME FIX v3 — display:none on non-apex themes
    ============================================================ */
@@ -5289,7 +5286,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-exam-sync.js ────────────────────────────────────────────
+// ── FILE: apex-exam-sync.js ──
 /* ============================================================
    APEX EXAM SYNC
    Single source of truth for the active exam.
@@ -5349,7 +5346,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-// ── FILE: apex-focus-notes-edit.js ────────────────────────────────────────────
+// ── FILE: apex-focus-notes-edit.js ──
 /* ============================================================
    APEX FOCUS NOTES EDITOR
    Adds a pencil icon next to "Recent focus notes" on review
@@ -5519,7 +5516,7 @@ console.log('[apex-final-batch] error cards render math');
   console.log('[apex-focus-notes-edit] installed — minutes + notes editable');
 })();
 
-// ── FILE: apex-scroll-preserve.js ────────────────────────────────────────────
+// ── FILE: apex-scroll-preserve.js ──
 /* ============================================================
    APEX SCROLL PRESERVE
    Stops the view from jumping to the top when the DOM is
@@ -5598,9 +5595,7 @@ console.log('[apex-final-batch] error cards render math');
 })();
 
 
-
-
-// ── FILE: apex-focus-history-edit.js ──────────────────────────────
+// ── FILE: apex-focus-history-edit.js ──
 /* ============================================================
    APEX — FOCUS HISTORY EDITOR v2
    Fully replaces focusHistoryModal so every row renders with
