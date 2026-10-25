@@ -165,11 +165,18 @@
         try {
           const parsed = JSON.parse(remote.blob);
           const remoteState = await decryptState(parsed);
+          if (typeof mergeForSync === 'function') {
           S = mergeForSync(S, remoteState);
+        } else {
+          console.warn("[apex sync] mergeForSync is missing.");
+          if (!silent) toast("Merge failed", "mergeForSync function is missing");
+          return;
+        }
           if (!silent) toast("Merged with cloud", "Local + cloud preserved");
         } catch (e) {
           recordSyncError();
-          if (!silent) toast("Merge failed", "Push aborted — cloud copy unreadable");
+          if (!silent) toast("Merge failed", "Error: " + e.message);
+          console.error("[apex sync] merge error:", e);
           return;
         }
       }
