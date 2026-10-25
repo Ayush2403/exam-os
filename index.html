@@ -12485,8 +12485,8 @@ const ACTIONS={
         <div class="sub-h" style="font-size:15px;color:var(--text);margin-bottom:14px">${esc(item.title)}</div>
         ${isFlashcard ? '<button class="btn primary" style="width:100%;margin-bottom:16px" data-action="reveal-quick-review">Reveal Answer</button>' : ''}
         <div class="${isFlashcard ? 'quick-review-reveal" style="display:none' : ''}">
-          ${item.myAnswer ? `<div class="detail-block" style="border-left:3px solid var(--pri-critical-fg);margin-bottom:12px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-critical-fg);margin-bottom:4px">My answer</div><div style="font-size:13px">${esc(item.myAnswer)}</div></div>` : ''}
-          ${item.whyWrong ? `<div class="detail-block" style="border-left:3px solid var(--pri-low-fg);margin-bottom:16px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-low-fg);margin-bottom:4px">Correct approach</div><div style="font-size:13px">${esc(item.whyWrong)}</div></div>` : ''}
+          ${item.myAnswer ? `<div class="detail-block" style="border-left:3px solid var(--pri-critical-fg);margin-bottom:12px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-critical-fg);margin-bottom:4px">My answer</div><div style="font-size:13px">${renderMath(item.myAnswer)}</div></div>` : ''}
+          ${item.whyWrong ? `<div class="detail-block" style="border-left:3px solid var(--pri-low-fg);margin-bottom:16px"><div class="tiny" style="font-weight:700;text-transform:uppercase;color:var(--pri-low-fg);margin-bottom:4px">Correct approach</div><div style="font-size:13px">${renderMath(item.whyWrong)}</div></div>` : ''}
           <div style="margin-top:20px">${gradeRowHTML(id, "grade-error")}</div>
         </div>
       `;
