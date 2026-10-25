@@ -12412,8 +12412,8 @@ function openSettings(initialTab){ initialTab = initialTab || "personal";
     +'</div>';
   openModal("Settings",body,async v=>{
     S.settings.userName=v.userName||"";S.settings.notifTime=v.notifTime||"08:00";
-    S.settings.showAllThemes = Array.isArray(v.showAllThemes);
-    S.settings.flashcardMode = Array.isArray(v.flashcardMode);
+    S.settings.showAllThemes = (v.showAllThemes && v.showAllThemes.length > 0);
+    S.settings.flashcardMode = (v.flashcardMode && v.flashcardMode.length > 0);
     S.settings.autoExportEvery = Array.isArray(v.autoExport) ? 20 : 999999;
     
     // Force a UI refresh so toggles take effect immediately
