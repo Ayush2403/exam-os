@@ -7957,6 +7957,23 @@ body.route-welcome #apex-cosmos{display:none}
     #sess-list .grade-btn, #err-list .grade-btn { min-height: 48px !important; font-size: 13px !important; }
   }
 </style>
+
+<style id="fix-error-title-expand">
+.t, .sess-name {
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+.t.expanded, .sess-name.expanded {
+  -webkit-line-clamp: unset !important;
+  overflow: visible !important;
+  display: block !important;
+}
+</style>
 </head>
 <body>
   <!-- APEX BRAND MARK · single source of truth · theme-independent -->
@@ -11716,6 +11733,15 @@ function exportNotesHTML(){
 })();
 <\/script>
 
+
+<script id="fix-error-title-expand-js">
+document.addEventListener('click', function(e) {
+  const title = e.target.closest('.sess-name') || e.target.closest('.t');
+  if (title) {
+    title.classList.toggle('expanded');
+  }
+});
+</script>
 </body></html>`;
   const blob=new Blob([html],{type:"text/html;charset=utf-8"});
   const url=URL.createObjectURL(blob);
