@@ -178,3 +178,19 @@
   overflow: visible !important;
   display: block !important;
 }
+
+/* ── Title Expand Fix ── */
+.t, .sess-name {
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+.t.expanded, .sess-name.expanded {
+  -webkit-line-clamp: unset !important;
+  overflow: visible !important;
+  display: block !important;
+}
