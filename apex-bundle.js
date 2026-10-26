@@ -1,4 +1,4 @@
-/* APEX BUNDLE v15 */
+/* APEX BUNDLE v17 */
 
 
 // ── FILE: apex-mobile.js ──
@@ -5926,3 +5926,17 @@ function confirmDelete(id){
 
   console.log('[apex-focus-history-edit v2] installed — icons render inline');
 })();
+
+// ── FILE: apex-title-expand.js ──
+
+(function() {
+  if (window._apexTitleExpand) return;
+  window._apexTitleExpand = true;
+  document.addEventListener('click', function(e) {
+    const title = e.target.closest('.sess-name');
+    if (title) {
+      title.classList.toggle('expanded');
+    }
+  });
+})();
+
