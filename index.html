@@ -8087,7 +8087,7 @@ const NAV_INFO={
 };
 const DEFAULT_TAX={statuses:["Not started","Learning","Practicing","Reviewing","Mastered"],priorities:["Critical","High","Medium","Low"],weights:["High","Medium","Low"],exams:["CGL","CHSL","RBI GRADE B","NABARD GRADE A","IB ACIO"],errTypes:["concept missed","forgot formula","calculation slip","time trap"],errSources:["Mock Test","Sectional Mock","PYQ","Discord doubt"],mockTypes:["CGL Full","CGL Sectional","CHSL Full","CHSL Sectional","RBI Full","RBI Sectional","SBI Full","SBI Sectional","SSC","Banking","IB ACIO"],taskPri:["High 🔥","Medium","Low"],taskStatus:["Next Up","In Progress","Completed"],resSources:["Takshila","Unacademy","IBT","Study Funda","Soldier Unplugged","EduTap","Other"],resTypes:["Notes","PDF","Video","Test Series","Book","Article"],subjects:["maths","reasoning","english grammar","descriptive english","general science","geography","history","polity","economics","economical issues","finance","management","social issues","environment","CA","misc GK","defence"]};
 const DEFAULT_HABIT_DEFS=[{id:"hg1",name:"CRACK THE EXAM",type:"hours",thresholds:[4,8,12]},{id:"hg2",name:"WORKOUT",items:[{id:"hi4",label:"Run"},{id:"hi5",label:"Stretching"}]},{id:"hg3",name:"INTROSPECTION",items:[{id:"hi6",label:"Journal introspect read"}]}];
-const STAGES=["1st Time Study","Revise: Day 1","Revise: Day 3","Revise: Day 7","Revise: Day 14","Revise: Day 30","Mastered"];
+const STAGES=["1st Time Study","Revise: Day 1","Revise: Day 3","Revise: Day 7","Revise: Day 14","Revise: Month 1","Mastered"];
 const INTERVALS=[1,3,7,14,30,60];
 const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -8308,7 +8308,7 @@ const relD=s=>{const d=diffD(s,todayISO());if(d===0)return"Today";if(d===1)retur
 const subjColor=s=>{if(SUBJ_COLOR[s])return SUBJ_COLOR[s];let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return PALETTE[Math.abs(h)%PALETTE.length];};
 function numPrefix(t){const m=String(t||"").match(/^(\d+)\s*[.\-]/);return m?parseInt(m[1],10):null;}
 function sortTopics(items){const hasAnyOrder=items.some(x=>typeof x.order==="number");if(hasAnyOrder){return items.slice().sort((a,b)=>{const ao=typeof a.order==="number"?a.order:999999;const bo=typeof b.order==="number"?b.order:999999;return ao-bo;});}return items.slice().sort((a,b)=>{const an=numPrefix(a.topic),bn=numPrefix(b.topic);if(an!==null&&bn!==null)return an-bn;if(an!==null)return-1;if(bn!==null)return 1;return a.topic.localeCompare(b.topic);});}
-function stageFromInterval(days){if(!days||days<=0)return"1st Time Study";if(days<=1)return"Revise: Day 1";if(days<=4)return"Revise: Day 3";if(days<=9)return"Revise: Day 7";if(days<=20)return"Revise: Day 14";if(days<=60)return"Revise: Day 30";return"Mastered";}
+function stageFromInterval(days){if(!days||days<=0)return"1st Time Study";if(days<=1)return"Revise: Day 1";if(days<=4)return"Revise: Day 3";if(days<=9)return"Revise: Day 7";if(days<=20)return"Revise: Day 14";if(days<=60)return"Revise: Month 1";return"Mastered";}
 
 const SYL_PARENT_MAP={
 "Unit I – Tenses, Voice & Modals":"PART A – FOUNDATION MODULE (Grammar)","The Function of Tenses":"Unit I – Tenses, Voice & Modals","Voice":"Unit I – Tenses, Voice & Modals","Modals":"Unit I – Tenses, Voice & Modals","Unit II – Sentences, Clauses & Verbs":"PART A – FOUNDATION MODULE (Grammar)","Kinds of Sentences and Clauses":"Unit II – Sentences, Clauses & Verbs","Clause Analysis":"Unit II – Sentences, Clauses & Verbs","Question Tags":"Unit II – Sentences, Clauses & Verbs","Non-Finite Verbs":"Unit II – Sentences, Clauses & Verbs","Verb":"Unit II – Sentences, Clauses & Verbs","Unit III – Articles, Noun & Pronoun":"PART A – FOUNDATION MODULE (Grammar)","Articles":"Unit III – Articles, Noun & Pronoun","Noun":"Unit III – Articles, Noun & Pronoun","Pronoun":"Unit III – Articles, Noun & Pronoun","Unit IV – Adjective, Adverb & Prepositions":"PART A – FOUNDATION MODULE (Grammar)","Adjective":"Unit IV – Adjective, Adverb & Prepositions","Adverb":"Unit IV – Adjective, Adverb & Prepositions","Prepositions":"Unit IV – Adjective, Adverb & Prepositions","Unit V – Phrasal Verbs & Idioms":"PART A – FOUNDATION MODULE (Grammar)","Phrasal Verbs":"Unit V – Phrasal Verbs & Idioms","Idioms and Phrases":"Unit V – Phrasal Verbs & Idioms","Unit VI – Error Detection & Improvement":"PART A – FOUNDATION MODULE (Grammar)","Spotting Errors (Miscellaneous)":"Unit VI – Error Detection & Improvement","Sentence Improvement":"Unit VI – Error Detection & Improvement","Selecting the Correct Sentences":"Unit VI – Error Detection & Improvement","Paronyms and Homonyms":"PART B – VERBAL ABILITY (Vocabulary)","One Word Substitutions":"PART B – VERBAL ABILITY (Vocabulary)","Words with Meanings":"PART B – VERBAL ABILITY (Vocabulary)","Synonyms and Antonyms":"PART B – VERBAL ABILITY (Vocabulary)","Foreign Words and Expressions":"PART B – VERBAL ABILITY (Vocabulary)","The Sentence Completion":"PART B – VERBAL ABILITY (Vocabulary)","Sequence of Sentences":"PART C – COMPREHENSION & ARRANGEMENT","Objective Comprehension":"PART C – COMPREHENSION & ARRANGEMENT","Cloze Test":"PART C – COMPREHENSION & ARRANGEMENT","Narration (Direct-Indirect Speech)":"PART D – PRACTICAL GRAMMAR","Synthesis":"PART D – PRACTICAL GRAMMAR","Transformation":"PART D – PRACTICAL GRAMMAR","Punctuation":"PART D – PRACTICAL GRAMMAR","Spelling Rules":"PART D – PRACTICAL GRAMMAR","Contractions":"PART D – PRACTICAL GRAMMAR",
@@ -8794,7 +8794,7 @@ function gradeReview(id,grade){
     else{newInterval=oldInterval===0?4:Math.max(4,Math.round(oldInterval*ease*1.3));newEase=Math.min(3.0,ease+0.1);}
   }
   const wasMastered=stageFromInterval(oldInterval)==="Mastered";
-  const becomingMastered=!wasMastered&&stageFromInterval(newInterval)==="Mastered";
+  const becomingMastered=!wasMastered&&newInterval>=30;
   if(becomingMastered){newInterval=90;s.masteredReviews=0;}
   else if(wasMastered){
     const mr=typeof s.masteredReviews==="number"?s.masteredReviews:0;
@@ -8837,7 +8837,7 @@ function gradeError(id,grade){
   else if(grade==="good"){newInterval=oldInterval===0?1:Math.max(2,Math.round(oldInterval*ease));newEase=Math.min(3.0,ease+0.05);}
   else{newInterval=oldInterval===0?4:Math.max(4,Math.round(oldInterval*ease*1.3));newEase=Math.min(3.0,ease+0.1);}
   const wasMastered=stageFromInterval(oldInterval)==="Mastered";
-  const becomingMastered=!wasMastered&&stageFromInterval(newInterval)==="Mastered";
+  const becomingMastered=!wasMastered&&newInterval>=30;
   if(becomingMastered){newInterval=90;e.masteredReviews=0;}
   else if(wasMastered){
     const mr=typeof e.masteredReviews==="number"?e.masteredReviews:0;
@@ -10116,7 +10116,7 @@ function wirePicker(el){
   renderChips();updateCount();renderList();
 }
 const pickVals=v=>{try{return JSON.parse(v);}catch(e){return[];}};
-const STAGE_COLOR={"1st Time Study":"#EC4899","Revise: Day 1":"#F59E0B","Revise: Day 3":"#EAB308","Revise: Day 7":"#3B82F6","Revise: Day 14":"#06B6D4","Revise: Day 30":"var(--accent-2)","Mastered":"#10B981"};
+const STAGE_COLOR={"1st Time Study":"#EC4899","Revise: Day 1":"#F59E0B","Revise: Day 3":"#EAB308","Revise: Day 7":"#3B82F6","Revise: Day 14":"#06B6D4","Revise: Month 1":"var(--accent-2)","Mastered":"#10B981"};
 const stagePill=s=>'<span class="pill"><i class="dot" style="background:'+(STAGE_COLOR[s]||"var(--text-3)")+'"></i>'+esc(s)+'</span>';
 const stageDots=s=>{const i=STAGES.indexOf(s);return'<span class="stage-dots">'+STAGES.map((_,j)=>'<i class="'+(j<=i?"on":"")+'"></i>').join("")+'</span>';};
 const relPill=id=>{const t=topicById(id);if(!t)return"";return'<button class="rel-pill" data-action="goto-topic" data-id="'+id+'"><i class="sdot" style="background:'+subjColor(t.subject)+'"></i><span>'+esc(t.topic)+'</span></button>';};
@@ -15295,7 +15295,7 @@ try{
           canonical.lastReviewed = dup.lastReviewed;
         }
         // Higher stage wins if the duplicate was further along
-        var stages = ["1st Time Study","Revise: Day 1","Revise: Day 3","Revise: Day 7","Revise: Day 14","Revise: Day 30","Mastered"];
+        var stages = ["1st Time Study","Revise: Day 1","Revise: Day 3","Revise: Day 7","Revise: Day 14","Revise: Month 1","Mastered"];
         var ci = stages.indexOf(canonical.stage);
         var di = stages.indexOf(dup.stage);
         if (di > ci) canonical.stage = dup.stage;
