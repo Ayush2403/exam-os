@@ -42,6 +42,7 @@ const files = [
   'apex-quicklog-fix.js',
   'apex-app-gist-update.js',
   'apex-audit-patch.js'
+  'apex-ultimate-fix.js'
 ];
 
 let code = '/* APEX BUNDLE v31 (clean build) */\n\n';
