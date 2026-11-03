@@ -52,10 +52,16 @@
       toast("Setup complete!", "Let's get to work.");
     }, "Start Studying");
 
-    // Hide the cancel button to force setup
-    const sv = document.querySelector('[data-msave]');
+    // Allow the user to skip it if they want
     const cl = document.querySelector('[data-mclose]');
-    if (cl) cl.style.display = 'none';
+    if (cl) {
+      cl.textContent = "Skip";
+      cl.onclick = function() {
+        S.settings.onboardingDone = true;
+        saveLocal();
+        closeModal();
+      };
+    }
   }
 
   // Check on load and route change
