@@ -8392,6 +8392,9 @@ function migrate_12_to_13(s){
   }
 }
 function applyIdempotentTransforms(s){
+  if(Array.isArray(s.sessions)){s.sessions.forEach(x=>{if(x.stage==="Revise: Day 30")x.stage="Revise: Month 1";});}
+  if(Array.isArray(s.errors)){s.errors.forEach(x=>{if(x.stage==="Revise: Day 30")x.stage="Revise: Month 1";});}
+
   if(!s.settings)s.settings={};
   if(!Array.isArray(S.settings.exams))S.settings.exams=[];
 if(typeof S.settings.focusDailyGoal!=="number")S.settings.focusDailyGoal=0;
@@ -8420,6 +8423,10 @@ if(typeof S.settings.ambientVolume!=="number")S.settings.ambientVolume=0.15;
       if(e.lastReviewed===undefined)e.lastReviewed=null;
     });
   }
+  
+  
+  
+  
   if(Array.isArray(s.syllabus)){
     s.syllabus.forEach(t=>{if(t.parentId===undefined)t.parentId=null;if(typeof t.notes!=="string")t.notes="";});
     const lookup={};
@@ -8811,7 +8818,7 @@ function gradeReview(id,grade){
     cappedInterval=capInfo.cap;
     cappedBy=capInfo;
   }
-  s.interval=cappedInterval;s.ease=newEase;s.lastReviewed=now;s.nextReview=addDays(now,cappedInterval);s.stage=stageFromInterval(cappedInterval);
+  s.interval=cappedInterval;s.ease=newEase;s.lastReviewed=now;s.nextReview=addDays(now,cappedInterval);if(becomingMastered){s.stage="Mastered";}else{s.stage=becomingMastered?"Mastered":stageFromInterval(cappedInterval);}
   if(prevStage!=="Mastered"&&s.stage==="Mastered")s.masteredAt=now;
   if(prevStage==="Mastered"&&s.stage!=="Mastered")s.masteredAt=null;
   s.history=(Array.isArray(s.history)?s.history:[]).concat([{date:now,grade}]);
@@ -8853,7 +8860,7 @@ function gradeError(id,grade){
     cappedInterval=capInfo.cap;
     cappedBy=capInfo;
   }
-  e.interval=cappedInterval;e.ease=newEase;e.lastReviewed=now;e.nextReview=addDays(now,cappedInterval);e.stage=stageFromInterval(cappedInterval);
+  e.interval=cappedInterval;e.ease=newEase;e.lastReviewed=now;e.nextReview=addDays(now,cappedInterval);if(becomingMastered){e.stage="Mastered";}else{e.stage=becomingMastered?"Mastered":stageFromInterval(cappedInterval);}
   e.history=(Array.isArray(e.history)?e.history:[]).concat([{date:now,grade}]);
   saveLocal();
   const toastMain=cappedBy?("Fix: "+g.label+" · +"+cappedInterval+"d (exam cap)"):("Fix: "+g.label+" · +"+newInterval+"d");
