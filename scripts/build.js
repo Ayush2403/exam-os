@@ -41,7 +41,7 @@ const files = [
   'apex-onboarding.js',
   'apex-quicklog-fix.js',
   'apex-app-gist-update.js',
-  'apex-audit-patch.js'
+  'apex-audit-patch.js',
   'apex-ultimate-fix.js'
 ];
 

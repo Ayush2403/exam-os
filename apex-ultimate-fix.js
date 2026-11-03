@@ -1,7 +1,7 @@
 /* ============================================================
-   APEX ULTIMATE FIX v1
-   1. Auto-Stage Sweeper (fixes window.S bug)
-   2. Quick Log Single-Enter UX
+   APEX ULTIMATE FIX v2
+   1. Auto-Stage Sweeper (Promotes Not Started -> Learning)
+   2. Quick Log Single-Enter UX (Enter to pick, Enter to submit)
    ============================================================ */
 (function(){
   if (window._apexUltimateFix) return;
@@ -25,21 +25,19 @@
     if (changed > 0) {
       console.log(`[auto-stage] Promoted ${changed} topic(s) to Learning`);
       
-      // Save
       if (typeof saveLocal === 'function') saveLocal();
       else if (window.saveLocal) window.saveLocal();
       
-      // Re-render
       if (typeof renderSylList === 'function') renderSylList();
       if (typeof rerender === 'function') rerender();
     }
   }
 
   // Run on boot, interval, and hashchange
-  setTimeout(sweep, 1000);
-  setTimeout(sweep, 2500);
-  setInterval(sweep, 3000);
-  window.addEventListener('hashchange', () => setTimeout(sweep, 200));
+  setTimeout(sweep, 1500);
+  setTimeout(sweep, 3500);
+  setInterval(sweep, 5000);
+  window.addEventListener('hashchange', () => setTimeout(sweep, 300));
 
   // Hook into the Topic Detail modal specifically
   if (typeof ACTIONS === 'object') {
@@ -53,7 +51,7 @@
   }
 
   // --- 2. QUICK LOG UX FIX ---
-  // Intercept the Enter key in the capture phase before the app does
+  // Intercept Enter ONLY if the dropdown is open
   document.addEventListener('keydown', function(e) {
     const inp = e.target.closest('[data-quicklog-input]');
     if (!inp) return;
@@ -68,12 +66,11 @@
           
           // Pick the highlighted item, or just the first one
           const target = box.querySelector('.ql-sug-item.hl') || items[0];
-          target.click(); // Fills the input and closes the box
-          return;
+          target.click(); // Fills the input with the topic name
         }
       }
     }
-  }, true); // Capture phase is crucial here
+  }, true); 
 
-  console.log('[apex-ultimate-fix] installed');
+  console.log('[apex-ultimate-fix v2] installed');
 })();
