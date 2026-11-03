@@ -14046,7 +14046,7 @@ function writeBackup(handle, filename, blob){
 setInterval(function(){
   document.querySelectorAll('.nav-info').forEach(function(b){
     var id=b.dataset.info;
-    if(id && window.NAV_INFO && NAV_INFO[id] && b.getAttribute('title') !== NAV_INFO[id]){
+    if(id && typeof NAV_INFO !== "undefined" && NAV_INFO && NAV_INFO[id] && b.getAttribute('title') !== NAV_INFO[id]){
       b.setAttribute('title', NAV_INFO[id]);
     }
   });

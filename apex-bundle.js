@@ -1,4 +1,4 @@
-/* APEX BUNDLE v24 */
+/* APEX BUNDLE v25 (gist override fix) */
 
 
 // ── FILE: apex-mobile.js ──
@@ -6272,7 +6272,7 @@ function confirmDelete(id){
   window._apexGistUpdate = true;
 
   // 1. Update Navigation Tooltips
-  if (window.NAV_INFO) {
+  if (typeof NAV_INFO !== "undefined" && NAV_INFO) {
     NAV_INFO.dashboard = "Your daily command center. Computes the 'Next Action' based on FSRS memory stability and Exam Marks at Risk.";
     NAV_INFO.reviews = "FSRS-powered Spaced Repetition. Rate Again/Hard/Good/Easy to calculate exact memory stability and optimal intervals.";
     NAV_INFO.radar = "Weak topics ranked by friction × exam weightage. Shows exactly how many marks a topic is costing you.";
@@ -6331,7 +6331,8 @@ function confirmDelete(id){
   };
   
   window.viewGuide = newViewGuide;
-  if (window.VIEWS) VIEWS.guide = newViewGuide;
+  if (window.VIEWS) window.VIEWS.guide = newViewGuide;
+  try { if (typeof VIEWS !== "undefined" && VIEWS) VIEWS.guide = newViewGuide; } catch(e) {}
 
   // 3. Override the Welcome Modal
   const newWelcomeOverlay = function() {
