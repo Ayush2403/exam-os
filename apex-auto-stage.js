@@ -1,73 +1,45 @@
 /* ============================================================
-   APEX AUTO-STAGE SYNC
-   Logging a session for a "Not started" topic automatically
-   moves it to "Learning" in the syllabus.
+   APEX AUTO-STAGE SYNC V2
+   Hooks into saveLocal() to ensure any topic with a logged
+   session is automatically moved from "Not started" to "Learning".
    ============================================================ */
 (function(){
-  if (window._apexAutoStage) return;
-  window._apexAutoStage = true;
+  if (window._apexAutoStageV2) return;
+  window._apexAutoStageV2 = true;
 
-  function promoteTopic(topicId) {
-    if (!topicId) return;
-    const t = topicById(topicId);
-    if (t && t.status === "Not started") {
-      t.status = "Learning";
-      // We don't call saveLocal() here because the caller (session creation) will handle it.
-      console.log("[auto-stage] Promoted topic to Learning:", t.topic);
+  function promoteTopics() {
+    if (!window.S || !S.sessions || !S.syllabus) return;
+    
+    // 1. Find every topicId that has a logged session
+    const activeIds = new Set();
+    S.sessions.forEach(s => { 
+      if (s.topicId) activeIds.add(s.topicId); 
+    });
+    
+    // 2. Find any "Not started" topic that is in that set
+    let changed = 0;
+    S.syllabus.forEach(t => {
+      if (t.status === "Not started" && activeIds.has(t.id)) {
+        t.status = "Learning";
+        changed++;
+      }
+    });
+
+    if (changed > 0) {
+      console.log(`[auto-stage] Promoted ${changed} topic(s) to Learning`);
     }
   }
 
-  // 1. Hook into manual Session Modal
-  const _origSessionModal = window.sessionModal || sessionModal;
-  window.sessionModal = function(s, prefillTopicId) {
-    // Pass a wrapped callback if the original function allows it, 
-    // but since we can't easily intercept the inner save function, 
-    // we intercept the creation globally instead.
-    return _origSessionModal.apply(this, arguments);
+  // 3. Wrap saveLocal (which is called after every data mutation)
+  const _origSave = window.saveLocal || saveLocal;
+  window.saveLocal = function() {
+    promoteTopics();
+    return _origSave.apply(this, arguments);
   };
-
-  // 2. Intercept the global `edit` function which is called when sessions are saved
-  const _origEdit = window.edit || edit;
-  window.edit = function(fn) {
-    // We wrap the edit function to check if a session was just added/updated
-    _origEdit(function() {
-      fn();
-      
-      // After the edit, scan for "Not started" topics that have sessions
-      // (This is a bit heavy, so we only do it if we suspect a session was added)
-      if (S.sessions.length > 0) {
-        const recentlyTouched = new Set();
-        // Look at the last 3 sessions (newest first)
-        for (let i = S.sessions.length - 1; i >= Math.max(0, S.sessions.length - 3); i--) {
-          if (S.sessions[i].topicId) recentlyTouched.add(S.sessions[i].topicId);
-        }
-        
-        recentlyTouched.forEach(id => promoteTopic(id));
-      }
-    });
-  };
-  try { edit = window.edit; } catch(e){}
-
-  // 3. Hook directly into Quick Log for immediate feedback
-  const _origQuickLogDo = window.quickLogDo || quickLogDo;
-  window.quickLogDo = function(forcedTopicId) {
-    // We can intercept the input before it processes to grab the topic ID
-    const inp = document.querySelector("[data-quicklog-input]");
-    let targetTopicId = forcedTopicId;
-
-    // If no forced ID, try to guess it from the input text using the same logic
-    if (!targetTopicId && inp && inp.value) {
-      const parsed = quickLogParse(inp.value);
-      const split = _fragmentSplit(parsed.topicText);
-      const matches = quickLogSuggest(split.topicText);
-      if (matches.length > 0) targetTopicId = matches[0].id;
-    }
-
-    if (targetTopicId) promoteTopic(targetTopicId);
-
-    return _origQuickLogDo.apply(this, arguments);
-  };
-  try { quickLogDo = window.quickLogDo; } catch(e){}
-
-  console.log('[apex-auto-stage] installed — sessions will auto-promote syllabus topics');
+  try { saveLocal = window.saveLocal; } catch(e){}
+  
+  // 4. Run once on boot just in case there are existing unsynced topics
+  setTimeout(promoteTopics, 2000);
+  
+  console.log('[apex-auto-stage v2] installed — wrapping saveLocal');
 })();
