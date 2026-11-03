@@ -1,0 +1,10 @@
+{
+  "name": "exam-os",
+  "version": "1.0.0",
+  "description": "Apex — The Exam OS",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "deploy": "npm run build && git add -A && git commit -m \"build: auto-deploy\" && wrangler pages deploy .",
+    "verify": "node scripts/patches/verify_app.js"
+  }
+}
