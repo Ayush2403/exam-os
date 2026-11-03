@@ -8778,11 +8778,21 @@ const GRADES={again:{key:"again",label:"Again",color:"#EF4444"},hard:{key:"hard"
 function gradeReview(id,grade){
   const s=S.sessions.find(x=>x.id===id);if(!s)return;const g=GRADES[grade];if(!g)return;snapshot();
   const now=todayISO();const oldInterval=typeof s.interval==="number"?s.interval:0;const ease=typeof s.ease==="number"?s.ease:2.5;
+  let fsrsResult = null;
+  if (typeof window.fsrsCalculate === 'function') {
+    fsrsResult = window.fsrsCalculate(s, grade);
+    s.fsrs_stability = fsrsResult.stability;
+    s.fsrs_difficulty = fsrsResult.difficulty;
+  }
   let newInterval,newEase=ease;
-  if(grade==="again"){newInterval=1;newEase=Math.max(1.3,ease-0.2);}
-  else if(grade==="hard"){newInterval=Math.max(1,Math.round(oldInterval*1.2));newEase=Math.max(1.3,ease-0.15);}
-  else if(grade==="good"){newInterval=oldInterval===0?1:Math.max(2,Math.round(oldInterval*ease));newEase=Math.min(3.0,ease+0.05);}
-  else{newInterval=oldInterval===0?4:Math.max(4,Math.round(oldInterval*ease*1.3));newEase=Math.min(3.0,ease+0.1);}
+  if (fsrsResult) {
+    newInterval = fsrsResult.interval;
+  } else {
+    if(grade==="again"){newInterval=1;newEase=Math.max(1.3,ease-0.2);}
+    else if(grade==="hard"){newInterval=Math.max(1,Math.round(oldInterval*1.2));newEase=Math.max(1.3,ease-0.15);}
+    else if(grade==="good"){newInterval=oldInterval===0?1:Math.max(2,Math.round(oldInterval*ease));newEase=Math.min(3.0,ease+0.05);}
+    else{newInterval=oldInterval===0?4:Math.max(4,Math.round(oldInterval*ease*1.3));newEase=Math.min(3.0,ease+0.1);}
+  }
   const wasMastered=stageFromInterval(oldInterval)==="Mastered";
   const becomingMastered=!wasMastered&&stageFromInterval(newInterval)==="Mastered";
   if(becomingMastered){newInterval=90;s.masteredReviews=0;}
@@ -8815,6 +8825,12 @@ function completeReview(id){gradeReview(id,"good");}
 function gradeError(id,grade){
   const e=S.errors.find(x=>x.id===id);if(!e)return;const g=GRADES[grade];if(!g)return;snapshot();
   const now=todayISO();const oldInterval=typeof e.interval==="number"?e.interval:0;const ease=typeof e.ease==="number"?e.ease:2.5;
+  let fsrsResult = null;
+  if (typeof window.fsrsCalculate === 'function') {
+    fsrsResult = window.fsrsCalculate(e, grade);
+    e.fsrs_stability = fsrsResult.stability;
+    e.fsrs_difficulty = fsrsResult.difficulty;
+  }
   let newInterval,newEase=ease;
   if(grade==="again"){newInterval=1;newEase=Math.max(1.3,ease-0.2);}
   else if(grade==="hard"){newInterval=Math.max(1,Math.round(oldInterval*1.2));newEase=Math.max(1.3,ease-0.15);}
